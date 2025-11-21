@@ -208,10 +208,8 @@ if [ "$SKIP_CONFIG" = true ]; then
     echo "------------------------------------"
     echo
 else
-    if [ ! -f "./config.json" ]; then
-        cp config.example.json config.json
-        chmod 777 config.json
-    fi
+    $PYTHON -m migrations init
+    $PYTHON -m migrations up
 
     # Yellow
     printf "\e[33m"
