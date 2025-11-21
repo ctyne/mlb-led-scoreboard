@@ -1,4 +1,4 @@
-from migrations.manager import MigrationManager, CHECKPOINT_PATH
+from migrations.manager import MigrationManager
 from migrations.cli.command import CLICommand
 
 class Up(CLICommand):
@@ -17,9 +17,9 @@ class Up(CLICommand):
             print("=" * 80)
             print(f"MIGRATE {migration.version} << {migration.__class__.__name__} >>")
 
-            if self.last_checkpoint() < migration.version:
+            if MigrationManager.last_checkpoint() < migration.version:
                 migration.up()
-                self.create_checkpoint(migration.version)
+                MigrationManager.create_checkpoint(migration.version)
 
                 self.step -= 1
             else:
@@ -30,15 +30,3 @@ class Up(CLICommand):
 
         print("=" * 80)
         print("Done.")
-
-    def create_checkpoint(self, ts):
-        with open(CHECKPOINT_PATH, 'a') as f:
-            f.write(f"{ts}\n")
-
-    def last_checkpoint(self):
-        try:
-            with open(CHECKPOINT_PATH, 'r') as f:
-                checkpoints = f.readlines()
-                return checkpoints[-1].strip()
-        except (FileNotFoundError, IndexError):
-            return "0"

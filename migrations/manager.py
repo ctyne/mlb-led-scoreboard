@@ -1,4 +1,4 @@
-import os, pathlib
+import os, pathlib, shutil
 
 import pathlib
 
@@ -30,6 +30,45 @@ class MigrationManager:
                 migrations.append(migration_class(version))
 
         return migrations
+    
+    @staticmethod
+    def remove_checkpoint():
+        """Remove the last checkpoint atomically using temp file swap."""
+        temp_path = CHECKPOINT_PATH.with_suffix('.txn')
+        try:
+            with open(CHECKPOINT_PATH, 'r') as existing:
+                checkpoints = existing.readlines()
+
+            with open(temp_path, 'w') as f:
+                f.writelines(checkpoints[:-1])
+
+            shutil.move(temp_path, CHECKPOINT_PATH)
+        except FileNotFoundError:
+            pass
+
+    @staticmethod
+    def create_checkpoint(checkpoint):
+        """Add a new checkpoint atomically using temp file swap."""
+        temp_path = CHECKPOINT_PATH.with_suffix('.txn')
+        with open(temp_path, 'w') as f:
+            try:
+                with open(CHECKPOINT_PATH, 'r') as existing:
+                    f.write(existing.read())
+            except FileNotFoundError:
+                pass
+
+            f.write(f"{checkpoint}\n")
+
+        shutil.move(temp_path, CHECKPOINT_PATH)
+
+    @staticmethod
+    def last_checkpoint():
+        try:
+            with open(CHECKPOINT_PATH, 'r') as f:
+                checkpoints = f.readlines()
+                return checkpoints[-1].strip()
+        except (FileNotFoundError, IndexError):
+            return "0"
 
     @classmethod
     def fetch_configs(cls):
