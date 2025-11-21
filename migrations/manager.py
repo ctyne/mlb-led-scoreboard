@@ -11,6 +11,7 @@ class MigrationManager:
     Each migration file should have a name starting with a timestamp.
     '''
     _configs = None
+    _config_migrations = None
 
     @staticmethod
     def load_migrations():
@@ -28,29 +29,37 @@ class MigrationManager:
                 migrations.append(migration_class(version))
 
         return migrations
+    
+    @classmethod
+    def all_configs(cls):
+        '''
+        Returns a list of available configuration paths.
+        '''
+        if cls._configs is not None:
+            return cls._configs
+
+        paths = [BASE_PATH, COLORS_PATH, COORDINATES_PATH]
+
+        cls._configs = []
+        for path in paths:
+            for entry in os.listdir(path):
+                if entry.endswith(".json") and "emulator" not in entry:
+                    json_path = pathlib.Path(path) / entry
+                    cls._configs.append(json_path)
+
+        return cls._configs
 
     @classmethod
     def fetch_configs(cls):
         '''
         Returns a list of configurations that are able to be migrated.
         '''
-        if cls._configs is not None:
-            return cls._configs
+        if cls._config_migrations is not None:
+            return cls._config_migrations
 
-        cls._configs = []
+        cls._config_migrations = [(path, MigrationManager.get_migrations(path)) for path in MigrationManager.all_configs()]
 
-        paths = [BASE_PATH, COLORS_PATH, COORDINATES_PATH]
-
-        for path in paths:
-            for entry in os.listdir(path):
-                if entry.endswith(".json") and "emulator" not in entry:
-                    json_path = pathlib.Path(path) / entry
-                    cls._configs.append(
-                        (json_path, MigrationManager.get_migrations(json_path))
-                    )
-
-        return cls._configs
-
+        return cls._config_migrations
 
     @staticmethod
     def get_migrations(path):

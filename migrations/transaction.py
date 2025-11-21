@@ -63,7 +63,11 @@ class Transaction:
                 migrations.remove(self.version)
 
         # Update data with new migrations list
-        data = data | { "_migrations": migrations }
+        # We delete it first, then re-add it so it's at the bottom of the list
+        if "_migrations" in data:
+            del data["_migrations"]
+        
+        data["_migrations"] = migrations
 
         with open(dirty, 'w') as f:
             json.dump(data, f, indent=2)
