@@ -29,7 +29,8 @@ def cast_keypaths(*arg_names):
 
 class ConfigMigration:
     '''Base class for configuration migrations.'''
-    def __init__(self):
+    def __init__(self, version):
+        self.version = version
         self.configs = MigrationManager.fetch_configs()
 
     def up(self):
@@ -135,7 +136,7 @@ class ConfigMigration:
         if not isinstance(configs, list):
             configs = [configs]
 
-        with Transaction() as transaction:
+        with Transaction(self.version) as transaction:
             for config_file in configs:
                 content = transaction.read(config_file)
                 

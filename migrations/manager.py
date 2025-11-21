@@ -27,7 +27,7 @@ class MigrationManager:
                 version, migration_class_name = path.stem.split('_', 1)
                 migration_class = getattr(migration_module, migration_class_name)
 
-                migrations.append((version, migration_class))
+                migrations.append(migration_class(version))
 
         return migrations
 

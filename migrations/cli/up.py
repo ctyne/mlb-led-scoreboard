@@ -13,15 +13,13 @@ class Up(CLICommand):
             print("No migrations to execute.")
             return
 
-        for version, migration_class in migrations:
+        for migration in migrations:
             print("=" * 80)
-            print(f"MIGRATE {version} << {migration_class.__name__} >>")
+            print(f"MIGRATE {migration.version} << {migration.__class__.__name__} >>")
 
-            migration = migration_class()
-
-            if self.last_checkpoint() < version:
+            if self.last_checkpoint() < migration.version:
                 migration.up()
-                self.create_checkpoint(version)
+                self.create_checkpoint(migration.version)
 
                 self.step -= 1
             else:

@@ -13,13 +13,11 @@ class Down(CLICommand):
             print("No migrations to roll back.")
             return
 
-        for version, migration_class in migrations[::-1]:
+        for migration in migrations[::-1]:
             print("=" * 80)
-            print(f"ROLLBACK {version} << {migration_class.__name__} >>")
+            print(f"ROLLBACK {migration.version} << {migration.__class__.__name__} >>")
 
-            migration = migration_class()
-
-            if self.last_checkpoint() == version:
+            if self.last_checkpoint() == migration.version:
                 migration.down()
                 self.create_checkpoint()
 

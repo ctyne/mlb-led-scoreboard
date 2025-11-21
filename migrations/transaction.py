@@ -5,7 +5,8 @@ from migrations.exceptions import Rollback, TransactionNotOpen
 class Transaction:
     TXN_EXTENSION = ".txn"
 
-    def __init__(self):
+    def __init__(self, version):
+        self.version = version
         self._open = {}
 
         self._active = False
@@ -31,7 +32,6 @@ class Transaction:
         '''
         dirty = self.__create_transaction_file(path)
 
-        data = None
         with open(dirty, "r") as f:
             data = json.load(f)
 
@@ -45,11 +45,11 @@ class Transaction:
 
         dirty = self.__create_transaction_file(path)
 
-        if isinstance(data, (dict, list)):
-            data = json.dumps(data, indent=2)
+        # Append a tag to the file so it isn't re-processed later.
+        data = data | { "_version": self.version }
 
         with open(dirty, 'w') as f:
-            f.write(data)
+            json.dump(data, f, indent=2)
 
     def rollback(self):
         '''
@@ -69,22 +69,25 @@ class Transaction:
         print("\tCOMMIT TRANSACTION")
 
     def __exit__(self, exc_type, exc_value, traceback):
-        try: 
-            if exc_type is None:
-                self.commit()
-            else:
-                raise exc_type(exc_value).with_traceback(traceback)
-        except Rollback:
-            print("\tROLLBACK TRANSACTION")
-        except Exception as e:
-            print(f"\tROLLBACK TRANSACTION: {e}")
-        finally:
+        if exc_type is None:
+            self.commit()
+            return False
+
+        print("\tROLLBACK TRANSACTION")
+        try:
             self.rollback()
+
+            # Suppress Rollback exceptions only
+            return exc_type == Rollback
+        except Exception as rollback_error:
+            print(f"\tWARNING: Rollback failed: {rollback_error}")
+
+        return False
 
     def __create_transaction_file(self, path):
         '''
         Creates a new file for the transaction. The transaction must be active.
-        The file has an extension TXN_EXTENSION and is cleaned up after the transaction commits or rolls back.
+        The file has an extension `TXN_EXTENSION` and is cleaned up after the transaction commits or rolls back.
         '''
         if not self._active:
             raise TransactionNotOpen("Transactions must be opened before use.")
@@ -95,8 +98,8 @@ class Transaction:
         
         dirty = path.with_suffix(self.TXN_EXTENSION)
 
-        if path in self._open:
-            return
+        if dirty in self._open:
+            return dirty
 
         shutil.copy(path, dirty)
         self._open[dirty] = path

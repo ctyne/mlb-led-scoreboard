@@ -107,9 +107,9 @@ venv.bak/
 # Ignore backups
 *.bak
 
-# Ignore migration checkpoints
+# Ignore migration / transaction checkpoints
 migrations/checkpoint.txt
-*.migrate
+*.txn
 
 # Ignore our customized config.json
 /config*.json
