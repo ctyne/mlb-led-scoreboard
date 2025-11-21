@@ -1,10 +1,10 @@
 import pathlib, time
 
-from migrations.commands import CLICommand
+from migrations.cli.command import CLICommand
 
 
 MIGRATION_TEMPLATE = '''\
-from migrations import ConfigMigration
+from migrations.migration import ConfigMigration
 
 
 class {}(ConfigMigration):
@@ -17,9 +17,9 @@ class {}(ConfigMigration):
 '''
 
 class Generate(CLICommand):
-    def __init__(self, migration_name):
-        self.__validate_migration_name(migration_name)
-        self.migration_name = migration_name
+    def __init__(self, arguments):
+        self.__validate_migration_name(arguments.migration_name)
+        self.migration_name = arguments.migration_name
 
     def execute(self):
         print(f"Generating migration '{self.migration_name}'.")

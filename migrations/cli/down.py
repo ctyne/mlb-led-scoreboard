@@ -1,11 +1,14 @@
-from migrations import MigrationLoader, CHECKPOINT_PATH
-from migrations.commands import CLICommand
+from migrations.manager import MigrationManager, CHECKPOINT_PATH
+from migrations.cli.command import CLICommand
 
 class Down(CLICommand):
-    def execute(self, step):
+    def __init__(self, arguments):
+        self.step = arguments.step
+
+    def execute(self):
         print("Rolling back migrations...")
 
-        migrations = MigrationLoader.load_migrations()
+        migrations = MigrationManager.load_migrations()
         if len(migrations) == 0:
             print("No migrations to roll back.")
             return
@@ -20,11 +23,11 @@ class Down(CLICommand):
                 migration.down()
                 self.create_checkpoint()
 
-                step -= 1
+                self.step -= 1
             else:
                 print("\t-- Migration not yet executed, skipping migration. --")
 
-            if step == 0:
+            if self.step == 0:
                 break
 
         print("=" * 80)
