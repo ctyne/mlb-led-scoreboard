@@ -137,8 +137,7 @@ class ConfigMigration:
 
         with Transaction() as transaction:
             for config_file in configs:
-                with open(config_file, 'r') as f:
-                    content = json.load(f)
+                content = transaction.read(config_file)
                 
                 yield content
 

@@ -6,3 +6,6 @@ class Rollback(Exception):
 
 class ExistingTransaction(Exception):
     pass
+
+class TransactionNotOpen(Exception):
+    pass
