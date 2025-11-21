@@ -3,6 +3,7 @@ import argparse
 from migrations.cli.up import Up
 from migrations.cli.down import Down
 from migrations.cli.generate import Generate
+from migrations.cli.init import Init
 
 
 def positive_int(value):
@@ -16,12 +17,17 @@ def positive_int(value):
 
 class CLI:
     COMMANDS = {
+        # Full commands
         "generate": Generate,
-        "g": Generate,
         "up": Up,
-        "u": Up,
         "down": Down,
-        "d": Down
+        "init": Init,
+
+        # Aliases
+        "g": Generate,
+        "u": Up,
+        "d": Down,
+        "i": Init
     }
 
     @staticmethod
@@ -29,12 +35,15 @@ class CLI:
         parser = argparse.ArgumentParser(description="Data migration manager for mlb-led-scoreboard configuration objects.")
         subparsers = parser.add_subparsers(dest='command', required=True, help='Available commands')
 
+        # "init" command
+        subparsers.add_parser('init', aliases=['i'], help='Initialize config files from schemas')
+
         # "generate" command
-        generate_parser = subparsers.add_parser('generate', help='Generate a new migration file')
+        generate_parser = subparsers.add_parser('generate', aliases=['g'], help='Generate a new migration file')
         generate_parser.add_argument('migration_name', type=str, help='Name of the migration')
 
         # "up" command
-        up_parser = subparsers.add_parser('up', help='Run migrations')
+        up_parser = subparsers.add_parser('up', aliases=['u'], help='Run migrations')
         up_parser.add_argument(
             '--step',
             type=positive_int,
@@ -43,7 +52,7 @@ class CLI:
         )
 
         # "down" command
-        down_parser = subparsers.add_parser('down', help='Roll back migrations')
+        down_parser = subparsers.add_parser('down', aliases=['d'], help='Roll back migrations')
         down_parser.add_argument(
             '--step',
             type=positive_int,
