@@ -3,6 +3,7 @@ import pathlib
 import shutil
 
 from migrations.cli.command import CLICommand
+from migrations.manager import MigrationManager
 from migrations.status import MigrationStatus
 
 class Init(CLICommand):
@@ -50,8 +51,8 @@ class Init(CLICommand):
                 shutil.copy2(schema_file, target_file)
 
                 # Inherit migration status from schema
-                schema_key = str(schema_file.absolute())
-                target_key = str(target_file.absolute())
+                schema_key = MigrationManager.normalize_path(schema_file)
+                target_key = MigrationManager.normalize_path(target_file)
                 if schema_key in schema_status:
                     custom_status[target_key] = schema_status[schema_key].copy()
 

@@ -17,8 +17,9 @@ class MigrationStatus:
         '''
         Returns a list of migration versions that have been applied to the given file.
         '''
+        from migrations.manager import MigrationManager
         status = cls.load_status()
-        file_key = str(pathlib.Path(file_path).absolute())
+        file_key = MigrationManager.normalize_path(file_path)
         return status.get(file_key, [])
 
     @classmethod

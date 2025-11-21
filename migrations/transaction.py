@@ -85,7 +85,7 @@ class Transaction:
                 custom_status[path] = versions
 
         for dirty, orig in self._open.items():
-            file_key = str(pathlib.Path(orig).absolute())
+            file_key = MigrationManager.normalize_path(orig)
 
             if MigrationManager.is_schema(file_key):
                 status = schema_status

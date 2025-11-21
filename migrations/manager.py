@@ -66,9 +66,19 @@ class MigrationManager:
 
         return cls._config_migrations
 
-    @classmethod
-    def is_schema(cls, path):
+    @staticmethod
+    def is_schema(path):
         if not isinstance(path, pathlib.Path):
             path = pathlib.Path(path)
 
         return SCHEMA_SUFFIX in path.suffixes
+
+    @staticmethod
+    def normalize_path(file_path):
+        '''
+        Convert a file path to a relative path string for use as a status key.
+        Uses forward slashes for cross-platform compatibility.
+        '''
+        abs_path = pathlib.Path(file_path).absolute()
+        rel_path = abs_path.relative_to(BASE_PATH)
+        return str(rel_path).replace('\\', '/')
