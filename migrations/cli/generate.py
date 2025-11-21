@@ -1,6 +1,7 @@
-import pathlib, time
+import time
 
 from migrations.cli.command import CLICommand
+from migrations.manager import MIGRATIONS_PATH
 
 
 MIGRATION_TEMPLATE = '''\
@@ -26,7 +27,7 @@ class Generate(CLICommand):
 
         ts = int(time.time())
         filename = f"{ts}_{self.migration_name}.py"
-        migration_path = pathlib.Path(__file__).parent.parent / filename
+        migration_path = MIGRATIONS_PATH / filename
 
         with open(migration_path, 'w') as f:
             f.write(MIGRATION_TEMPLATE.format(self.migration_name, ts))

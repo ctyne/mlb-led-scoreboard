@@ -8,6 +8,8 @@ COORDINATES_PATH = BASE_PATH / "coordinates"
 
 MIGRATIONS_PATH = pathlib.Path(__file__).parent / "migrate"
 
+SCHEMA_SUFFIX = ".example"
+
 class MigrationManager:
     '''
     Loads migration classes from the migrations directory.
@@ -60,14 +62,13 @@ class MigrationManager:
         if cls._config_migrations is not None:
             return cls._config_migrations
 
-        cls._config_migrations = [(path, MigrationManager.get_migrations(path)) for path in MigrationManager.all_configs()]
+        cls._config_migrations = [(path, MigrationStatus.get_migrations(path)) for path in MigrationManager.all_configs()]
 
         return cls._config_migrations
 
-    @staticmethod
-    def get_migrations(path):
-        '''
-        Reads the list of migrations that have been applied to a file from centralized status.
-        Returns empty list if no migrations have been applied.
-        '''
-        return MigrationStatus.get_migrations(path)
+    @classmethod
+    def is_schema(cls, path):
+        if not isinstance(path, pathlib.Path):
+            path = pathlib.Path(path)
+
+        return SCHEMA_SUFFIX in path.suffixes

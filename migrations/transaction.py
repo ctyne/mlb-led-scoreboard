@@ -1,6 +1,7 @@
 import json, os, pathlib, shutil
 
 from migrations.exceptions import Rollback, TransactionNotOpen
+from migrations.manager import MigrationManager
 from migrations.mode import MigrationMode
 from migrations.status import MigrationStatus
 
@@ -72,14 +73,46 @@ class Transaction:
         '''
         if not self._open:
             print("\t\tWARNING: Nothing staged!")
+            return
+
+        custom_status = {}
+        schema_status = {}
+
+        for path, versions in MigrationStatus.load_status().items():
+            if MigrationManager.is_schema(path):
+                schema_status[path] = versions
+            else:
+                custom_status[path] = versions
+
+        for dirty, orig in self._open.items():
+            file_key = str(pathlib.Path(orig).absolute())
+
+            if MigrationManager.is_schema(file_key):
+                status = schema_status
+            else:
+                status = custom_status
+
+            if file_key not in status:
+                status[file_key] = []
+
+            if self.mode == MigrationMode.UP:
+                if self.version not in status[file_key]:
+                    status[file_key].append(self.version)
+            elif self.mode == MigrationMode.DOWN:
+                if self.version in status[file_key]:
+                    status[file_key].remove(self.version)
+
+        with open(MigrationStatus.CUSTOM_TXN_FILE, 'w') as f:
+            json.dump(custom_status, f, indent=2)
+
+        with open(MigrationStatus.SCHEMA_TXN_FILE, 'w') as f:
+            json.dump(schema_status, f, indent=2)
+
+        self._open[MigrationStatus.CUSTOM_TXN_FILE] = MigrationStatus.CUSTOM_STATUS_FILE
+        self._open[MigrationStatus.SCHEMA_TXN_FILE] = MigrationStatus.SCHEMA_STATUS_FILE
 
         for dirty, orig in self._open.items():
             shutil.move(dirty, orig)
-
-            if self.mode == MigrationMode.UP:
-                MigrationStatus.add_migration(orig, self.version)
-            elif self.mode == MigrationMode.DOWN:
-                MigrationStatus.remove_migration(orig, self.version)
 
         print("\tCOMMIT TRANSACTION")
 
