@@ -1,13 +1,8 @@
-import os, pathlib, shutil
-
-import pathlib
-
+import json, os, pathlib
 
 BASE_PATH = pathlib.Path(__file__).parent.parent
 COLORS_PATH = BASE_PATH / "colors"
 COORDINATES_PATH = BASE_PATH / "coordinates"
-
-CHECKPOINT_PATH = pathlib.Path(__file__).parent / "checkpoint.txt"
 
 
 class MigrationManager:
@@ -19,6 +14,9 @@ class MigrationManager:
 
     @staticmethod
     def load_migrations():
+        '''
+        Dynamically loads migration classes and instantiates them.
+        '''
         migrations = []
 
         for path in sorted((pathlib.Path(__file__).parent).glob("*.py")):
@@ -30,66 +28,42 @@ class MigrationManager:
                 migrations.append(migration_class(version))
 
         return migrations
-    
-    @staticmethod
-    def remove_checkpoint():
-        """Remove the last checkpoint atomically using temp file swap."""
-        temp_path = CHECKPOINT_PATH.with_suffix('.txn')
-        try:
-            with open(CHECKPOINT_PATH, 'r') as existing:
-                checkpoints = existing.readlines()
-
-            with open(temp_path, 'w') as f:
-                f.writelines(checkpoints[:-1])
-
-            shutil.move(temp_path, CHECKPOINT_PATH)
-        except FileNotFoundError:
-            pass
-
-    @staticmethod
-    def create_checkpoint(checkpoint):
-        """Add a new checkpoint atomically using temp file swap."""
-        temp_path = CHECKPOINT_PATH.with_suffix('.txn')
-        with open(temp_path, 'w') as f:
-            try:
-                with open(CHECKPOINT_PATH, 'r') as existing:
-                    f.write(existing.read())
-            except FileNotFoundError:
-                pass
-
-            f.write(f"{checkpoint}\n")
-
-        shutil.move(temp_path, CHECKPOINT_PATH)
-
-    @staticmethod
-    def last_checkpoint():
-        try:
-            with open(CHECKPOINT_PATH, 'r') as f:
-                checkpoints = f.readlines()
-                return checkpoints[-1].strip()
-        except (FileNotFoundError, IndexError):
-            return "0"
 
     @classmethod
     def fetch_configs(cls):
+        '''
+        Returns a list of configurations that are able to be migrated.
+        '''
         if cls._configs is not None:
             return cls._configs
 
-        cls._configs = {
-            "colors": [],
-            "coordinates": [],
-            "base": []
-        }
+        cls._configs = []
 
-        paths = [
-            (BASE_PATH, "base"),
-            (COLORS_PATH, "colors"),
-            (COORDINATES_PATH, "coordinates")
-        ]
+        paths = [BASE_PATH, COLORS_PATH, COORDINATES_PATH]
 
-        for path, key in paths:
+        for path in paths:
             for entry in os.listdir(path):
                 if entry.endswith(".json") and "emulator" not in entry:
-                    cls._configs[key].append(pathlib.Path(path) / entry)
+                    json_path = pathlib.Path(path) / entry
+                    cls._configs.append(
+                        (json_path, MigrationManager.get_migrations(json_path))
+                    )
 
         return cls._configs
+
+
+    @staticmethod
+    def get_migrations(path):
+        '''
+        Reads the list of migrations that have been applied to a file.
+        Returns empty list if file doesn't exist or has no migrations.
+        '''
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
+
+            migrations = data.get("_migrations", [])
+
+            return migrations
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []

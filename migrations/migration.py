@@ -1,9 +1,9 @@
-import inspect, json
+import inspect, pathlib
 
 from functools import wraps
 from migrations.exceptions import *
 from migrations.transaction import Transaction
-from migrations.manager import MigrationManager
+from migrations.mode import MigrationMode
 
 class Keypath:
     def __init__(self, keypath):
@@ -26,12 +26,14 @@ def cast_keypaths(*arg_names):
         return wrapper
     return decorator
 
-
 class ConfigMigration:
     '''Base class for configuration migrations.'''
     def __init__(self, version):
         self.version = version
-        self.configs = MigrationManager.fetch_configs()
+
+        # Accessors for the MigrationManager
+        self._targets = []
+        self._mode = None
 
     def up(self):
         '''
@@ -47,6 +49,13 @@ class ConfigMigration:
         Default implementation assumes an irreversible migration.
         '''
         raise IrreversibleMigration()
+    
+    def _execute(self):
+        if self._mode == MigrationMode.DOWN:
+            return self.down()
+        
+        if self._mode == MigrationMode.UP:
+            return self.up()
 
     @cast_keypaths("keypath")
     def add_key(self, keypath, value, configs):
@@ -132,14 +141,27 @@ class ConfigMigration:
         '''
         Iterate over all configuration files in the provided configs.
         Yields the JSON content of each configuration file, and writes back any changes.
+        Uses self._mode to determine whether to add or remove migration from _migrations array.
         '''
         if not isinstance(configs, list):
             configs = [configs]
 
-        with Transaction(self.version) as transaction:
-            for config_file in configs:
-                content = transaction.read(config_file)
-                
+        paths = [pathlib.Path(config).absolute() for config in configs]
+
+        with Transaction(self.version, mode=self._mode) as transaction:
+            for path in paths:
+                if path not in self._targets:
+                    continue
+
+                content = transaction.read(path)
+
                 yield content
 
-                transaction.write(config_file, content)
+                transaction.write(path, content)
+
+            for path in self._targets:
+                if path in paths:
+                    continue
+
+                # Touch the file to update the version
+                transaction.write(path, transaction.read(path))

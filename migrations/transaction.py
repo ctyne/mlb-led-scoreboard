@@ -1,12 +1,17 @@
 import json, os, pathlib, shutil
 
 from migrations.exceptions import Rollback, TransactionNotOpen
+from migrations.mode import MigrationMode
 
 class Transaction:
     TXN_EXTENSION = ".txn"
 
-    def __init__(self, version):
+    def __init__(self, version, mode=MigrationMode.UP):
+        '''
+        Create a transaction for a migration.
+        '''
         self.version = version
+        self.mode = mode
         self._open = {}
 
         self._active = False
@@ -41,12 +46,24 @@ class Transaction:
         '''
         Writes to a file in an open transaction.
         '''
-        print("\t\tSTAGING:", path)
+        if self.mode == MigrationMode.UP:
+            print("\t\tSTAGING:", path)
+        else:
+            print("\t\tSTAGING ROLLBACK:", path)
 
         dirty = self.__create_transaction_file(path)
 
-        # Append a tag to the file so it isn't re-processed later.
-        data = data | { "_version": self.version }
+        migrations = data.get("_migrations", [])
+
+        if self.mode == MigrationMode.UP:
+            if self.version not in migrations:
+                migrations.append(self.version)
+        elif self.mode == MigrationMode.DOWN:
+            if self.version in migrations:
+                migrations.remove(self.version)
+
+        # Update data with new migrations list
+        data = data | { "_migrations": migrations }
 
         with open(dirty, 'w') as f:
             json.dump(data, f, indent=2)
