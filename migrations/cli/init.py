@@ -6,24 +6,21 @@ from migrations.cli.command import CLICommand
 from migrations.manager import MigrationManager
 from migrations.status import MigrationStatus
 
+
 class Init(CLICommand):
     def __init__(self, _arguments):
         pass
 
     def execute(self):
-        '''
+        """
         Initialize custom config files by copying from schema files (*.example.json).
         New files inherit migration status from schemas.
         Existing files are skipped (they need migration from their current version).
-        '''
+        """
         print("Initializing config files from schemas...")
 
         project_root = pathlib.Path(__file__).parent.parent.parent
-        search_dirs = [
-            project_root,
-            project_root / "coordinates",
-            project_root / "colors"
-        ]
+        search_dirs = [project_root, project_root / "coordinates", project_root / "colors"]
 
         # Load schema status (what migrations schemas have)
         schema_status = MigrationStatus._load_status(MigrationStatus.SCHEMA_STATUS_FILE)
@@ -60,7 +57,7 @@ class Init(CLICommand):
 
         # Save custom status atomically (write-then-swap) if we copied any files
         if copied_files:
-            with open(MigrationStatus.CUSTOM_TXN_FILE, 'w') as f:
+            with open(MigrationStatus.CUSTOM_TXN_FILE, "w") as f:
                 json.dump(custom_status, f, indent=2)
             shutil.move(MigrationStatus.CUSTOM_TXN_FILE, MigrationStatus.CUSTOM_STATUS_FILE)
 

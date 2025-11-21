@@ -2,6 +2,7 @@ from migrations.manager import MigrationManager
 from migrations.migration import MigrationMode
 from migrations.cli.command import CLICommand
 
+
 class Down(CLICommand):
     def __init__(self, arguments):
         self.step = arguments.step

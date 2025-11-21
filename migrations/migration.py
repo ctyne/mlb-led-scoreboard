@@ -5,13 +5,16 @@ from migrations.exceptions import *
 from migrations.transaction import Transaction
 from migrations.mode import MigrationMode
 
+
 class Keypath:
     def __init__(self, keypath):
         self.keypath = keypath
-        self.parts = keypath.split('.')
+        self.parts = keypath.split(".")
+
 
 def cast_keypaths(*arg_names):
     """Decorator that casts specific named arguments to Keypath if they are strings."""
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -23,11 +26,15 @@ def cast_keypaths(*arg_names):
                     bound.arguments[name] = Keypath(bound.arguments[name])
 
             return func(*bound.args, **bound.kwargs)
+
         return wrapper
+
     return decorator
 
+
 class ConfigMigration:
-    '''Base class for configuration migrations.'''
+    """Base class for configuration migrations."""
+
     def __init__(self, version):
         self.version = version
 
@@ -35,30 +42,30 @@ class ConfigMigration:
         self._mode = None
 
     def up(self):
-        '''
+        """
         Performs a data migration for a configuration object.
-        '''
+        """
         raise NotImplementedError("ConfigMigration subclasses must implement up()")
 
     def down(self):
-        '''
-        Reverse a migration. 
+        """
+        Reverse a migration.
 
         Raises IrreversibleMigration if migration cannot be reversed.
         Default implementation assumes an irreversible migration.
-        '''
+        """
         raise IrreversibleMigration()
-    
+
     def _execute(self):
         if self._mode == MigrationMode.DOWN:
             return self.down()
-        
+
         if self._mode == MigrationMode.UP:
             return self.up()
 
     @cast_keypaths("keypath")
     def add_key(self, keypath, value, configs):
-        '''Add a key to the configuration at the specified keypath.'''
+        """Add a key to the configuration at the specified keypath."""
         for content in self.__enumerate_configs(configs):
             parts = keypath.parts
             current = content
@@ -75,7 +82,7 @@ class ConfigMigration:
 
     @cast_keypaths("keypath")
     def remove_key(self, keypath, configs):
-        '''Remove a key from the configuration at the specified keypath.'''
+        """Remove a key from the configuration at the specified keypath."""
         for content in self.__enumerate_configs(configs):
             parts = keypath.parts
             current = content
@@ -90,7 +97,7 @@ class ConfigMigration:
 
     @cast_keypaths("keypath_from", "keypath_to")
     def move_key(self, keypath_from, keypath_to, configs):
-        '''Move a key from one keypath to another.'''
+        """Move a key from one keypath to another."""
         for content in self.__enumerate_configs(configs):
             parts_from = keypath_from.parts
             parts_to = keypath_to.parts
@@ -118,7 +125,7 @@ class ConfigMigration:
 
     @cast_keypaths("keypath")
     def rename_key(self, keypath, new_name, configs):
-        '''Rename a key at the specified keypath.'''
+        """Rename a key at the specified keypath."""
         for content in self.__enumerate_configs(configs):
             parts = keypath.parts
             current = content
@@ -137,10 +144,10 @@ class ConfigMigration:
             current[new_name] = value
 
     def __enumerate_configs(self, configs):
-        '''
+        """
         Iterate over all configuration files in the provided configs.
         Yields the JSON content of each configuration file, and writes back any changes.
-        '''
+        """
         if not isinstance(configs, list):
             configs = [configs]
 

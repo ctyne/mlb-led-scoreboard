@@ -4,7 +4,7 @@ from migrations.cli.command import CLICommand
 from migrations.manager import MIGRATIONS_PATH
 
 
-MIGRATION_TEMPLATE = '''\
+MIGRATION_TEMPLATE = """\
 from migrations.migration import ConfigMigration
 
 
@@ -15,7 +15,8 @@ class {}(ConfigMigration):
     # def down(self):
     #     Implement the logic to revert the migration if necessary.
     #     Raises IrreversibleMigration by default.
-'''
+"""
+
 
 class Generate(CLICommand):
     def __init__(self, arguments):
@@ -29,7 +30,7 @@ class Generate(CLICommand):
         filename = f"{ts}_{self.migration_name}.py"
         migration_path = MIGRATIONS_PATH / filename
 
-        with open(migration_path, 'w') as f:
+        with open(migration_path, "w") as f:
             f.write(MIGRATION_TEMPLATE.format(self.migration_name, ts))
 
         print(f"Migration '{self.migration_name}' generated successfully.")
