@@ -32,7 +32,6 @@ class ConfigMigration:
         self.version = version
 
         # Accessors for the MigrationManager
-        self._targets = []
         self._mode = None
 
     def up(self):
@@ -141,7 +140,6 @@ class ConfigMigration:
         '''
         Iterate over all configuration files in the provided configs.
         Yields the JSON content of each configuration file, and writes back any changes.
-        Uses self._mode to determine whether to add or remove migration from _migrations array.
         '''
         if not isinstance(configs, list):
             configs = [configs]
@@ -150,18 +148,8 @@ class ConfigMigration:
 
         with Transaction(self.version, mode=self._mode) as transaction:
             for path in paths:
-                if path not in self._targets:
-                    continue
-
                 content = transaction.read(path)
 
                 yield content
 
                 transaction.write(path, content)
-
-            for path in self._targets:
-                if path in paths:
-                    continue
-
-                # Touch the file to update the version
-                transaction.write(path, transaction.read(path))

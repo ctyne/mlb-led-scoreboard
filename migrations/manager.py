@@ -1,9 +1,12 @@
-import json, os, pathlib
+import os, pathlib
+
+from migrations.status import MigrationStatus
 
 BASE_PATH = pathlib.Path(__file__).parent.parent
 COLORS_PATH = BASE_PATH / "colors"
 COORDINATES_PATH = BASE_PATH / "coordinates"
 
+MIGRATIONS_PATH = pathlib.Path(__file__).parent / "migrate"
 
 class MigrationManager:
     '''
@@ -20,9 +23,9 @@ class MigrationManager:
         '''
         migrations = []
 
-        for path in sorted((pathlib.Path(__file__).parent).glob("*.py")):
+        for path in sorted(MIGRATIONS_PATH.glob("*.py")):
             if path.name[0].isdigit():
-                migration_module = getattr(__import__("migrations." + path.stem), path.stem)
+                migration_module = __import__(f"migrations.migrate.{path.stem}", fromlist=[path.stem])
                 version, migration_class_name = path.stem.split('_', 1)
                 migration_class = getattr(migration_module, migration_class_name)
 
@@ -64,15 +67,7 @@ class MigrationManager:
     @staticmethod
     def get_migrations(path):
         '''
-        Reads the list of migrations that have been applied to a file.
-        Returns empty list if file doesn't exist or has no migrations.
+        Reads the list of migrations that have been applied to a file from centralized status.
+        Returns empty list if no migrations have been applied.
         '''
-        try:
-            with open(path, 'r') as f:
-                data = json.load(f)
-
-            migrations = data.get("_migrations", [])
-
-            return migrations
-        except (FileNotFoundError, json.JSONDecodeError):
-            return []
+        return MigrationStatus.get_migrations(path)

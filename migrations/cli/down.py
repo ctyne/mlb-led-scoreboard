@@ -27,8 +27,6 @@ class Down(CLICommand):
                     targets.append(config_file)
 
             if targets:
-                print(f"\t{len(targets)} file(s) to roll back")
-                migration._targets = targets
                 migration._mode = MigrationMode.DOWN
                 migration._execute()
                 self.step -= 1

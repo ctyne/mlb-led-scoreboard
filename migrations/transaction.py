@@ -2,6 +2,7 @@ import json, os, pathlib, shutil
 
 from migrations.exceptions import Rollback, TransactionNotOpen
 from migrations.mode import MigrationMode
+from migrations.status import MigrationStatus
 
 class Transaction:
     TXN_EXTENSION = ".txn"
@@ -53,22 +54,6 @@ class Transaction:
 
         dirty = self.__create_transaction_file(path)
 
-        migrations = data.get("_migrations", [])
-
-        if self.mode == MigrationMode.UP:
-            if self.version not in migrations:
-                migrations.append(self.version)
-        elif self.mode == MigrationMode.DOWN:
-            if self.version in migrations:
-                migrations.remove(self.version)
-
-        # Update data with new migrations list
-        # We delete it first, then re-add it so it's at the bottom of the list
-        if "_migrations" in data:
-            del data["_migrations"]
-        
-        data["_migrations"] = migrations
-
         with open(dirty, 'w') as f:
             json.dump(data, f, indent=2)
 
@@ -83,9 +68,18 @@ class Transaction:
     def commit(self):
         '''
         Swaps in the temporary dirty files to their original reference path, overwriting existing files.
+        Updates the centralized migration status for all migrated files.
         '''
+        if not self._open:
+            print("\t\tWARNING: Nothing staged!")
+
         for dirty, orig in self._open.items():
             shutil.move(dirty, orig)
+
+            if self.mode == MigrationMode.UP:
+                MigrationStatus.add_migration(orig, self.version)
+            elif self.mode == MigrationMode.DOWN:
+                MigrationStatus.remove_migration(orig, self.version)
 
         print("\tCOMMIT TRANSACTION")
 

@@ -23,12 +23,11 @@ class Up(CLICommand):
             targets = []
 
             for config_file, applied_migrations in configs:
-                if migration.version not in applied_migrations:
+                if migration.version in applied_migrations:
                     targets.append(config_file)
 
-            if targets:
-                print(f"\t{len(targets)} file(s) to migrate")
-                migration._targets = targets
+            # If we have targets, this migration is already applied.
+            if not targets:
                 migration._mode = MigrationMode.UP
                 migration._execute()
                 self.step -= 1
