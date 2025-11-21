@@ -66,7 +66,7 @@ class ConfigMigration:
     @cast_keypaths("keypath")
     def add_key(self, keypath, value, configs):
         """Add a key to the configuration at the specified keypath."""
-        for content in self.__enumerate_configs(configs):
+        for content in self.enumerate_configs(configs):
             parts = keypath.parts
             current = content
 
@@ -83,7 +83,7 @@ class ConfigMigration:
     @cast_keypaths("keypath")
     def remove_key(self, keypath, configs):
         """Remove a key from the configuration at the specified keypath."""
-        for content in self.__enumerate_configs(configs):
+        for content in self.enumerate_configs(configs):
             parts = keypath.parts
             current = content
 
@@ -98,7 +98,7 @@ class ConfigMigration:
     @cast_keypaths("keypath_from", "keypath_to")
     def move_key(self, keypath_from, keypath_to, configs):
         """Move a key from one keypath to another."""
-        for content in self.__enumerate_configs(configs):
+        for content in self.enumerate_configs(configs):
             parts_from = keypath_from.parts
             parts_to = keypath_to.parts
 
@@ -126,7 +126,7 @@ class ConfigMigration:
     @cast_keypaths("keypath")
     def rename_key(self, keypath, new_name, configs):
         """Rename a key at the specified keypath."""
-        for content in self.__enumerate_configs(configs):
+        for content in self.enumerate_configs(configs):
             parts = keypath.parts
             current = content
 
@@ -143,7 +143,7 @@ class ConfigMigration:
             del current[parts[-1]]
             current[new_name] = value
 
-    def __enumerate_configs(self, configs):
+    def enumerate_configs(self, configs):
         """
         Iterate over all configuration files in the provided configs.
         Yields the JSON content of each configuration file, and writes back any changes.
