@@ -2,7 +2,7 @@ These JSON files are used to determine the colors for pretty much every element 
 
 # Custom Colors
 
-You can edit these colors to display parts of the scoreboard in any way you choose. Simply copy the file corresponding to the colors you wish to customize to the same filename without the `.schema` extension. These JSON files only need to contain the parts you wish to override but it's often easier to just make a copy of the full example file and edit the values you want to change.
+You can edit these colors to display parts of the scoreboard in any way you choose. Simply copy the file corresponding to the colors you wish to customize to the same filename without the `.schema` extension. These JSON files only need to contain the parts you wish to override but it's often easier to just make a copy of the full schema file and edit the values you want to change.
 
 ## Examples
 If you want to edit the color of some of the teams, copy `teams.schema.json` to a new file called `teams.json`, then edit the `"r"`, `"g"` and `"b"` values for the colors you wish to change in that new file. If you want to customize the color of the scrolling text on the final screen, copy `scoreboard.schema.json` to `scoreboard.json` and edit the `"final"->"scrolling_text"` keys to your liking. Your customized colors will always take precedence.
