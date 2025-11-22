@@ -1,12 +1,7 @@
 import os, pathlib
 
+from migrations import *
 from migrations.status import MigrationStatus
-
-BASE_PATH = pathlib.Path(__file__).parent.parent
-COLORS_PATH = BASE_PATH / "colors"
-COORDINATES_PATH = BASE_PATH / "coordinates"
-
-MIGRATIONS_PATH = pathlib.Path(__file__).parent / "migrate"
 
 SCHEMA_SUFFIX = ".schema"
 
@@ -21,7 +16,7 @@ class MigrationManager:
     _config_migrations = None
 
     @staticmethod
-    def load_migrations():
+    def load_migrations() -> list:
         """
         Dynamically loads migration classes and instantiates them.
         """
@@ -38,7 +33,7 @@ class MigrationManager:
         return migrations
 
     @classmethod
-    def all_configs(cls):
+    def all_configs(cls) -> list[pathlib.Path]:
         """
         Returns a list of available configuration paths.
         """
@@ -71,14 +66,14 @@ class MigrationManager:
         return cls._config_migrations
 
     @staticmethod
-    def is_schema(path: pathlib.Path):
+    def is_schema(path: pathlib.Path) -> bool:
         if not isinstance(path, pathlib.Path):
             path = pathlib.Path(path)
 
         return SCHEMA_SUFFIX in path.suffixes
 
     @staticmethod
-    def normalize_path(file_path: pathlib.Path):
+    def normalize_path(file_path: pathlib.Path) -> pathlib.Path:
         """
         Convert a file path to a relative path string for use as a status key.
         Uses forward slashes for cross-platform compatibility.

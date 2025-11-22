@@ -40,7 +40,9 @@ class ConfigMigration:
                 self.version, mode, modified_files
             )
 
-            txn.write(MigrationManager.normalize_path(MigrationStatus.CUSTOM_STATUS_FILE), custom_status)
-            txn.write(MigrationManager.normalize_path(MigrationStatus.SCHEMA_STATUS_FILE), schema_status)
+            if custom_status:
+                txn.write(MigrationStatus.CUSTOM_STATUS_FILE, custom_status)
+            if schema_status:
+                txn.write(MigrationStatus.SCHEMA_STATUS_FILE, schema_status)
 
         return result

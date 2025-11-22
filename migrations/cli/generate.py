@@ -5,8 +5,7 @@ from migrations.manager import MIGRATIONS_PATH
 
 
 MIGRATION_TEMPLATE = """\
-from migrations.migration import ConfigMigration
-from migrations.exceptions import IrreversibleMigration
+from migrations import *
 
 
 class {}(ConfigMigration):
