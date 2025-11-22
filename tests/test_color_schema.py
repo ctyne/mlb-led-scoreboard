@@ -7,7 +7,7 @@ class TestColorSchema(unittest.TestCase):
     CITY_CONNECT_KEY = "city_connect"
 
     def setUp(self):
-        with open(os.path.join("colors", "teams.example.json")) as f:
+        with open(os.path.join("colors", "teams.schema.json")) as f:
             self.team_colors = json.load(f)
 
     def _validate_required_keys(self, data, context):

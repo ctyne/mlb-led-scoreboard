@@ -121,8 +121,8 @@ coordinates/*.json
 # Ignore any customized color configs
 colors/*.json
 
-# Do not ignore example configs or test fixtures
-!*example.json
+# Do not ignore schemas or test fixtures
+!*schema.json
 !/tests/fixtures/*.json
 
 #

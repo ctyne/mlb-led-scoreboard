@@ -96,7 +96,7 @@ Under the hood, the migration system uses a transaction manager that compiles al
 The system maintains two snapshot files that record which migrations have been applied to which files:
 
 * `migrations/migrate/schema-status.json`
-  - Tracks migrations applied to schema files (`*.example.json`). This file is committed to keep schemas in sync.
+  - Tracks migrations applied to schema files (`*.schema.json`). This file is committed to keep schemas in sync.
 * `migrations/migrate/custom-status.json`
   - Tracks migrations applied to your custom config files. This file is ignored by git since they are custom files.
 
@@ -106,8 +106,8 @@ Status files are intended to be human-readable. Each key is a path to a config f
 
 ```json
 {
-  "config.example.json": [1763750914, 1763750983],
-  "coordinates/w32h32.example.json": [1763750914]
+  "config.schema.json": [1763750914, 1763750983],
+  "coordinates/w32h32.schema.json": [1763750914]
 }
 ```
 
@@ -118,7 +118,7 @@ File paths are relative to project root with forward slashes for cross-platform 
 Running `init` performs two operations:
 
 1. If a schema file exists but no corresponding custom file is present, the migrator copies the schema to the expected custom file path.
-   * For instance, `config.example.json` is copied to `config.json`
+   * For instance, `config.schema.json` is copied to `config.json`
 2. For each copied file, a record is added to the custom state, inheriting the same migration versions as the schema.
 
 This setup allows for pre-existing custom configurations to be migrated to new versions, while allowing new installations to create up-to-date custom configurations without needing to be migrated separately.
@@ -164,6 +164,6 @@ python -m migrations down    # Rollback
 python -m migrations up      # Re-apply
 
 # 5. Commit schema & status changes
-git add migrations/migrate/schema-status.json *.example.json
+git add migrations/migrate/schema-status.json *.schema.json
 git commit -m "Add example_migration field"
 ```

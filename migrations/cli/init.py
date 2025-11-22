@@ -13,7 +13,7 @@ class Init(CLICommand):
 
     def execute(self):
         """
-        Initialize custom config files by copying from schema files (*.example.json).
+        Initialize custom config files by copying from schema files (*.schema.json).
         New files inherit migration status from schemas.
         Existing files are skipped (they need migration from their current version).
         """
@@ -35,8 +35,8 @@ class Init(CLICommand):
             if not search_dir.exists():
                 continue
 
-            for schema_file in search_dir.glob("*.example.json"):
-                # Derive target filename (strip .example)
+            for schema_file in search_dir.glob("*.schema.json"):
+                # Derive target filename (strip .schema)
                 target_file = schema_file.with_suffix("").with_suffix(".json")
 
                 if target_file.exists():
@@ -78,6 +78,6 @@ class Init(CLICommand):
             print(f"\nExisting files need to be migrated with 'migrate up'.")
 
         if not copied_files and not skipped_files:
-            print("No schema files (*.example.json) found.")
+            print("No schema files (*.schema.json) found.")
 
         print("=" * 80)

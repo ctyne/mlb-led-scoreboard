@@ -103,14 +103,14 @@ class TestValidateConfigMethods(unittest.TestCase):
     with mock.patch("os.listdir") as mocked_listdir:
       files = [
         "config.json",
-        "config.example.json",
+        "config.schema.json",
         "config_INVALID.json"
       ]
       mocked_listdir.return_value = files
 
       # Checking whether a schema exists for the custom config
       with mock.patch("os.path.isfile") as mocked_isfile:
-        mocked_isfile.side_effect = lambda file: "config.example.json" in file
+        mocked_isfile.side_effect = lambda file: "config.schema.json" in file
 
         COORDINATES_IGNORED_KEYS = [
           "font_name",
@@ -619,7 +619,7 @@ class TestValidateConfigMethods(unittest.TestCase):
       renames = validation["renamed_keys"].values()
 
       for file in os.listdir(directory):
-        if file.endswith(".example.json"):
+        if file.endswith(".schema.json"):
           with open(os.path.join(directory, file)) as config_file:
             config = json.load(config_file)
             for rename in renames:

@@ -8,7 +8,7 @@ COORDINATES_PATH = BASE_PATH / "coordinates"
 
 MIGRATIONS_PATH = pathlib.Path(__file__).parent / "migrate"
 
-SCHEMA_SUFFIX = ".example"
+SCHEMA_SUFFIX = ".schema"
 
 
 class MigrationManager:
