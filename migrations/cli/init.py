@@ -1,10 +1,9 @@
-import json
-import pathlib
-import shutil
+import json, pathlib, shutil
 
 from migrations.cli.command import CLICommand
 from migrations.manager import MigrationManager
 from migrations.status import MigrationStatus
+from migrations.transaction import Transaction
 
 
 class Init(CLICommand):
@@ -57,9 +56,10 @@ class Init(CLICommand):
 
         # Save custom status atomically (write-then-swap) if we copied any files
         if copied_files:
-            with open(MigrationStatus.CUSTOM_TXN_FILE, "w") as f:
-                json.dump(custom_status, f, indent=2)
-            shutil.move(MigrationStatus.CUSTOM_TXN_FILE, MigrationStatus.CUSTOM_STATUS_FILE)
+            with Transaction() as txn:
+                with txn.load_for_update(MigrationStatus.CUSTOM_STATUS_FILE) as content:
+                    # Writing to content saves it atomically
+                    content = json.dumps(custom_status, indent=2)
 
         # Report results
         print("=" * 80)
