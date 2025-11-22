@@ -7,9 +7,6 @@ from migrations.manager import MigrationManager
 class ConfigMigration:
     """
     Base class for configuration migrations.
-
-    When up() or down() is executed, the self.txn attribute is automatically set
-    and can be used to read/write files atomically within migration methods.
     """
 
     def __init__(self, version: str):
@@ -39,15 +36,11 @@ class ConfigMigration:
 
             # Update status files in the same transaction
             modified_files = txn.get_modified_files()
-            custom_status, schema_status = MigrationStatus.build_updated_migration_statuses(self.version, mode, modified_files)
+            custom_status, schema_status = MigrationStatus.build_updated_migration_statuses(
+                self.version, mode, modified_files
+            )
 
-            txn.write(
-                MigrationManager.normalize_path(MigrationStatus.CUSTOM_STATUS_FILE),
-                custom_status
-            )
-            txn.write(
-                MigrationManager.normalize_path(MigrationStatus.SCHEMA_STATUS_FILE),
-                schema_status
-            )
+            txn.write(MigrationManager.normalize_path(MigrationStatus.CUSTOM_STATUS_FILE), custom_status)
+            txn.write(MigrationManager.normalize_path(MigrationStatus.SCHEMA_STATUS_FILE), schema_status)
 
         return result

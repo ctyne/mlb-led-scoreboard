@@ -12,6 +12,7 @@ class TransactionState(Enum):
 
 class Transaction:
     """Generic transaction class for atomic file operations."""
+
     TXN_EXTENSION = ".txn"
 
     def __init__(self):

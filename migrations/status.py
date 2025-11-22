@@ -1,21 +1,18 @@
 import json, os, pathlib
 from migrations.mode import MigrationMode
 
+
 class MigrationStatus:
     """
     Centralized migration status tracker.
     Tracks which migrations have been applied to which files.
     """
 
-    TXN_EXTENSION = ".txn"
     CUSTOM_STATUS_FILE = pathlib.Path(__file__).parent / "migrate" / "custom-status.json"
-    CUSTOM_TXN_FILE = CUSTOM_STATUS_FILE.with_suffix(TXN_EXTENSION)
-
     SCHEMA_STATUS_FILE = pathlib.Path(__file__).parent / "migrate" / "schema-status.json"
-    SCHEMA_TXN_FILE = SCHEMA_STATUS_FILE.with_suffix(TXN_EXTENSION)
 
     @classmethod
-    def get_migrations(cls, file_path):
+    def get_migrations(cls, file_path: pathlib.Path) -> list[str]:
         """
         Returns a list of migration versions that have been applied to the given file.
         """
@@ -34,7 +31,7 @@ class MigrationStatus:
         return cls._load_status(cls.CUSTOM_STATUS_FILE) | cls._load_status(cls.SCHEMA_STATUS_FILE)
 
     @classmethod
-    def _load_status(cls, path):
+    def _load_status(cls, path: pathlib.Path) -> dict:
         if not os.path.exists(path):
             return {}
 
