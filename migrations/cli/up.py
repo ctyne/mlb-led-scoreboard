@@ -21,14 +21,15 @@ class Up(CLICommand):
             print("=" * 80)
             print(f"MIGRATE {migration.version} << {migration.__class__.__name__} >>")
 
-            targets = []
+            able = True
 
-            for config_file, applied_migrations in configs:
+            for _, applied_migrations in configs:
                 if migration.version in applied_migrations:
-                    targets.append(config_file)
+                    able = False
+                    break
 
             # If we have targets, this migration is already applied.
-            if not targets:
+            if able:
                 migration.execute(MigrationMode.UP)
                 self.step -= 1
             else:

@@ -21,13 +21,14 @@ class Down(CLICommand):
             print("=" * 80)
             print(f"ROLLBACK {migration.version} << {migration.__class__.__name__} >>")
 
-            targets = []
+            able = False
 
-            for config_file, applied_migrations in configs:
+            for _, applied_migrations in configs:
                 if migration.version in applied_migrations:
-                    targets.append(config_file)
+                    able = True
+                    break
 
-            if targets:
+            if able:
                 migration.execute(MigrationMode.DOWN)
                 self.step -= 1
             else:

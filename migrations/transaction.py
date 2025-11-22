@@ -1,6 +1,7 @@
 import json, os, pathlib, shutil
 
 from enum import Enum
+from contextlib import contextmanager
 from migrations.exceptions import Rollback, TransactionNotOpen, TransactionAlreadyCommitted
 
 
@@ -91,6 +92,23 @@ class Transaction:
 
         self._state = TransactionState.COMMITTED
         print("\tCOMMIT TRANSACTION")
+
+
+    @contextmanager
+    def load_for_update(self, file_path):
+        """
+        Loads content from the file within a transaction within a context.
+        Content is a dictionary representing JSON data.
+        Content is written back to the file after exiting the context.
+
+        Guarantees data written will be updated atomically.
+        """
+
+        content = self.read(file_path)
+
+        yield content
+
+        self.write(file_path, content)
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is None:

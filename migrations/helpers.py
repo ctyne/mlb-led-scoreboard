@@ -1,5 +1,4 @@
 from migrations.transaction import Transaction
-from contextlib import contextmanager
 
 
 class Keypath:
@@ -18,23 +17,6 @@ class Keypath:
 
     def __repr__(self):
         return self.__str__()
-
-
-@contextmanager
-def load_for_update(txn, file_path):
-    """
-    Loads content from the file within a transaction within a context.
-    Content is a dictionary representing JSON data.
-    Content is written back to the file after exiting the context.
-
-    Guarantees data written will be updated atomically.
-    """
-
-    content = txn.read(file_path)
-
-    yield content
-
-    txn.write(file_path, content)
 
 
 def add_key(txn: Transaction, file_path: str, key: str, value: any, create_parents: bool = True):
@@ -61,7 +43,7 @@ def remove_key(txn: Transaction, file_path: str, key: str):
     """
     keypath = Keypath(key)
 
-    with load_for_update(txn, file_path) as content:
+    with txn.load_for_update(file_path) as content:
         target = content
 
         for part in keypath.parts[:-1]:
@@ -84,7 +66,7 @@ def move_key(txn: Transaction, file_path: str, src: str, dst: str):
     key = None
     value = None
 
-    with load_for_update(txn, file_path) as content:
+    with txn.load_for_update(file_path) as content:
         target = content
 
         for part in src_keypath.parts[:-1]:
@@ -118,7 +100,7 @@ def _add_key(
 ):
     keypath = Keypath(key)
 
-    with load_for_update(txn, file_path) as content:
+    with txn.load_for_update(file_path) as content:
         target = content
 
         for part in keypath.parts[:-1]:
