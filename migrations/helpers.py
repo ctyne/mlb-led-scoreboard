@@ -65,7 +65,42 @@ def remove_key(txn: Transaction, file_path: str, key: str):
             del target[keypath.parts[-1]]
 
 def move_key(txn: Transaction, file_path: str, src: str, dst: str):
-    pass
+    """
+    Moves an object at a specified key to a new key. All intermediate keys must be present. Fails if the value already exists.
+    """
+    src_keypath = Keypath(src)
+    dst_keypath = Keypath(dst)
+
+    key = None
+    value = None
+
+    with load_for_update(txn, file_path) as content:
+        target = content
+
+        for part in src_keypath.parts[:-1]:
+            if part not in target:
+                raise KeyError(f"Source keypath '{src_keypath}' does not exist")
+
+            target = target[part]
+
+        if src_keypath.parts[-1] in target:
+            key = src_keypath.parts[-1]
+            value = target[src_keypath.parts[-1]]
+
+            del target[src_keypath.parts[-1]]
+
+        if key is None:
+            raise KeyError(f"Source keypath '{src_keypath}' does not exist")
+        
+        target = content
+    
+        for part in dst_keypath.parts:
+            if part not in target:
+                raise KeyError(f"Destination keypath '{dst_keypath}' does not exist")
+
+            target = target[part]
+
+        target[key] = value
 
 def _add_key(txn: Transaction, file_path: str, key: str, value: any, create_parents: bool=True, overwrite: bool=False):
     keypath = Keypath(key)
