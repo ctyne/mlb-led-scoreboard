@@ -1,5 +1,5 @@
 import json, os, pathlib
-
+from migrations.mode import MigrationMode
 
 class MigrationStatus:
     """
@@ -43,3 +43,44 @@ class MigrationStatus:
                 return json.load(f)
         except (json.JSONDecodeError, FileNotFoundError):
             return {}
+
+    @staticmethod
+    def build_updated_migration_statuses(version: str, mode: MigrationMode, modified_files: list[pathlib.Path]):
+        """
+        Creates two dictionaries containing updated status data for custom and schema files.
+        """
+        from migrations.manager import MigrationManager
+
+        if not modified_files:
+            return
+
+        custom_status = {}
+        schema_status = {}
+
+        # Load existing status
+        for path, versions in MigrationStatus.load_status().items():
+            if MigrationManager.is_schema(path):
+                schema_status[path] = versions
+            else:
+                custom_status[path] = versions
+
+        # Update status for each modified file
+        for file_path in modified_files:
+            file_key = MigrationManager.normalize_path(file_path)
+
+            if MigrationManager.is_schema(file_key):
+                status = schema_status
+            else:
+                status = custom_status
+
+            if file_key not in status:
+                status[file_key] = []
+
+            if mode == MigrationMode.UP:
+                if version not in status[file_key]:
+                    status[file_key].append(version)
+            elif mode == MigrationMode.DOWN:
+                if version in status[file_key]:
+                    status[file_key].remove(version)
+
+        return custom_status, schema_status

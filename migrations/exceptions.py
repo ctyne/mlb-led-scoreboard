@@ -12,3 +12,7 @@ class ExistingTransaction(Exception):
 
 class TransactionNotOpen(Exception):
     pass
+
+
+class TransactionAlreadyCommitted(Exception):
+    pass

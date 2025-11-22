@@ -6,15 +6,17 @@ from migrations.manager import MIGRATIONS_PATH
 
 MIGRATION_TEMPLATE = """\
 from migrations.migration import ConfigMigration
+from migrations.exceptions import IrreversibleMigration
 
 
 class {}(ConfigMigration):
-    def up(self):
+    def up(self, txn):
         raise NotImplementedError("Migration logic not implemented.")
 
-    # def down(self):
-    #     Implement the logic to revert the migration if necessary.
-    #     Raises IrreversibleMigration by default.
+    def down(self, txn):
+        # Implement the logic to revert the migration if necessary.
+        # Raises IrreversibleMigration by default.
+        raise IrreversibleMigration
 """
 
 

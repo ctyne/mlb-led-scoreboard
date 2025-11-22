@@ -29,8 +29,7 @@ class Up(CLICommand):
 
             # If we have targets, this migration is already applied.
             if not targets:
-                migration._mode = MigrationMode.UP
-                migration._execute()
+                migration.execute(MigrationMode.UP)
                 self.step -= 1
             else:
                 print("\t-- All files up to date, skipping migration. --")

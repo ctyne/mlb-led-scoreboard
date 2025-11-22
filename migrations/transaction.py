@@ -1,23 +1,29 @@
 import json, os, pathlib, shutil
 
-from migrations.exceptions import Rollback, TransactionNotOpen
-from migrations.manager import MigrationManager
-from migrations.mode import MigrationMode
-from migrations.status import MigrationStatus
+from enum import Enum
+from migrations.exceptions import Rollback, TransactionNotOpen, TransactionAlreadyCommitted
+
+
+class TransactionState(Enum):
+    UNSTARTED = 1
+    OPEN = 2
+    COMMITTED = 3
 
 
 class Transaction:
+    """Generic transaction class for atomic file operations."""
     TXN_EXTENSION = ".txn"
 
-    def __init__(self, version, mode=MigrationMode.UP):
+    def __init__(self):
         """
-        Create a transaction for a migration.
+        Create a transaction for atomic file operations.
         """
-        self.version = version
-        self.mode = mode
         self._open = {}
+        self._state = TransactionState.UNSTARTED
 
-        self._active = False
+    @property
+    def state(self):
+        return self._state
 
     def __enter__(self):
         self.begin()
@@ -25,13 +31,16 @@ class Transaction:
         return self
 
     def begin(self):
-        if self._active:
+        if self.state == TransactionState.OPEN:
             return
 
-        print("\tBEGIN TRANSACTION")
-        self._active = True
+        if self.state != TransactionState.UNSTARTED:
+            raise TransactionAlreadyCommitted
 
-    def read(self, path):
+        print("\tBEGIN TRANSACTION")
+        self._state = TransactionState.OPEN
+
+    def read(self, path: pathlib.Path) -> dict:
         """
         Reads from a file in an open transaction.
 
@@ -45,14 +54,11 @@ class Transaction:
 
         return data
 
-    def write(self, path, data):
+    def write(self, path: pathlib.Path, data: dict):
         """
         Writes to a file in an open transaction.
         """
-        if self.mode == MigrationMode.UP:
-            print("\t\tSTAGING:", path)
-        else:
-            print("\t\tSTAGING ROLLBACK:", path)
+        print("\t\tSTAGING:", path)
 
         dirty = self.__create_transaction_file(path)
 
@@ -67,54 +73,24 @@ class Transaction:
             if os.path.exists(dirty):
                 os.remove(dirty)
 
+    def get_modified_files(self) -> list[pathlib.Path]:
+        """
+        Returns a list of original file paths that have been modified in this transaction.
+        """
+        return list(self._open.values())
+
     def commit(self):
         """
         Swaps in the temporary dirty files to their original reference path, overwriting existing files.
-        Updates the centralized migration status for all migrated files.
         """
         if not self._open:
             print("\t\tWARNING: Nothing staged!")
             return
 
-        custom_status = {}
-        schema_status = {}
-
-        for path, versions in MigrationStatus.load_status().items():
-            if MigrationManager.is_schema(path):
-                schema_status[path] = versions
-            else:
-                custom_status[path] = versions
-
-        for dirty, orig in self._open.items():
-            file_key = MigrationManager.normalize_path(orig)
-
-            if MigrationManager.is_schema(file_key):
-                status = schema_status
-            else:
-                status = custom_status
-
-            if file_key not in status:
-                status[file_key] = []
-
-            if self.mode == MigrationMode.UP:
-                if self.version not in status[file_key]:
-                    status[file_key].append(self.version)
-            elif self.mode == MigrationMode.DOWN:
-                if self.version in status[file_key]:
-                    status[file_key].remove(self.version)
-
-        with open(MigrationStatus.CUSTOM_TXN_FILE, "w") as f:
-            json.dump(custom_status, f, indent=2)
-
-        with open(MigrationStatus.SCHEMA_TXN_FILE, "w") as f:
-            json.dump(schema_status, f, indent=2)
-
-        self._open[MigrationStatus.CUSTOM_TXN_FILE] = MigrationStatus.CUSTOM_STATUS_FILE
-        self._open[MigrationStatus.SCHEMA_TXN_FILE] = MigrationStatus.SCHEMA_STATUS_FILE
-
         for dirty, orig in self._open.items():
             shutil.move(dirty, orig)
 
+        self._state = TransactionState.COMMITTED
         print("\tCOMMIT TRANSACTION")
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -133,12 +109,12 @@ class Transaction:
 
         return False
 
-    def __create_transaction_file(self, path):
+    def __create_transaction_file(self, path: pathlib.Path) -> pathlib.Path:
         """
         Creates a new file for the transaction. The transaction must be active.
         The file has an extension `TXN_EXTENSION` and is cleaned up after the transaction commits or rolls back.
         """
-        if not self._active:
+        if not self.state == TransactionState.OPEN:
             raise TransactionNotOpen("Transactions must be opened before use.")
         if not isinstance(path, pathlib.Path):
             path = pathlib.Path(path)

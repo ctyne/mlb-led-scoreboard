@@ -28,8 +28,7 @@ class Down(CLICommand):
                     targets.append(config_file)
 
             if targets:
-                migration._mode = MigrationMode.DOWN
-                migration._execute()
+                migration.execute(MigrationMode.DOWN)
                 self.step -= 1
             else:
                 print("\t-- Migration not yet applied to any files, skipping. --")

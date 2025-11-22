@@ -71,14 +71,14 @@ class MigrationManager:
         return cls._config_migrations
 
     @staticmethod
-    def is_schema(path):
+    def is_schema(path: pathlib.Path):
         if not isinstance(path, pathlib.Path):
             path = pathlib.Path(path)
 
         return SCHEMA_SUFFIX in path.suffixes
 
     @staticmethod
-    def normalize_path(file_path):
+    def normalize_path(file_path: pathlib.Path):
         """
         Convert a file path to a relative path string for use as a status key.
         Uses forward slashes for cross-platform compatibility.
