@@ -3,6 +3,10 @@ from contextlib import contextmanager
 
 
 class Keypath:
+    """
+    Converts a keypath string into a Keypath object by splitting on SEP.
+    """
+
     SEP = "."
 
     def __init__(self, keypath_str: str):
