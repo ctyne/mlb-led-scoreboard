@@ -42,7 +42,9 @@ class MigrationStatus:
             return {}
 
     @staticmethod
-    def build_updated_migration_statuses(version: str, mode: MigrationMode, modified_files: list[pathlib.Path]) -> tuple[dict, dict]:
+    def build_updated_migration_statuses(
+        version: str, mode: MigrationMode, modified_files: list[pathlib.Path]
+    ) -> tuple[dict, dict]:
         """
         Creates two dictionaries containing updated status data for custom and schema files.
         """

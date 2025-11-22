@@ -59,8 +59,6 @@ class Transaction:
         """
         Writes to a file in an open transaction.
         """
-        print("\t\tSTAGING:", path)
-
         dirty = self.__create_transaction_file(path)
 
         with open(dirty, "w") as f:
@@ -129,5 +127,7 @@ class Transaction:
 
         shutil.copy(path, dirty)
         self._open[dirty] = path
+
+        print("\t\tSTAGING:", path)
 
         return dirty

@@ -1,7 +1,6 @@
 from migrations.mode import MigrationMode
 from migrations.transaction import Transaction
 from migrations.status import MigrationStatus
-from migrations.manager import MigrationManager
 
 
 class ConfigMigration:
