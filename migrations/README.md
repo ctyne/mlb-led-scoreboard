@@ -59,14 +59,18 @@ class example_migration(ConfigMigration):
 
 ### Helper Functions Reference
 
-The migration system provides helper functions that automatically handle subconfigs and ensure atomicity:
+The migration system provides helper functions that automatically handle subconfigs and ensure atomicity.
 
-#### `add_key(txn, file_path, key, value, create_parents=True)`
+**IMPORTANT:** These helpers always operate on ALL subconfigs in a family. This is by design - migration authors cannot predict what custom subconfigs end users have created (e.g., `config.test.json`, `config.dev.json`). The helpers ensure all configurations stay in sync.
+
+#### `add_key(txn, file_path, key, value, create_parents=True, expand_schema=True)`
 Adds a key at the specified keypath. Raises `KeyError` if the key already exists or parent keys are missing and `create_parents` is False.
+
+If `expand_schema=True` (default), operations on schema files affect all subconfigs in the family.
 
 ```python
 def up(self, txn):
-    # Add a top-level key
+    # Add a top-level key to all subconfigs
     add_key(txn, "config.json", "new_field", "default_value")
 
     # Add a nested key (creates parent keys automatically)
@@ -74,37 +78,60 @@ def up(self, txn):
 
     # Require parent keys to exist
     add_key(txn, "config.json", "existing.path.new_key", True, create_parents=False)
+
+    # Add key via schema reference (affects all subconfigs by default)
+    add_key(txn, "config.schema.json", "new_field", "value")
+
+    # Add key only to schema file
+    add_key(txn, "config.schema.json", "new_field", "value", expand_schema=False)
 ```
 
-#### `overwrite_key(txn, file_path, key, value, create_parents=True)`
+#### `overwrite_key(txn, file_path, key, value, create_parents=True, expand_schema=True)`
 Adds or overwrites a key at the specified keypath. Unlike `add_key`, this will not fail if the key already exists.
 
+If `expand_schema=True` (default), operations on schema files affect all subconfigs in the family.
+
 ```python
 def up(self, txn):
-    # Update existing value or create if missing
+    # Update existing value or create if missing (affects all subconfigs)
     overwrite_key(txn, "config.json", "version", "2.0")
+
+    # Update via schema reference (affects all subconfigs by default)
+    overwrite_key(txn, "config.schema.json", "version", "2.0")
 ```
 
-#### `remove_key(txn, file_path, key)`
+#### `remove_key(txn, file_path, key, expand_schema=True)`
 Removes a key at the specified keypath. If any part is not present, the key is considered already deleted (no error raised).
 
+If `expand_schema=True` (default), operations on schema files affect all subconfigs in the family.
+
 ```python
 def up(self, txn):
-    # Remove a nested key
+    # Remove a nested key from all subconfigs
     remove_key(txn, "config.json", "deprecated.old_field")
+
+    # Remove via schema reference (affects all subconfigs by default)
+    remove_key(txn, "config.schema.json", "deprecated.old_field")
 ```
 
-#### `move_key(txn, file_path, src, dst)`
+#### `move_key(txn, file_path, src, dst, expand_schema=True)`
 Moves an object at a specified key to a new key. All intermediate keys must be present. Fails if the destination already exists.
+
+If `expand_schema=True` (default), operations on schema files affect all subconfigs in the family.
 
 ```python
 def up(self, txn):
     # Move a key to a new location (must be nested under an existing parent)
     move_key(txn, "config.json", "old_location.field", "new_location")
+
+    # Move via schema reference (affects all subconfigs by default)
+    move_key(txn, "config.schema.json", "old_location.field", "new_location")
 ```
 
-#### `configs(file_path)`
-Returns a list of all config paths that match the reference. Schema paths return a single path. For custom configs, returns all matching subconfigs.
+#### `configs(file_path, expand_schema=True)`
+Returns a list of all config paths that match the reference. For custom configs, returns all matching subconfigs.
+
+When `expand_schema=True` (default), schema paths return all subconfigs of the corresponding custom config family. When `expand_schema=False`, schema paths return only the schema file itself.
 
 ```python
 from migrations.helpers import configs
@@ -112,6 +139,12 @@ from migrations.helpers import configs
 def up(self, txn):
     # Get all subconfigs of config.json (e.g., config.json, config.test.json, etc.)
     all_configs = configs("config.json")
+
+    # Get all subconfigs via schema reference (same result as above)
+    all_configs = configs("config.schema.json")
+
+    # Get only the schema file itself
+    schema_only = configs("config.schema.json", expand_schema=False)
 
     # Process each config individually if needed
     for config_path in all_configs:
@@ -122,21 +155,41 @@ def up(self, txn):
 
 ### Working with Subconfigs
 
-All helper functions automatically operate on subconfigs. For example, if you have `config.json` and `config.custom.json`, operations on `"config.json"` will affect both files:
+**All helper functions ALWAYS operate on all subconfigs in a family.** This is a critical design decision: migration authors cannot predict what custom subconfigs end users have created (e.g., `config.test.json`, `config.dev.json`, `config.production.json`). The helpers automatically discover and update all subconfigs to keep configurations in sync.
+
+For example, if you have `config.json`, `config.custom.json`, and `config.test.json`:
 
 ```python
 def up(self, txn):
-    # This adds the key to both config.json AND config.custom.json
+    # This ALWAYS adds the key to ALL subconfigs: config.json, config.custom.json, config.test.json
+    # You cannot selectively update only some subconfigs - this ensures consistency
     add_key(txn, "config.json", "new_field", "value")
 ```
 
-To work with schema files only, reference the schema directly:
+#### Schema Operations
+
+By default, operations on schema files also affect all subconfigs in the family:
 
 ```python
 def up(self, txn):
-    # Only affects config.schema.json
+    # This affects ALL custom configs: config.json, config.custom.json, config.test.json, etc.
+    # The schema file itself is NOT modified (schemas are version-controlled separately)
     add_key(txn, "config.schema.json", "new_field", "value")
 ```
+
+The `expand_schema` parameter only controls whether schema file references expand to custom configs. It does NOT allow selective updating of subconfigs:
+
+```python
+def up(self, txn):
+    # expand_schema=False means "only modify the schema file itself"
+    # This is rarely needed - typically only for schema metadata that shouldn't propagate to configs
+    add_key(txn, "config.schema.json", "new_field", "value", expand_schema=False)
+
+    # This STILL affects all subconfigs - expand_schema only applies to schema file references
+    add_key(txn, "config.json", "new_field", "value", expand_schema=False)
+```
+
+All helper functions (`add_key`, `overwrite_key`, `remove_key`, `move_key`) support the `expand_schema` parameter, but it only affects schema file behavior, not subconfig expansion.
 
 ### Direct Content Manipulation
 
