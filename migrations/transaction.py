@@ -2,13 +2,18 @@ import json, os, pathlib, shutil
 
 from enum import Enum
 from contextlib import contextmanager
-from migrations.exceptions import Rollback, TransactionNotOpen, TransactionAlreadyCommitted
+from migrations.exceptions import *
+
+# Track active transaction to prevent nesting.
+# The transaction system is designed specifically for migrations, so a full-fledged nested transaction system is not needed.
+_active_transaction = None
 
 
 class TransactionState(Enum):
     UNSTARTED = 1
     OPEN = 2
     COMMITTED = 3
+    ROLLED_BACK = 4
 
 
 class Transaction:
@@ -33,14 +38,21 @@ class Transaction:
         return self
 
     def begin(self):
+        global _active_transaction
+
         if self.state == TransactionState.OPEN:
             return
 
         if self.state != TransactionState.UNSTARTED:
             raise TransactionAlreadyCommitted
 
+        # Prevent nested transactions
+        if _active_transaction is not None:
+            raise ExistingTransaction("Nested transactions are not supported. A transaction is already active.")
+
         print("\tBEGIN TRANSACTION")
         self._state = TransactionState.OPEN
+        _active_transaction = self
 
     def read(self, path: pathlib.Path) -> dict:
         """
@@ -69,9 +81,15 @@ class Transaction:
         """
         Removes temporary files without overwriting to reference paths.
         """
+        global _active_transaction
+
         for dirty, _ in self._open.items():
             if os.path.exists(dirty):
                 os.remove(dirty)
+
+        self._state = TransactionState.ROLLED_BACK
+        _active_transaction = None
+        print("\tROLLBACK TRANSACTION")
 
     def get_modified_files(self) -> list[pathlib.Path]:
         """
@@ -83,14 +101,17 @@ class Transaction:
         """
         Swaps in the temporary dirty files to their original reference path, overwriting existing files.
         """
+        global _active_transaction
+
         if not self._open:
             print("\t\tWARNING: Nothing staged!")
-            return
+            return self.rollback()
 
         for dirty, orig in self._open.items():
             shutil.move(dirty, orig)
 
         self._state = TransactionState.COMMITTED
+        _active_transaction = None
         print("\tCOMMIT TRANSACTION")
 
     @contextmanager
@@ -110,20 +131,26 @@ class Transaction:
         self.write(file_path, content)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type is None:
-            self.commit()
-            return False
+        global _active_transaction
 
-        print("\tROLLBACK TRANSACTION")
         try:
-            self.rollback()
+            if exc_type is None:
+                self.commit()
+                return False
 
-            # Suppress Rollback exceptions only
-            return exc_type == Rollback
-        except Exception as rollback_error:
-            print(f"\tWARNING: Rollback failed: {rollback_error}")
 
-        return False
+            try:
+                self.rollback()
+
+                # Suppress Rollback exceptions only
+                return exc_type == Rollback
+            except Exception as rollback_error:
+                print(f"\tWARNING: Rollback failed: {rollback_error}")
+
+            return False
+        finally:
+            # Always clear active transaction when exiting
+            _active_transaction = None
 
     def __create_transaction_file(self, path: pathlib.Path) -> pathlib.Path:
         """

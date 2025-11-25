@@ -4,6 +4,7 @@ from migrations.transaction import Transaction
 
 
 SCHEMA_IDENTIFIER = "schema"
+IGNORE_LIST = ["emulator_config.json"]
 
 
 class Keypath:
@@ -62,7 +63,7 @@ def configs(file_path: pathlib.Path, expand_schema: bool = True) -> list[pathlib
     output = []
 
     for path in directory.glob(f"*.{ext}"):
-        if name not in path.name or SCHEMA_IDENTIFIER in path.name:
+        if name not in path.name or SCHEMA_IDENTIFIER in path.name or path.name in IGNORE_LIST:
             continue
 
         output.append(path)
