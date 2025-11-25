@@ -243,9 +243,7 @@
       "home": {
         "x": 4,
         "y": 18
-      },
-      "full": true,
-      "shorten_on_high_line_score": true
+      }
     },
     "accent": {
       "away": {
@@ -275,7 +273,12 @@
         "y": 17
       }
     },
-    "line_score": {
+    "runs": {
+      "runs_hits_errors": {
+        "show": false,
+        "compress_digits": false,
+        "spacing": 3
+      },
       "away": {
         "x": 63,
         "y": 8
@@ -283,10 +286,7 @@
       "home": {
         "x": 63,
         "y": 18
-      },
-      "show_hits_and_errors": false,
-      "compress_digits": false,
-      "spacing": 3
+      }
     }
   },
   "offday": {
