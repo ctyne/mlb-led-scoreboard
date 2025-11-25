@@ -11,6 +11,27 @@ class MigrationStatus:
     CUSTOM_STATUS_FILE = pathlib.Path(__file__).parent / "migrate" / "custom-status.json"
     SCHEMA_STATUS_FILE = pathlib.Path(__file__).parent / "migrate" / "schema-status.json"
 
+    @staticmethod
+    def pending_migrations():
+        """
+        Returns a list of migration versions that have yet to be applied.
+        """
+        from migrations.manager import MigrationManager
+
+        pending = set()
+
+        for migration in MigrationManager.load_migrations():
+            migrated = False
+            for migrations in MigrationStatus.load_status().values():
+                if migration.version in migrations:
+                    migrated = True
+                    break
+
+            if not migrated:
+                pending.add(migration)
+
+        return pending
+
     @classmethod
     def get_migrations(cls, file_path: pathlib.Path) -> list[str]:
         """

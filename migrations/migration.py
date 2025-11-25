@@ -45,3 +45,11 @@ class ConfigMigration:
                 txn.write(MigrationStatus.SCHEMA_STATUS_FILE, schema_status)
 
         return result
+
+    @property
+    def filename(self):
+        """
+        Returns the migration filename.
+        Child classes will always have the same file structure, so hardcoding here is simplest.
+        """
+        return f"{self.version}_{self.__class__.__name__}.py"

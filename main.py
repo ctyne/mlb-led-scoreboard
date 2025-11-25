@@ -14,6 +14,20 @@ if statsapi_version < (1, 9, 0):
     debug.error("We require MLB-StatsAPI 1.9.0 or higher. You may need to re-run install.sh")
     sys.exit(1)
 
+# Check pending migrations early so failure is fast.
+from migrations.status import MigrationStatus
+
+pending = MigrationStatus.pending_migrations()
+
+if pending:
+    print("Configuration migrations are pending! Please re-run the installer to resolve.")
+    print("\t===== PENDING =====")
+
+    for migration in pending:
+        print(f"\t{migration.filename}")
+
+    sys.exit(1)
+
 import logging
 import os
 import threading
