@@ -4,6 +4,9 @@ from migrations.cli.command import CLICommand
 
 
 class Down(CLICommand):
+    """
+    Rolls back a migration or multiple migrations, if --step is specified.
+    """
     def __init__(self, arguments):
         self.step = arguments.step
 

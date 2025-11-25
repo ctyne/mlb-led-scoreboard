@@ -4,6 +4,9 @@ from migrations.cli.command import CLICommand
 
 
 class Up(CLICommand):
+    """
+    Migrates all pending migrations, unless --step is specified. If step is present, migrates up to that amount.
+    """
     def __init__(self, arguments):
         self.step = arguments.step
 
