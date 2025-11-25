@@ -43,16 +43,16 @@ class MigrationStatus:
         file_key = MigrationManager.normalize_path(file_path)
         return status.get(file_key, [])
 
-    @classmethod
-    def load_status(cls):
+    @staticmethod
+    def load_status():
         """
         Loads the migration status from the status file.
         Returns an empty dict if the file doesn't exist.
         """
-        return cls._load_status(cls.CUSTOM_STATUS_FILE) | cls._load_status(cls.SCHEMA_STATUS_FILE)
+        return MigrationStatus._load_status(MigrationStatus.CUSTOM_STATUS_FILE) | MigrationStatus._load_status(MigrationStatus.SCHEMA_STATUS_FILE)
 
-    @classmethod
-    def _load_status(cls, path: pathlib.Path) -> dict:
+    @staticmethod
+    def _load_status(path: pathlib.Path) -> dict:
         if not os.path.exists(path):
             return {}
 
