@@ -31,9 +31,9 @@
     "only_preferred": false,
     "only_live": true,
     "rates": {
-      "live": 15,
-      "final": 15,
-      "pregame": 15
+      "live": 15.0,
+      "final": 15.0,
+      "pregame": 15.0
     },
     "while_preferred_team_live": {
       "enabled": false,
@@ -48,9 +48,9 @@
   },
   "time_format": "12h",
   "end_of_day": "00:00",
-  "sync_delay_seconds": 0,
   "api_refresh_rate": 5,
   "scrolling_speed": 2,
   "debug": false,
-  "demo_date": false
+  "demo_date": false,
+  "sync_delay_seconds": 0
 }
