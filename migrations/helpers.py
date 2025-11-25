@@ -42,6 +42,10 @@ def configs(file_path: pathlib.Path, expand_schema: bool = True) -> list[pathlib
     if not isinstance(file_path, pathlib.Path):
         file_path = pathlib.Path(file_path)
 
+    # By default, return ALL configs in the family
+    # If the user specified the migration against a custom config, only expand to custom subconfigs and skip the schema
+    skip_schema = False
+
     # Handle schema files
     if SCHEMA_IDENTIFIER in file_path.name:
         if not expand_schema:
@@ -52,18 +56,26 @@ def configs(file_path: pathlib.Path, expand_schema: bool = True) -> list[pathlib
         custom_name = file_path.name.replace(f".{SCHEMA_IDENTIFIER}", "")
         custom_path = file_path.parent / custom_name
         file_path = custom_path
+    else:
+        skip_schema = True
 
-    # Get all subconfigs for the custom config
     parts = file_path.name.split(".")
 
     name = parts[0]
-    ext = parts[-1]  # Use -1 instead of 1 to handle multi-part names like "config.test.json"
+    ext = parts[-1]
     directory = file_path.parents[0]
 
     output = []
 
     for path in directory.glob(f"*.{ext}"):
-        if name not in path.name or SCHEMA_IDENTIFIER in path.name or path.name in IGNORE_LIST:
+        # Doesn't match config family
+        if name not in path.name:
+            continue
+        # Didn't specify a schema to start, so migration wants ONLY custom configs
+        if SCHEMA_IDENTIFIER in path.name and skip_schema:
+            continue
+        # Is in ignore list
+        if path.name in IGNORE_LIST:
             continue
 
         output.append(path)

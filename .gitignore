@@ -109,7 +109,7 @@ venv.bak/
 
 # Ignore migration custom checkpoint & temporary transaction files
 migrations/migrate/custom-status.json
-*.txn
+.transaction/
 
 # Ignore our customized config.json
 /config*.json

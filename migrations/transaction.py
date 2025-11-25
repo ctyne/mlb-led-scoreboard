@@ -19,7 +19,7 @@ class TransactionState(Enum):
 class Transaction:
     """Generic transaction class for atomic file operations."""
 
-    TXN_EXTENSION = ".txn"
+    TXN_DIRECTORY = pathlib.Path(__file__).parent / "migrate" / ".transaction"
 
     def __init__(self):
         """
@@ -27,6 +27,8 @@ class Transaction:
         """
         self._open = {}
         self._state = TransactionState.UNSTARTED
+        self._temp_dir = None
+        self._file_counter = 0
 
     @property
     def state(self):
@@ -49,6 +51,10 @@ class Transaction:
         # Prevent nested transactions
         if _active_transaction is not None:
             raise ExistingTransaction("Nested transactions are not supported. A transaction is already active.")
+
+        # Create temporary directory for atomic operations
+        self._temp_dir = pathlib.Path(Transaction.TXN_DIRECTORY)
+        self._temp_dir.mkdir(exist_ok=True)
 
         print("\tBEGIN TRANSACTION")
         self._state = TransactionState.OPEN
@@ -79,13 +85,12 @@ class Transaction:
 
     def rollback(self):
         """
-        Removes temporary files without overwriting to reference paths.
+        Removes temporary directory without overwriting to reference paths.
         """
         global _active_transaction
 
-        for dirty, _ in self._open.items():
-            if os.path.exists(dirty):
-                os.remove(dirty)
+        if self._temp_dir and self._temp_dir.exists():
+            shutil.rmtree(self._temp_dir)
 
         self._state = TransactionState.ROLLED_BACK
         _active_transaction = None
@@ -99,7 +104,7 @@ class Transaction:
 
     def commit(self):
         """
-        Swaps in the temporary dirty files to their original reference path, overwriting existing files.
+        Swaps in the temporary files to their original paths, then removes temp directory.
         """
         global _active_transaction
 
@@ -109,6 +114,10 @@ class Transaction:
 
         for dirty, orig in self._open.items():
             shutil.move(dirty, orig)
+
+        # Clean up temp directory
+        if self._temp_dir and self._temp_dir.exists():
+            shutil.rmtree(self._temp_dir)
 
         self._state = TransactionState.COMMITTED
         _active_transaction = None
@@ -154,8 +163,8 @@ class Transaction:
 
     def __create_transaction_file(self, path: pathlib.Path) -> pathlib.Path:
         """
-        Creates a new file for the transaction. The transaction must be active.
-        The file has an extension `TXN_EXTENSION` and is cleaned up after the transaction commits or rolls back.
+        Creates a new file for the transaction in the temporary directory.
+        The transaction must be active. Files are cleaned up after the transaction commits or rolls back.
         """
         if not self.state == TransactionState.OPEN:
             raise TransactionNotOpen("Transactions must be opened before use.")
@@ -164,10 +173,14 @@ class Transaction:
         if not os.path.exists(path):
             raise FileNotFoundError(f"{path} does not exist.")
 
-        dirty = path.with_suffix(self.TXN_EXTENSION)
+        # Check if this file is already staged
+        for dirty, orig in self._open.items():
+            if orig == path:
+                return dirty
 
-        if dirty in self._open:
-            return dirty
+        # Create unique temp file in temp directory
+        dirty = self._temp_dir / f"{self._file_counter}_{path.name}"
+        self._file_counter += 1
 
         shutil.copy(path, dirty)
         self._open[dirty] = path

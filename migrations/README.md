@@ -193,7 +193,7 @@ All helper functions (`add_key`, `overwrite_key`, `remove_key`, `move_key`) supp
 
 ### Direct Content Manipulation
 
-For complex transformations, load and modify content directly:
+For complex transformations, load and modify content directly. The context loads data from JSON as a dictionary:
 
 ```python
 def up(self, txn):
@@ -232,7 +232,7 @@ Replace the `raise NotImplementedError` with your migration logic. If the migrat
 
 If using the helpers shown above, the migration system makes strong guarantees about atomicity -- ALL operations in a migration are guaranteed to complete else ALL operations fail.
 
-Under the hood, the migration system uses a transaction manager that compiles all changes made by a migration. The changes are written to a temporary file with a `.txn` extension. Once all changes are complete, the transaction manager copies the transaction file to the reference path, overwriting the old configuration.
+Under the hood, the migration system uses a transaction manager that compiles all changes made by a migration. The changes are written to a temporary directory `migrations/migrate/.transaction`. Once all changes are complete, the transaction manager copies the transaction file to the reference path, overwriting the old configuration. Note that nested transactions are not supported.
 
 ---------------
 > [!WARNING]  
@@ -240,7 +240,6 @@ Under the hood, the migration system uses a transaction manager that compiles al
 >
 > Failure to follow the correct patterns can leave the migrator in invalid states.
 ---------------
-
 
 ## Tracking Migration State
 
