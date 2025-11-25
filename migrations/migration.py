@@ -39,10 +39,10 @@ class ConfigMigration:
                 self.version, mode, modified_files
             )
 
-            if custom_status:
-                txn.write(MigrationStatus.CUSTOM_STATUS_FILE, custom_status)
-            if schema_status:
-                txn.write(MigrationStatus.SCHEMA_STATUS_FILE, schema_status)
+            if custom_status.dirty:
+                txn.write(MigrationStatus.CUSTOM_STATUS_FILE, custom_status.data)
+            if schema_status.dirty:
+                txn.write(MigrationStatus.SCHEMA_STATUS_FILE, schema_status.data)
 
         return result
 

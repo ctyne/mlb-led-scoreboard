@@ -1,6 +1,52 @@
 import json, os, pathlib
 from migrations.mode import MigrationMode
 
+class MigrationStatusData:
+    """
+    An object containing the migrations applied against files as a writable JSON dict in its `data` field.
+    The state is always consistent, but may be dirty, which will be contained in the 'dirty' field.
+    """
+
+    def __init__(self):
+        self.data = {}
+        self.dirty = False
+
+    def set_versions(self, file: pathlib.Path, versions: list[str]) -> None:
+        """
+        Sets the key in the data field to the list of versions.
+        """
+        self.data[file] = versions
+
+    def add_version(self, file: pathlib.Path, version: str) -> None:
+        """
+        Adds a version to a file. If the file isn't already tracked, adds the file to tracking before adding the version.
+
+        Always sets the dirty flag.
+        """
+        if file not in self.data:
+            self.data[file] = [version]
+            self.dirty = True
+        elif version not in self.data[file]:
+            self.data[file].append(version)
+            self.dirty = True
+
+    def remove_version(self, file: pathlib.Path, version: str) -> None:
+        """
+        Removes a version from a file. If the file isn't tracked or the version isn't applied to the file, it does nothing.
+
+        If a version is actually removed, sets the dirty flag.
+        """
+        if file not in self.data:
+            return
+        
+        if version not in self.data[file]:
+            return
+
+        self.data[file].remove(version)
+        self.dirty = True
+
+        if not self.data[file]:
+            del self.data[file]
 
 class MigrationStatus:
     """
@@ -12,7 +58,7 @@ class MigrationStatus:
     SCHEMA_STATUS_FILE = pathlib.Path(__file__).parent / "migrate" / "schema-status.json"
 
     @staticmethod
-    def pending_migrations():
+    def pending_migrations() -> list:
         """
         Returns a list of migration versions that have yet to be applied.
         """
@@ -67,24 +113,24 @@ class MigrationStatus:
     @staticmethod
     def build_updated_migration_statuses(
         version: str, mode: MigrationMode, modified_files: list[pathlib.Path]
-    ) -> tuple[dict, dict]:
+    ) -> tuple[MigrationStatusData, MigrationStatusData]:
         """
-        Creates two dictionaries containing updated status data for custom and schema files.
+        Creates two MigrationStatusData objects containing updated status data for custom and schema files.
         """
         from migrations.manager import MigrationManager
 
-        if not modified_files:
-            return {}, {}
+        custom_status = MigrationStatusData()
+        schema_status = MigrationStatusData()
 
-        custom_status = {}
-        schema_status = {}
+        if not modified_files:
+            return custom_status, schema_status
 
         # Load existing status
         for path, versions in MigrationStatus.load_status().items():
             if MigrationManager.is_schema(path):
-                schema_status[path] = versions
+                schema_status.set_versions(path, versions)
             else:
-                custom_status[path] = versions
+                custom_status.set_versions(path, versions)
 
         # Update status for each modified file
         for file_path in modified_files:
@@ -95,14 +141,9 @@ class MigrationStatus:
             else:
                 status = custom_status
 
-            if file_key not in status:
-                status[file_key] = []
-
             if mode == MigrationMode.UP:
-                if version not in status[file_key]:
-                    status[file_key].append(version)
+                status.add_version(file_key, version)
             elif mode == MigrationMode.DOWN:
-                if version in status[file_key]:
-                    status[file_key].remove(version)
+                status.remove_version(file_key, version)
 
         return custom_status, schema_status
