@@ -49,7 +49,9 @@ class MigrationStatus:
         Loads the migration status from the status file.
         Returns an empty dict if the file doesn't exist.
         """
-        return MigrationStatus._load_status(MigrationStatus.CUSTOM_STATUS_FILE) | MigrationStatus._load_status(MigrationStatus.SCHEMA_STATUS_FILE)
+        return MigrationStatus._load_status(MigrationStatus.CUSTOM_STATUS_FILE) | MigrationStatus._load_status(
+            MigrationStatus.SCHEMA_STATUS_FILE
+        )
 
     @staticmethod
     def _load_status(path: pathlib.Path) -> dict:

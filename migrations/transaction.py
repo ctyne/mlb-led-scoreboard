@@ -93,7 +93,6 @@ class Transaction:
         self._state = TransactionState.COMMITTED
         print("\tCOMMIT TRANSACTION")
 
-
     @contextmanager
     def load_for_update(self, file_path):
         """

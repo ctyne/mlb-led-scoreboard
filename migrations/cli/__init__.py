@@ -44,9 +44,19 @@ class CLI:
         subparsers.add_parser("init", aliases=["i"], help="Initialize config files from schemas")
 
         # "subconfig" command
-        subconfig_parser = subparsers.add_parser("subconfig", aliases=["s"], help="Create a subconfiguration from a reference that inherits the migration state of the reference")
+        subconfig_parser = subparsers.add_parser(
+            "subconfig",
+            aliases=["s"],
+            help="Create a subconfiguration from a reference that inherits the migration state of the reference",
+        )
         subconfig_parser.add_argument("subconfig", type=str, help="Relative path of the subconfig")
-        subconfig_parser.add_argument("-r", "--reference", type=str, help="Relative path of the reference. If not present, will be inferred from the subconfig path", required=False)
+        subconfig_parser.add_argument(
+            "-r",
+            "--reference",
+            type=str,
+            help="Relative path of the reference. If not present, will be inferred from the subconfig path",
+            required=False,
+        )
 
         # "generate" command
         generate_parser = subparsers.add_parser("generate", aliases=["g"], help="Generate a new migration file")
@@ -55,7 +65,8 @@ class CLI:
         # "up" command
         up_parser = subparsers.add_parser("up", aliases=["u"], help="Run migrations")
         up_parser.add_argument(
-            "-s", "--step",
+            "-s",
+            "--step",
             type=positive_int,
             default=999_999,
             help="Number of migrations to process (defaults to all migrations)",
@@ -64,7 +75,11 @@ class CLI:
         # "down" command
         down_parser = subparsers.add_parser("down", aliases=["d"], help="Roll back migrations")
         down_parser.add_argument(
-            "-s", "--step", type=positive_int, default=1, help="Number of migrations to process (defaults to most recent)"
+            "-s",
+            "--step",
+            type=positive_int,
+            default=1,
+            help="Number of migrations to process (defaults to most recent)",
         )
 
         args = parser.parse_args()

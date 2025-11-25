@@ -23,6 +23,7 @@ class Generate(CLICommand):
     """
     Generates a new migration from the template, with the version set to the current UTC timestamp.
     """
+
     def __init__(self, arguments):
         self.__validate_migration_name(arguments.migration_name)
         self.migration_name = arguments.migration_name

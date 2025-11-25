@@ -5,6 +5,7 @@ from migrations.transaction import Transaction
 
 SCHEMA_IDENTIFIER = "schema"
 
+
 class Keypath:
     """
     Converts a keypath string into a Keypath object by splitting on SEP.
@@ -22,8 +23,9 @@ class Keypath:
     def __repr__(self):
         return self.__str__()
 
+
 def configs(file_path: pathlib.Path, expand_schema: bool = True) -> list[pathlib.Path]:
-    '''
+    """
     Returns all subconfigs that match the reference.
 
     For instance: 'config.sub.json' is a subconfig referencing the custom config 'config.json'.
@@ -35,7 +37,7 @@ def configs(file_path: pathlib.Path, expand_schema: bool = True) -> list[pathlib
         configs("config.json") -> ["config.json", "config.test.json", "config.custom.json"]
         configs("config.schema.json", expand_schema=True) -> ["config.json", "config.test.json", ...]
         configs("config.schema.json", expand_schema=False) -> ["config.schema.json"]
-    '''
+    """
     if not isinstance(file_path, pathlib.Path):
         file_path = pathlib.Path(file_path)
 
@@ -67,7 +69,15 @@ def configs(file_path: pathlib.Path, expand_schema: bool = True) -> list[pathlib
 
     return output
 
-def add_key(txn: Transaction, file_path: pathlib.Path, key: str, value: any, create_parents: bool = True, expand_schema: bool = True):
+
+def add_key(
+    txn: Transaction,
+    file_path: pathlib.Path,
+    key: str,
+    value: any,
+    create_parents: bool = True,
+    expand_schema: bool = True,
+):
     """
     Adds a key at the specified keypath. If `create_parents` is True, any missing keys along the path will be created.
 
@@ -79,7 +89,14 @@ def add_key(txn: Transaction, file_path: pathlib.Path, key: str, value: any, cre
         _add_key(txn, path, key, value, create_parents)
 
 
-def overwrite_key(txn: Transaction, file_path: pathlib.Path, key: str, value: any, create_parents: bool = True, expand_schema: bool = True):
+def overwrite_key(
+    txn: Transaction,
+    file_path: pathlib.Path,
+    key: str,
+    value: any,
+    create_parents: bool = True,
+    expand_schema: bool = True,
+):
     """
     Adds or overwrites a key at the specified keypath. If `create_parents` is True, any missing keys along the path will be created.
 
@@ -100,6 +117,7 @@ def remove_key(txn: Transaction, file_path: pathlib.Path, key: str, expand_schem
     for path in configs(file_path, expand_schema=expand_schema):
         _remove_key(txn, path, key)
 
+
 def move_key(txn: Transaction, file_path: pathlib.Path, src: str, dst: str, expand_schema: bool = True):
     """
     Moves an object at a specified key to a new key. All intermediate keys must be present. Fails if the value already exists.
@@ -109,11 +127,17 @@ def move_key(txn: Transaction, file_path: pathlib.Path, src: str, dst: str, expa
     for path in configs(file_path, expand_schema=expand_schema):
         _move_key(txn, path, src, dst)
 
+
 #### SINGLE-FILE HELPERS ####
 # These encapsulate the functionality of the helpers above.
 # They operate on single files, so they do not expand to relevant subconfigs and _usually_ should not be directly used.
 def _add_key(
-    txn: Transaction, file_path: pathlib.Path, key: str, value: any, create_parents: bool = True, overwrite: bool = False
+    txn: Transaction,
+    file_path: pathlib.Path,
+    key: str,
+    value: any,
+    create_parents: bool = True,
+    overwrite: bool = False,
 ):
     keypath = Keypath(key)
 
@@ -135,6 +159,7 @@ def _add_key(
 
         target[keypath.parts[-1]] = value
 
+
 def _remove_key(txn: Transaction, file_path: pathlib.Path, key: str):
     keypath = Keypath(key)
 
@@ -149,6 +174,7 @@ def _remove_key(txn: Transaction, file_path: pathlib.Path, key: str):
 
         if keypath.parts[-1] in target:
             del target[keypath.parts[-1]]
+
 
 def _move_key(txn: Transaction, file_path: pathlib.Path, src: str, dst: str):
     src_keypath = Keypath(src)

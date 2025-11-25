@@ -19,9 +19,12 @@ class Subconfig(CLICommand):
             which has schema
         <name>.schema.json
     """
+
     def __init__(self, arguments):
         self.subconfig = pathlib.Path(arguments.subconfig)
-        self.reference = pathlib.Path(arguments.reference) if arguments.reference else Subconfig.infer_reference(self.subconfig)
+        self.reference = (
+            pathlib.Path(arguments.reference) if arguments.reference else Subconfig.infer_reference(self.subconfig)
+        )
         self.schema = self.reference.with_suffix("").with_suffix(".schema.json")
 
     def execute(self):
@@ -41,7 +44,7 @@ class Subconfig(CLICommand):
         subconfig_migrations = MigrationStatus.get_migrations(self.subconfig)
         reference_migrations = MigrationStatus.get_migrations(self.reference)
         versions_match = subconfig_migrations == reference_migrations
-        
+
         if already_exists:
             print("\tSubconfig already exists, skipping file creation.")
 
@@ -69,7 +72,7 @@ class Subconfig(CLICommand):
         """
         if not self.subconfig.name.count(".") == 2:
             return f"Expected 3 part subconfig in format '<name>.<subname>.json', got: {self.subconfig}"
-        
+
         name, _subname, _ext = self.subconfig.name.split(".")
 
         expected_reference = name + ".json"
@@ -77,7 +80,7 @@ class Subconfig(CLICommand):
 
         if not self.reference.name == expected_reference and os.path.exists(self.reference):
             return f"Subconfig does not reference a known config! Expected reference '{expected_reference}' to exist."
-        
+
         if not self.schema.name == expected_schema and os.path.exists(self.schema):
             return f"Subconfig does not reference a known schema! Expected schema '{expected_schema}' to exist."
 
