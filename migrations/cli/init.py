@@ -25,6 +25,8 @@ class Init(CLICommand):
         schema_status = MigrationStatus._load_status(MigrationStatus.SCHEMA_STATUS_FILE)
 
         # Load existing custom status
+        # This file isn't tracked, so touch it first. Fine to do outside of a transaction.
+        MigrationStatus.CUSTOM_STATUS_FILE.touch()
         custom_status = MigrationStatus._load_status(MigrationStatus.CUSTOM_STATUS_FILE)
 
         copied_files = []
