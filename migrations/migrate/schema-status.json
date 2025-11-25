@@ -1,1 +1,23 @@
-{}
+{
+  "config.schema.json": [
+    "1764053783"
+  ],
+  "coordinates/w32h32.schema.json": [
+    "1764056138"
+  ],
+  "coordinates/w64h32.schema.json": [
+    "1764056138"
+  ],
+  "coordinates/w64h64.schema.json": [
+    "1764056138"
+  ],
+  "coordinates/w128h32.schema.json": [
+    "1764056138"
+  ],
+  "coordinates/w128h64.schema.json": [
+    "1764056138"
+  ],
+  "coordinates/w192h64.schema.json": [
+    "1764056138"
+  ]
+}
