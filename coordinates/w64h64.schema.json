@@ -1,175 +1,131 @@
 {
   "defaults": {
-    "font_name": "6x12"
+    "font_name": "5x8"
   },
   "bases": {
     "1B": {
-      "x": 88,
-      "y": 9,
-      "size": 12
+      "x": 20,
+      "y": 46,
+      "size": 14
     },
     "2B": {
-      "x": 80,
-      "y": 1,
-      "size": 12
+      "x": 11,
+      "y": 37,
+      "size": 14
     },
     "3B": {
-      "x": 72,
-      "y": 9,
-      "size": 12
+      "x": 2,
+      "y": 46,
+      "size": 14
     }
   },
   "final": {
     "inning": {
-      "x": 96,
-      "y": 14
+      "x": 32,
+      "y": 27
     },
     "scrolling_text": {
       "x": 0,
-      "y": 30,
-      "width": 128
+      "y": 38,
+      "width": 64
     },
     "nohit_text": {
-      "x": 85,
-      "y": 22
+      "x": 24,
+      "y": 49
     }
   },
   "inning": {
     "break": {
       "number": {
-        "x": 30,
-        "y": 29
+        "x": 35,
+        "y": 27
       },
       "text": {
-        "x": 8,
-        "y": 29
+        "x": 16,
+        "y": 27
       },
       "due_up": {
         "due": {
-          "x": 77,
-          "y": 8
+          "x": 16,
+          "y": 36
         },
         "up": {
-          "x": 98,
-          "y": 8
+          "x": 35,
+          "y": 36
         },
         "divider": {
-          "draw": true,
-          "x": 64,
-          "y_start": 0,
-          "y_end": 64
+          "draw": false
         },
-        "loop": 128,
+        "loop": 64,
         "leadoff": {
-          "x": 67,
-          "y": 16,
-          "width": 59
+          "x": 2,
+          "y": 45,
+          "width": 60
         },
         "on_deck": {
-          "x": 67,
-          "y": 24,
-          "width": 59
+          "x": 2,
+          "y": 53,
+          "width": 60
         },
         "in_hole": {
-          "x": 67,
-          "y": 32,
-          "width": 59
+          "x": 2,
+          "y": 61,
+          "width": 60
         }
       }
     },
     "number": {
-      "x": 128,
-      "y": 8
+      "x": 61,
+      "y": 60
     },
     "arrow": {
       "size": 3,
       "up": {
         "x_offset": -5,
-        "y_offset": -4
+        "y_offset": -6
       },
       "down": {
         "x_offset": -5,
-        "y_offset": -2
+        "y_offset": -1
       }
     }
   },
   "outs": {
     "1": {
-      "x": 110,
-      "y": 24,
-      "size": 4,
-      "nohit": {
-        "x": 110,
-        "y": 26,
-        "size": 4
-      },
-      "perfect_game": {
-        "x": 110,
-        "y": 26,
-        "size": 4
-      }
+      "x": 46,
+      "y": 48,
+      "size": 3
     },
     "2": {
-      "x": 116,
-      "y": 24,
-      "size": 4,
-      "nohit": {
-        "x": 116,
-        "y": 26,
-        "size": 4
-      },
-      "perfect_game": {
-        "x": 116,
-        "y": 26,
-        "size": 4
-      }
+      "x": 51,
+      "y": 48,
+      "size": 3
     },
     "3": {
-      "x": 122,
-      "y": 24,
-      "size": 4,
-      "nohit": {
-        "x": 122,
-        "y": 26,
-        "size": 4
-      },
-      "perfect_game": {
-        "x": 122,
-        "y": 26,
-        "size": 4
-      }
+      "x": 56,
+      "y": 48,
+      "size": 3
     }
   },
   "batter_count": {
-    "x": 110,
-    "y": 22,
-    "nohit": {
-      "x": 110,
-      "y": 16
-    },
-    "perfect_game": {
-      "x": 110,
-      "y": 16
-    }
+    "x": 46,
+    "y": 46
   },
   "nohitter": {
-    "x": 110,
-    "y": 24,
+    "x": 30,
+    "y": 45,
     "innings_until_display": 5
   },
   "atbat": {
     "batter": {
-      "font_name": "5x8",
-      "x": 52,
-      "y": 30,
-      "width": 40,
-      "offset": 56
+      "x": 1,
+      "y": 36,
+      "width": 46
     },
     "pitcher": {
-      "font_name": "5x8",
       "x": 1,
-      "y": 30,
-      "width": 40
+      "y": 28,
+      "width": 50
     },
     "pitch": {
       "font_name": "4x6",
@@ -188,14 +144,14 @@
     },
     "loop": 64,
     "strikeout": {
-      "x": 60,
-      "y": 30,
+      "x": 31,
+      "y": 36,
       "desc_length": "short",
       "enabled": true
     },
     "play_result": {
-      "x": 60,
-      "y": 30,
+      "x": 31,
+      "y": 36,
       "desc_length": "short",
       "enabled": true
     }
@@ -203,31 +159,31 @@
   "pregame": {
     "scrolling_text": {
       "x": 0,
-      "y": 30,
-      "width": 128,
+      "y": 45,
+      "width": 64,
       "warmup": {
         "x": 0,
-        "y": 30,
-        "width": 128
+        "y": 51,
+        "width": 64
       }
     },
     "start_time": {
-      "x": 95,
-      "y": 15
+      "x": 32,
+      "y": 27
     },
     "warmup_text": {
-      "x": 95,
-      "y": 15
+      "x": 32,
+      "y": 27
     }
   },
   "standings": {
-    "__comment__": "Delete this next line and make offset 8 to make the font much larger but only display 4 teams",
     "font_name": "4x6",
+    "start": 16,
     "offset": 6,
-    "height": 32,
-    "width": 128,
+    "height": 30,
+    "width": 64,
     "divider": {
-      "x": 25
+      "x": 13
     },
     "stat_title": {
       "x": 28
@@ -237,31 +193,31 @@
         "x": 1
       },
       "record": {
-        "x": 64
+        "x": 31
       },
       "games_back": {
-        "x": 126
+        "x": 64
       }
     },
     "postseason": {
       "matchup_y_gap": 6,
       "series_x_gap": 16,
-      "wc_x_start": 34,
-      "wc_y_start": 6,
-      "ds_a_y_start": 25,
+      "wc_x_start": 2,
+      "wc_y_start": 20,
+      "ds_a_y_start": 39,
       "__comment": "all other coords are based off wild card position"
     }
   },
   "status": {
     "text": {
-      "x": 96,
-      "y": 14,
+      "x": 32,
+      "y": 27,
       "short_text": false
     },
     "scrolling_text": {
       "x": 0,
-      "y": 30,
-      "width": 128
+      "y": 38,
+      "width": 64
     }
   },
   "teams": {
@@ -280,8 +236,6 @@
       }
     },
     "name": {
-      "full": true,
-      "shorten_on_high_line_score": true,
       "away": {
         "x": 4,
         "y": 8
@@ -310,19 +264,21 @@
       "position": "absolute",
       "away": {
         "font_name": "4x6",
-        "x": 19,
+        "x": 18,
         "y": 7
       },
       "home": {
         "font_name": "4x6",
-        "x": 19,
+        "x": 18,
         "y": 17
       }
     },
-    "line_score": {
-      "show_hits_and_errors": false,
-      "compress_digits": false,
-      "spacing": 3,
+    "runs": {
+      "runs_hits_errors": {
+        "show": false,
+        "compress_digits": false,
+        "spacing": 3
+      },
       "away": {
         "x": 63,
         "y": 8
@@ -336,20 +292,20 @@
   "offday": {
     "scrolling_text": {
       "x": 0,
-      "y": 30,
-      "width": 128
+      "y": 40,
+      "width": 64
     },
     "time": {
-      "x": 64,
-      "y": 9
+      "x": 40,
+      "y": 7
     },
     "conditions": {
-      "x": 100,
-      "y": 22
+      "x": 39,
+      "y": 16
     },
     "temperature": {
       "x": 10,
-      "y": 22
+      "y": 23
     },
     "wind_speed": {
       "x": 0,
@@ -360,8 +316,8 @@
       "y": -2
     },
     "wind": {
-      "x": 40,
-      "y": 22
+      "x": 39,
+      "y": 23
     },
     "weather_icon": {
       "x": 2,
@@ -375,12 +331,12 @@
     "background": {
       "width": 7,
       "height": 7,
-      "x": 121,
-      "y": 25
+      "x": 57,
+      "y": 57
     },
     "text": {
-      "x": 125,
-      "y": 31
+      "x": 61,
+      "y": 63
     }
   }
 }

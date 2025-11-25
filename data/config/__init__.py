@@ -224,7 +224,7 @@ class Config:
     # our "custom" config contains overrides.
     def __get_config(self, base_filename):
         filename = "{}.json".format(base_filename)
-        reference_filename = "config.example.json"  # always use this filename.
+        reference_filename = "config.schema.json"  # always use this filename.
         reference_config = self.read_json(reference_filename)
         custom_config = self.read_json(filename)
         if custom_config:
@@ -235,7 +235,7 @@ class Config:
     def __get_colors(self, base_filename):
         filename_prefix = "colors/{}".format(base_filename)
         filename = "{}.json".format(filename_prefix)
-        reference_filename = "{}.example.json".format(filename_prefix)
+        reference_filename = "{}.schema.json".format(filename_prefix)
         reference_colors = self.read_json(reference_filename)
         if not reference_colors:
             debug.error(
@@ -253,7 +253,7 @@ class Config:
     def __get_layout(self, width, height):
         filename_prefix = "coordinates/w{}h{}".format(width, height)
         filename = "{}.json".format(filename_prefix)
-        reference_filename = "{}.example.json".format(filename_prefix)
+        reference_filename = "{}.schema.json".format(filename_prefix)
         reference_layout = self.read_json(reference_filename)
         if not reference_layout:
             # Unsupported coordinates
