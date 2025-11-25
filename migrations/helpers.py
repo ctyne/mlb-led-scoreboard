@@ -25,7 +25,7 @@ class Keypath:
         return self.__str__()
 
 
-def configs(file_path: pathlib.Path, expand_schema: bool = True) -> list[pathlib.Path]:
+def configs(file_paths: list[pathlib.Path], expand_schema: bool = True) -> list[pathlib.Path]:
     """
     Returns all subconfigs that match the reference.
 
@@ -39,6 +39,17 @@ def configs(file_path: pathlib.Path, expand_schema: bool = True) -> list[pathlib
         configs("config.schema.json", expand_schema=True) -> ["config.json", "config.test.json", ...]
         configs("config.schema.json", expand_schema=False) -> ["config.schema.json"]
     """
+    if not isinstance(file_paths, list):
+        file_paths = [file_paths]
+
+    output = []
+
+    for path in file_paths:
+        output.extend(_configs(path, expand_schema))
+
+    return output
+
+def _configs(file_path: pathlib.Path, expand_schema: bool) -> list[pathlib.Path]:
     if not isinstance(file_path, pathlib.Path):
         file_path = pathlib.Path(file_path)
 
@@ -140,6 +151,16 @@ def move_key(txn: Transaction, file_path: pathlib.Path, src: str, dst: str, expa
     for path in configs(file_path, expand_schema=expand_schema):
         _move_key(txn, path, src, dst)
 
+def rename_key(txn: Transaction, file_path: pathlib.Path, src: str, name: str, expand_schema: bool = True):
+    """
+    Renames a specified key to a new key. All intermediate keys must be present. Fails if the value already exists.
+
+    If `expand_schema` is True (default), operations on schema files affect all subconfigs.
+    """
+    for path in configs(file_path, expand_schema=expand_schema):
+        _rename_key(txn, path, src, name)
+
+
 
 #### SINGLE-FILE HELPERS ####
 # These encapsulate the functionality of the helpers above.
@@ -223,3 +244,28 @@ def _move_key(txn: Transaction, file_path: pathlib.Path, src: str, dst: str):
             target = target[part]
 
         target[key] = value
+
+def _rename_key(txn: Transaction, file_path: pathlib.Path, key: str, name):
+    keypath = Keypath(key)
+
+    with txn.load_for_update(file_path) as content:
+        target = content
+
+        for part in keypath.parts[:-1]:
+            if part not in target:
+                return
+
+            target = target[part]
+
+        if name in target:
+            raise KeyError(f"<{file_path}> Renamed key '{keypath}' -> '{name}' already exists")
+
+        value = None
+        if keypath.parts[-1] in target:
+            value = target[keypath.parts[-1]]
+            del target[keypath.parts[-1]]
+        else:
+            raise KeyError(f"<{file_path}> Destination keypath '{keypath}' does not exist")
+
+        target[name] = value
+        

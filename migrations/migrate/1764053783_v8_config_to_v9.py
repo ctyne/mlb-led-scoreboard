@@ -1,13 +1,12 @@
 from migrations import *
 
 
-TARGET = pathlib.Path("config.schema.json")
+TARGET = BASE_PATH / "config.schema.json"
 
 class v8_config_to_v9(ConfigMigration):
     def up(self, txn):
         for config in configs(TARGET):
             with txn.load_for_update(config) as content:
-
                 # pregame_weather -> weather.pregame
                 pregame_weather = content["pregame_weather"]
                 del content["pregame_weather"]
