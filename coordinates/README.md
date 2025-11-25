@@ -1,13 +1,22 @@
-These JSON files are named in correspondence to the dimensions of the LED board used when running the software. A file, located in the `coordinates` directory with a filename `w<cols>h<rows>.schema.json` tells the scoreboard that those dimensions are officially supported. This `.schema` file is required and you will need to copy one of the existing files into a file that matches your dimensions.
+These JSON files are named in correspondence to the dimensions of the LED board used when running the software. A file, located in the `coordinates` directory with a filename `w<cols>h<rows>.schema.json` tells the scoreboard that those dimensions are officially supported.
 
 # Custom Coordinates
-You can edit these coordinates to display parts of the scoreboard in any way you choose. Simply copy the file corresponding to your board's dimensions to `w<cols>h<rows>.json`. This JSON file only needs to contain the parts you wish to override but it's often easier to just make a copy of the full schema file and edit the values you want to change.
+
+You can edit these coordinates to display parts of the scoreboard in any way you choose.
+
+During installation (see the main README for setup instructions), custom coordinate files (e.g., `w64h32.json`) are created from their corresponding schema files (e.g., `w64h32.schema.json`). You can then edit the custom files to override any coordinates you want to change.
 
 ## Example
-If you have a 64x32 board, copy `w64h32.schema.json` to a new file called `w64h32.json`, then edit the coordinates in that file as you see fit. Your customized coordinates will always take precedence.
 
->!WARNING
-> **DO NOT** remove `.schema` files! **Copy** the files instead.
+**Customizing coordinates for a 64x32 board:**
+1. After installation, edit the coordinates in `w64h32.json` as you see fit
+2. Your customized coordinates will always take precedence over the schema defaults
+
+**Creating additional coordinate configurations:**
+If you want multiple coordinate configurations for the same board size (e.g., different layouts like `w64h32.compact.json`), see the migrations documentation in the main README.
+
+> [!WARNING]
+> **DO NOT** edit or remove `.schema` files!
 >
 > These are checked by the software to determine which matrix dimensions are supported. If you remove the file, the scoreboard may fail to start.
 
