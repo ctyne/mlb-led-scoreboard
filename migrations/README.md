@@ -38,44 +38,142 @@ python -m migrations down --step 5
 
 ## Writing Migrations
 
-Every migration needs to define at minimum `up()` to apply changes. `down()` is optional and reverts an `up()` migration. If `down()` is not defined, the migration is irreversible and raise an exception if rollback is attempted.
+Every migration needs to define at minimum `up(txn)` to apply changes. `down(txn)` is optional and reverts an `up()` migration. If `down()` is not defined, the migration is irreversible and raise an exception if rollback is attempted.
+
+Both methods receive a `Transaction` object (`txn`) which ensures atomicity across all operations.
 
 ### Basic Examples
 
-The following is an example of adding a key to all configurations.
-
 ```python
-from migrations.migration import ConfigMigration
-from migrations.manager import MigrationManager
+from migrations import *
 
 class example_migration(ConfigMigration):
-    def up(self):
+    def up(self, txn):
         '''Add example key to all configs'''
-        self.add_key("example", 1, MigrationManager.all_configs())
+        add_key(txn, "config.json", "example", 1)
 
-    def down(self):
+    def down(self, txn):
         '''Remove example key'''
-        self.remove_key("example", MigrationManager.all_configs())
+        remove_key(txn, "config.json", "example")
 ```
 
-Below are some more advanced uses:
+### Helper Functions Reference
+
+The migration system provides helper functions that automatically handle subconfigs and ensure atomicity:
+
+#### `add_key(txn, file_path, key, value, create_parents=True)`
+Adds a key at the specified keypath. Raises `KeyError` if the key already exists or parent keys are missing and `create_parents` is False.
 
 ```python
-# Add a key to a specific config.
-def up(self):
-    self.add_key("example", 1, "config.json")
+def up(self, txn):
+    # Add a top-level key
+    add_key(txn, "config.json", "new_field", "default_value")
 
-# Add a deeply nested key. Strings delimited with dots are treated as a nested path.
-def up(self):
-    self.add_key("path.to.key", "example", "config.json")
+    # Add a nested key (creates parent keys automatically)
+    add_key(txn, "config.json", "section.subsection.field", 42)
 
-# Read existing content, and modify it in-place.
-def up(self):
-    for content in self.enumerate_configs("config.json"):
+    # Require parent keys to exist
+    add_key(txn, "config.json", "existing.path.new_key", True, create_parents=False)
+```
+
+#### `overwrite_key(txn, file_path, key, value, create_parents=True)`
+Adds or overwrites a key at the specified keypath. Unlike `add_key`, this will not fail if the key already exists.
+
+```python
+def up(self, txn):
+    # Update existing value or create if missing
+    overwrite_key(txn, "config.json", "version", "2.0")
+```
+
+#### `remove_key(txn, file_path, key)`
+Removes a key at the specified keypath. If any part is not present, the key is considered already deleted (no error raised).
+
+```python
+def up(self, txn):
+    # Remove a nested key
+    remove_key(txn, "config.json", "deprecated.old_field")
+```
+
+#### `move_key(txn, file_path, src, dst)`
+Moves an object at a specified key to a new key. All intermediate keys must be present. Fails if the destination already exists.
+
+```python
+def up(self, txn):
+    # Move a key to a new location (must be nested under an existing parent)
+    move_key(txn, "config.json", "old_location.field", "new_location")
+```
+
+#### `configs(file_path)`
+Returns a list of all config paths that match the reference. Schema paths return a single path. For custom configs, returns all matching subconfigs.
+
+```python
+from migrations.helpers import configs
+
+def up(self, txn):
+    # Get all subconfigs of config.json (e.g., config.json, config.test.json, etc.)
+    all_configs = configs("config.json")
+
+    # Process each config individually if needed
+    for config_path in all_configs:
+        with txn.load_for_update(config_path) as content:
+            # Custom logic per config
+            content["modified"] = True
+```
+
+### Working with Subconfigs
+
+All helper functions automatically operate on subconfigs. For example, if you have `config.json` and `config.custom.json`, operations on `"config.json"` will affect both files:
+
+```python
+def up(self, txn):
+    # This adds the key to both config.json AND config.custom.json
+    add_key(txn, "config.json", "new_field", "value")
+```
+
+To work with schema files only, reference the schema directly:
+
+```python
+def up(self, txn):
+    # Only affects config.schema.json
+    add_key(txn, "config.schema.json", "new_field", "value")
+```
+
+### Direct Content Manipulation
+
+For complex transformations, load and modify content directly:
+
+```python
+def up(self, txn):
+    with txn.load_for_update("config.json") as content:
+        # Read existing values
         old_value = content["path"]["to"]["key"]
 
+        # Modify in-place
         content["path"]["to"]["key"] = old_value.replace("_", "-")
+
+        # Add computed values
+        content["computed"] = len(old_value)
 ```
+
+### Migration Template
+
+When you run `python -m migrations generate <name>`, a new migration file is created with this template:
+
+```python
+from migrations import *
+
+
+class <name>(ConfigMigration):
+    def up(self, txn):
+        raise NotImplementedError("Migration logic not implemented.")
+
+    def down(self, txn):
+        # Implement the logic to revert the migration if necessary.
+        # Raises IrreversibleMigration by default.
+        raise IrreversibleMigration
+```
+
+Replace the `raise NotImplementedError` with your migration logic. If the migration cannot be reversed, leave `down()` as-is with `raise IrreversibleMigration`.
 
 ## Atomicity Guarantees
 
@@ -123,6 +221,42 @@ Running `init` performs two operations:
 
 This setup allows for pre-existing custom configurations to be migrated to new versions, while allowing new installations to create up-to-date custom configurations without needing to be migrated separately.
 
+## Working with Subconfigs
+
+Subconfigs allow you to create multiple variations of a configuration that share the same schema. For example, you might have:
+
+* `config.json` - Your main configuration
+* `config.custom.json` - An alternate configuration for specific use cases
+* `config.schema.json` - The schema definition
+
+### Creating Subconfigs
+
+```bash
+# Create a subconfig (automatically infers reference from name)
+python -m migrations subconfig config.custom.json
+
+# Explicitly specify the reference config
+python -m migrations subconfig config.custom.json --reference config.json
+```
+
+### Naming Convention
+
+Subconfigs must follow the pattern `<name>.<subname>.json` where:
+* `<name>` matches the base config name (e.g., `config`)
+* `<subname>` is your custom identifier (e.g., `custom`, `dev`, `test`)
+* The reference config `<name>.json` must exist
+* The schema `<name>.schema.json` must exist
+
+### Migration Behavior
+
+Subconfigs are created by copying the reference config and inherit its complete migration state. This ensures:
+
+* New subconfigs start at the same migration version as the reference
+* All future migrations automatically apply to both the reference and subconfigs
+* The migration system treats them as a family of related configurations
+
+If a subconfig already exists with a different migration state, the `subconfig` command will abort to prevent data loss.
+
 ## Commands Reference
 
 ```bash
@@ -130,6 +264,12 @@ This setup allows for pre-existing custom configurations to be migrated to new v
 # This operation is idempotent
 # (alias: i)
 python -m migrations init
+
+# Create a subconfiguration from a reference config
+# Subconfigs inherit migration state from the reference
+# (alias: s)
+python -m migrations subconfig <name>.<subname>.json
+python -m migrations subconfig <name>.<subname>.json --reference <name>.json
 
 # Create new migration
 # (alias: g)
@@ -146,7 +286,9 @@ python -m migrations down            # Rollback last 1
 python -m migrations down --step 3   # Rollback last 3
 ```
 
-## Example Workflow
+## Example Workflows
+
+### Basic Migration Workflow
 
 ```bash
 # 1. First time setup
@@ -166,4 +308,28 @@ python -m migrations up      # Re-apply
 # 5. Commit schema & status changes
 git add migrations/migrate/schema-status.json *.schema.json
 git commit -m "Add example_migration field"
+```
+
+### Working with Subconfigs
+
+```bash
+# 1. Initialize main configs
+python -m migrations init
+
+# 2. Create a subconfig for testing
+python -m migrations s config.test.json
+
+# 3. Make changes to config.test.json as needed
+# (edit the file manually)
+
+# 4. Later, create a migration affecting all configs
+python -m migrations g add_new_feature
+
+# 5. In the migration, operations on "config.json" affect all subconfigs
+# migrations/migrate/{timestamp}_add_new_feature.py:
+#   def up(self, txn):
+#       add_key(txn, "config.json", "new_feature", True)
+
+# 6. Apply - this updates config.json AND config.test.json
+python -m migrations up
 ```
