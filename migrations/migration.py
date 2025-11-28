@@ -39,10 +39,8 @@ class ConfigMigration:
                 elif mode == MigrationMode.UP:
                     result = self.up(txn, ctx)
 
-                # Update status files in the same transaction
-                modified_files = txn.get_modified_files()
                 custom_status, schema_status = MigrationStatus.build_updated_migration_statuses(
-                    self.version, mode, modified_files
+                    self.version, mode
                 )
 
                 if custom_status.dirty:

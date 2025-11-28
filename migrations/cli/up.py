@@ -29,12 +29,8 @@ class Up(CLICommand):
 
             print("=" * 80)
             print(f"MIGRATE {migration.version} << {migration.__class__.__name__} >>")
-            print(f"\tMigrating {len(files_to_migrate)} file(s)")
 
             migration.execute(MigrationMode.UP, target_files=files_to_migrate)
-
-            # Update plan state for accurate tracking
-            plan.mark_applied(migration.version, files_to_migrate)
 
             self.step -= 1
             if self.step == 0:

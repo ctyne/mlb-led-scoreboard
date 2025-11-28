@@ -120,18 +120,18 @@ class MigrationStatus:
 
     @staticmethod
     def build_updated_migration_statuses(
-        version: str, mode: MigrationMode, modified_files: list[pathlib.Path]
+        version: str, mode: MigrationMode
     ) -> tuple[MigrationStatusData, MigrationStatusData]:
         """
-        Creates two MigrationStatusData objects containing updated status data for custom and schema files.
+        Creates two MigrationStatusData objects with updated status for ALL config files.
+
+        This always operates on all files in the system to ensure consistency - if a migration
+        runs, all files are marked as having that migration, even if only some were modified.
         """
         from migrations.manager import MigrationManager
 
         custom_status = MigrationStatusData()
         schema_status = MigrationStatusData()
-
-        if not modified_files:
-            return custom_status, schema_status
 
         # Load existing status
         for path, versions in MigrationStatus.load_status().items():
@@ -140,8 +140,9 @@ class MigrationStatus:
             else:
                 custom_status.set_versions(path, versions)
 
-        # Update status for each modified file
-        for file_path in modified_files:
+        # Update status for ALL config files in the system
+        all_files = [path for path, _ in MigrationManager.fetch_configs()]
+        for file_path in all_files:
             file_key = MigrationManager.normalize_path(file_path)
 
             if MigrationManager.is_schema(file_key):

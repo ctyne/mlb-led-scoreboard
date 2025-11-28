@@ -30,12 +30,8 @@ class Down(CLICommand):
 
             print("=" * 80)
             print(f"ROLLBACK {migration.version} << {migration.__class__.__name__} >>")
-            print(f"\tRolling back {len(files_to_rollback)} file(s)")
 
             migration.execute(MigrationMode.DOWN, target_files=files_to_rollback)
-
-            # Update plan state for accurate tracking
-            plan.mark_removed(migration.version, files_to_rollback)
 
             self.step -= 1
             if self.step == 0:
