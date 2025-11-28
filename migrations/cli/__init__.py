@@ -1,4 +1,4 @@
-import argparse
+import argparse, os
 
 from migrations.cli.up import Up
 from migrations.cli.down import Down
@@ -105,7 +105,6 @@ class CLI:
     @staticmethod
     def require_initialization():
         """Ensure the migration system has been initialized before running commands."""
-        import os
         from migrations.status import MigrationStatus
 
         if not os.path.exists(MigrationStatus.CUSTOM_STATUS_FILE):
