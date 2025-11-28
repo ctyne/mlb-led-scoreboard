@@ -33,7 +33,7 @@ class CLI:
         "d": Down,
         "i": Init,
         "s": Subconfig,
-        "r": Reset
+        "r": Reset,
     }
 
     @staticmethod

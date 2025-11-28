@@ -59,7 +59,7 @@ class MigrationExecutionPlan:
         self.migrations: list = []
 
     @classmethod
-    def build(cls, mode: MigrationMode = MigrationMode.UP) -> 'MigrationExecutionPlan':
+    def build(cls, mode: MigrationMode = MigrationMode.UP) -> "MigrationExecutionPlan":
         """Load all configs and migrations, compute what needs to be done."""
         plan = cls()
         plan.migrations = MigrationManager.load_migrations()
@@ -84,17 +84,11 @@ class MigrationExecutionPlan:
 
     def get_files_needing(self, migration_version: str) -> list[pathlib.Path]:
         """For UP: Return list of file paths that need this migration."""
-        return [
-            path for path, state in self.file_states.items()
-            if state.needs_migration(migration_version)
-        ]
+        return [path for path, state in self.file_states.items() if state.needs_migration(migration_version)]
 
     def get_files_having(self, migration_version: str) -> list[pathlib.Path]:
         """For DOWN: Return list of file paths that have this migration applied."""
-        return [
-            path for path, state in self.file_states.items()
-            if state.has_migration(migration_version)
-        ]
+        return [path for path, state in self.file_states.items() if state.has_migration(migration_version)]
 
     def has_work(self, mode: MigrationMode = MigrationMode.UP) -> bool:
         """Check if any files have pending migrations or rollbacks."""

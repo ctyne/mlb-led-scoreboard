@@ -17,7 +17,9 @@ class Reset(CLICommand):
 
         This does NOT alter schema migrations!
         """
-        print("WARNING! Resetting migrations is a destructive action and removes any custom configurations you might have.")
+        print(
+            "WARNING! Resetting migrations is a destructive action and removes any custom configurations you might have."
+        )
         print("\tYou will need to reinitialize the migrations via 'migrations init' before use.")
         answer = input("Are you sure you want to continue? (y/n)")
 

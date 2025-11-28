@@ -3,6 +3,7 @@ from migrations import *
 
 TARGET = BASE_PATH / "config.schema.json"
 
+
 class v8_config_to_v9(ConfigMigration):
     def up(self, ctx: MigrationContext):
         for config in ctx.configs(TARGET):

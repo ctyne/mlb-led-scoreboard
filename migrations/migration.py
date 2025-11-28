@@ -37,9 +37,7 @@ class ConfigMigration:
             elif mode == MigrationMode.UP:
                 result = self.up(ctx)
 
-            custom_status, schema_status = MigrationStatus.build_updated_migration_statuses(
-                self.version, mode
-            )
+            custom_status, schema_status = MigrationStatus.build_updated_migration_statuses(self.version, mode)
 
             if custom_status.dirty:
                 ctx.write(MigrationStatus.CUSTOM_STATUS_FILE, custom_status.data)

@@ -1,6 +1,7 @@
 import json, os, pathlib
 from migrations.mode import MigrationMode
 
+
 class MigrationStatusData:
     """
     An object containing the migrations applied against files as a writable JSON dict in its `data` field.
@@ -38,7 +39,7 @@ class MigrationStatusData:
         """
         if file not in self.data:
             return
-        
+
         if version not in self.data[file]:
             return
 
@@ -47,6 +48,7 @@ class MigrationStatusData:
 
         if not self.data[file]:
             del self.data[file]
+
 
 class MigrationStatus:
     """
@@ -109,12 +111,12 @@ class MigrationStatus:
                 return json.load(f)
         except (json.JSONDecodeError, FileNotFoundError):
             return {}
-        
+
     @staticmethod
     def touch(path: pathlib.Path):
         if os.path.exists(path):
             return
-        
+
         with open(path, "w") as f:
             return json.dump({}, f)
 

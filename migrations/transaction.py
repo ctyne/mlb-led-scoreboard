@@ -147,7 +147,6 @@ class Transaction:
                 self.commit()
                 return False
 
-
             try:
                 self.rollback()
 

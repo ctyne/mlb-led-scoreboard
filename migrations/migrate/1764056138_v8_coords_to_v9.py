@@ -10,6 +10,7 @@ W192H64 = COORDINATES_PATH / "w192h64.schema.json"
 
 ALL_COORDS = [W32H32, W64H32, W64H64, W128H32, W128H64, W192H64]
 
+
 class v8_coords_to_v9(ConfigMigration):
     def up(self, ctx: MigrationContext):
         # Add teams.name.full default
@@ -42,13 +43,13 @@ class v8_coords_to_v9(ConfigMigration):
                 line_score = content["teams"]["line_score"]
 
                 rhe = line_score["runs_hits_errors"]
-                
+
                 # Unpack runs_hits_errors to top-level line_score
                 # Move run_hits_errors.show -> show_hits_and_errors
                 line_score = line_score | {
                     "show_hits_and_errors": rhe["show"],
                     "compress_digits": rhe["compress_digits"],
-                    "spacing": rhe["spacing"]
+                    "spacing": rhe["spacing"],
                 }
 
                 content["teams"]["line_score"] = line_score
@@ -88,7 +89,7 @@ class v8_coords_to_v9(ConfigMigration):
                 rhe = {
                     "show": runs["show_hits_and_errors"],
                     "compress_digits": runs["compress_digits"],
-                    "spacing": runs["spacing"]
+                    "spacing": runs["spacing"],
                 }
 
                 content["teams"]["runs"]["runs_hits_errors"] = rhe

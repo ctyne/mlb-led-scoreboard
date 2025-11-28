@@ -50,6 +50,7 @@ class MigrationContext:
             with ctx.load_for_update("config.json") as content:
                 content["key"] = "value"
     """
+
     def __init__(self, target_files: Optional[list[pathlib.Path]] = None):
         self.target_files = set(target_files) if target_files else None
         self._txn: Optional[Transaction] = None
@@ -84,11 +85,7 @@ class MigrationContext:
         return self._txn.get_modified_files()
 
     # Config helper
-    def configs(
-        self,
-        file_paths: list[pathlib.Path] | pathlib.Path,
-        expand_schema: bool = True
-    ) -> list[pathlib.Path]:
+    def configs(self, file_paths: list[pathlib.Path] | pathlib.Path, expand_schema: bool = True) -> list[pathlib.Path]:
         """
         Returns all subconfigs that match the reference, filtered by target_files.
 
@@ -178,10 +175,9 @@ class MigrationContext:
 # Module-level helper functions
 # These can be used standalone or through MigrationContext methods
 
+
 def configs(
-    file_paths: list[pathlib.Path] | pathlib.Path,
-    expand_schema: bool = True,
-    ctx: Optional[MigrationContext] = None
+    file_paths: list[pathlib.Path] | pathlib.Path, expand_schema: bool = True, ctx: Optional[MigrationContext] = None
 ) -> list[pathlib.Path]:
     """
     Returns all subconfigs that match the reference.
@@ -210,6 +206,7 @@ def configs(
     # Filter to target_files if ctx is provided
     if ctx and ctx.target_files is not None:
         from migrations.manager import MigrationManager
+
         # Normalize all paths for comparison
         target_set = {MigrationManager.normalize_path(f) for f in ctx.target_files}
         output = [f for f in output if MigrationManager.normalize_path(f) in target_set]
@@ -366,6 +363,7 @@ def rename_key(
 # Internal single-file helpers
 # These encapsulate the functionality of the helpers above.
 # They operate on single files, so they do not expand to relevant subconfigs and _usually_ should not be directly used.
+
 
 def _add_key(
     txn: Transaction,
