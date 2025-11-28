@@ -47,7 +47,9 @@ class CLI:
         subparsers.add_parser("init", aliases=["i"], help="Initialize config files from schemas")
 
         # "reset" command
-        reset_parser = subparsers.add_parser("reset", aliases=["r"], help="Resets custom migrations, preserving schemas")
+        reset_parser = subparsers.add_parser(
+            "reset", aliases=["r"], help="Resets custom migrations, preserving schemas"
+        )
         reset_parser.add_argument("-f", "--force", action="store_true", help="Skip confirmation and force reset")
 
         # "subconfig" command

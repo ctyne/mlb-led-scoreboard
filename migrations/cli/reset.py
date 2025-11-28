@@ -4,6 +4,7 @@ from migrations.cli.command import CLICommand
 from migrations.status import MigrationStatus
 from migrations.manager import MigrationManager
 
+
 class Reset(CLICommand):
     def __init__(self, arguments):
         self.force = arguments.force
@@ -19,7 +20,7 @@ class Reset(CLICommand):
             "WARNING! Resetting migrations is a destructive action and removes any custom configurations you might have."
         )
         print("\tYou will need to reinitialize the migrations via 'migrations init' before use.")
-        
+
         if not self.force:
             answer = input("Are you sure you want to continue? (y/n)")
 
