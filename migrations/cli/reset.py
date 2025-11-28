@@ -1,14 +1,12 @@
 import os, pathlib
 
 from migrations.cli.command import CLICommand
-from migrations.manager import MigrationManager
 from migrations.status import MigrationStatus
-from migrations.transaction import Transaction
-
+from migrations.manager import MigrationManager
 
 class Reset(CLICommand):
-    def __init__(self, _arguments):
-        pass
+    def __init__(self, arguments):
+        self.force = arguments.force
 
     def execute(self):
         """
@@ -21,13 +19,13 @@ class Reset(CLICommand):
             "WARNING! Resetting migrations is a destructive action and removes any custom configurations you might have."
         )
         print("\tYou will need to reinitialize the migrations via 'migrations init' before use.")
-        answer = input("Are you sure you want to continue? (y/n)")
+        
+        if not self.force:
+            answer = input("Are you sure you want to continue? (y/n)")
 
-        if answer not in "Yy":
-            print("Aborting...")
-            return
-
-        print("=" * 80)
+            if answer not in "Yy":
+                print("Aborting...")
+                return
 
         project_root = pathlib.Path(__file__).parent.parent.parent
         search_dirs = [project_root, project_root / "coordinates", project_root / "colors"]
@@ -36,14 +34,23 @@ class Reset(CLICommand):
             if not search_dir.exists():
                 continue
 
-            for schema_file in search_dir.glob("*.schema.json"):
-                target_file = schema_file.with_suffix("").with_suffix(".json")
+            schemas = list(search_dir.glob("*.schema.json"))
+            for file in search_dir.glob("*.json"):
+                if MigrationManager.is_schema(file):
+                    continue
 
-                if target_file.exists():
-                    print(f"\tRemoving {target_file}")
-                    os.remove(target_file)
+                removable = False
 
-        print(f"\tRemoving {MigrationStatus.CUSTOM_STATUS_FILE}")
-        os.remove(MigrationStatus.CUSTOM_STATUS_FILE)
+                for schema in schemas:
+                    if file.with_suffix("") == schema.with_suffix("").with_suffix(""):
+                        removable = True
 
-        print("=" * 80)
+                if removable:
+                    print(f"\tRemoving {file}")
+                    os.remove(file)
+
+        if MigrationStatus.CUSTOM_STATUS_FILE.exists():
+            print(f"\tRemoving {MigrationStatus.CUSTOM_STATUS_FILE}")
+            os.remove(MigrationStatus.CUSTOM_STATUS_FILE)
+
+        print("Done.")

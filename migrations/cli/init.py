@@ -1,4 +1,4 @@
-import json, pathlib, shutil
+import pathlib, shutil
 
 from migrations.cli.command import CLICommand
 from migrations.manager import MigrationManager

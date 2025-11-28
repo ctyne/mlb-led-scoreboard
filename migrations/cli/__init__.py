@@ -47,7 +47,8 @@ class CLI:
         subparsers.add_parser("init", aliases=["i"], help="Initialize config files from schemas")
 
         # "reset" command
-        subparsers.add_parser("reset", aliases=["r"], help="Resets custom migrations, preserving schemas")
+        reset_parser = subparsers.add_parser("reset", aliases=["r"], help="Resets custom migrations, preserving schemas")
+        reset_parser.add_argument("-f", "--force", action="store_true", help="Skip confirmation and force reset")
 
         # "subconfig" command
         subconfig_parser = subparsers.add_parser(
@@ -91,8 +92,29 @@ class CLI:
         args = parser.parse_args()
 
         if args.command not in CLI.COMMANDS:
-            # TODO
-            raise
+            print(f"\nError: Unknown command '{args.command}'")
+            exit(1)
+
+        # Check if migration system is initialized (except for init/reset commands)
+        if args.command not in ["init", "i", "reset", "r"]:
+            CLI.require_initialization()
 
         cmd = CLI.COMMANDS[args.command]
         cmd(args).execute()
+
+    @staticmethod
+    def require_initialization():
+        """Ensure the migration system has been initialized before running commands."""
+        import os
+        from migrations.status import MigrationStatus
+
+        if not os.path.exists(MigrationStatus.CUSTOM_STATUS_FILE):
+            print(
+                """\
+Error: Migration system is not initialized yet.
+
+Please run the following command first:
+  python -m migrations init
+"""
+            )
+            exit(1)
