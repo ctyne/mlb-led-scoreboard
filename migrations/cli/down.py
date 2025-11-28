@@ -1,6 +1,6 @@
-from migrations.manager import MigrationManager
 from migrations.migration import MigrationMode
 from migrations.cli.command import CLICommand
+from migrations.plan import MigrationExecutionPlan
 
 
 class Down(CLICommand):
@@ -14,30 +14,30 @@ class Down(CLICommand):
     def execute(self):
         print("Rolling back migrations...")
 
-        migrations = MigrationManager.load_migrations()
-        if len(migrations) == 0:
+        plan = MigrationExecutionPlan.build(mode=MigrationMode.DOWN)
+
+        if not plan.has_work(mode=MigrationMode.DOWN):
             print("No migrations to roll back.")
             return
 
-        configs = MigrationManager.fetch_configs()
+        # Process migrations in reverse order for rollback
+        for migration in reversed(plan.migrations):
+            files_to_rollback = plan.get_files_having(migration.version)
 
-        for migration in migrations[::-1]:
+            if not files_to_rollback:
+                print(f"ROLLBACK {migration.version} - No files have this migration, skipping.")
+                continue
+
             print("=" * 80)
             print(f"ROLLBACK {migration.version} << {migration.__class__.__name__} >>")
+            print(f"\tRolling back {len(files_to_rollback)} file(s)")
 
-            able = False
+            migration.execute(MigrationMode.DOWN, target_files=files_to_rollback)
 
-            for _, applied_migrations in configs:
-                if migration.version in applied_migrations:
-                    able = True
-                    break
+            # Update plan state for accurate tracking
+            plan.mark_removed(migration.version, files_to_rollback)
 
-            if able:
-                migration.execute(MigrationMode.DOWN)
-                self.step -= 1
-            else:
-                print("\t-- Migration not yet applied to any files, skipping. --")
-
+            self.step -= 1
             if self.step == 0:
                 break
 

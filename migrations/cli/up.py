@@ -1,6 +1,6 @@
-from migrations.manager import MigrationManager
 from migrations.migration import MigrationMode
 from migrations.cli.command import CLICommand
+from migrations.plan import MigrationExecutionPlan
 
 
 class Up(CLICommand):
@@ -14,31 +14,29 @@ class Up(CLICommand):
     def execute(self):
         print("Executing migrations...")
 
-        migrations = MigrationManager.load_migrations()
-        if len(migrations) == 0:
+        plan = MigrationExecutionPlan.build(mode=MigrationMode.UP)
+
+        if not plan.has_work(mode=MigrationMode.UP):
             print("No migrations to execute.")
             return
 
-        configs = MigrationManager.fetch_configs()
+        for migration in plan.migrations:
+            files_to_migrate = plan.get_files_needing(migration.version)
 
-        for migration in migrations:
+            if not files_to_migrate:
+                print(f"MIGRATE {migration.version} - All files up to date, skipping.")
+                continue
+
             print("=" * 80)
             print(f"MIGRATE {migration.version} << {migration.__class__.__name__} >>")
+            print(f"\tMigrating {len(files_to_migrate)} file(s)")
 
-            able = True
+            migration.execute(MigrationMode.UP, target_files=files_to_migrate)
 
-            for _, applied_migrations in configs:
-                if migration.version in applied_migrations:
-                    able = False
-                    break
+            # Update plan state for accurate tracking
+            plan.mark_applied(migration.version, files_to_migrate)
 
-            # If we have targets, this migration is already applied.
-            if able:
-                migration.execute(MigrationMode.UP)
-                self.step -= 1
-            else:
-                print("\t-- All files up to date, skipping migration. --")
-
+            self.step -= 1
             if self.step == 0:
                 break
 

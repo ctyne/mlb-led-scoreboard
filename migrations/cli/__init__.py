@@ -5,6 +5,7 @@ from migrations.cli.down import Down
 from migrations.cli.generate import Generate
 from migrations.cli.init import Init
 from migrations.cli.subconfig import Subconfig
+from migrations.cli.reset import Reset
 
 
 def positive_int(value):
@@ -25,12 +26,14 @@ class CLI:
         "down": Down,
         "init": Init,
         "subconfig": Subconfig,
+        "reset": Reset,
         # Aliases
         "g": Generate,
         "u": Up,
         "d": Down,
         "i": Init,
         "s": Subconfig,
+        "r": Reset
     }
 
     @staticmethod
@@ -42,6 +45,9 @@ class CLI:
 
         # "init" command
         subparsers.add_parser("init", aliases=["i"], help="Initialize config files from schemas")
+
+        # "reset" command
+        subparsers.add_parser("reset", aliases=["r"], help="Resets custom migrations, preserving schemas")
 
         # "subconfig" command
         subconfig_parser = subparsers.add_parser(

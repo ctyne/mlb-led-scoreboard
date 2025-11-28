@@ -26,7 +26,7 @@ class Init(CLICommand):
 
         # Load existing custom status
         # This file isn't tracked, so touch it first. Fine to do outside of a transaction.
-        MigrationStatus.CUSTOM_STATUS_FILE.touch()
+        MigrationStatus.touch(MigrationStatus.CUSTOM_STATUS_FILE)
         custom_status = MigrationStatus._load_status(MigrationStatus.CUSTOM_STATUS_FILE)
 
         copied_files = []
@@ -59,9 +59,7 @@ class Init(CLICommand):
         # Save custom status atomically (write-then-swap) if we copied any files
         if copied_files:
             with Transaction() as txn:
-                with txn.load_for_update(MigrationStatus.CUSTOM_STATUS_FILE) as content:
-                    # Writing to content saves it atomically
-                    content = json.dumps(custom_status, indent=2)
+                txn.write(MigrationStatus.CUSTOM_STATUS_FILE, custom_status)
 
         # Report results
         print("=" * 80)

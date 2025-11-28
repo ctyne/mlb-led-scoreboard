@@ -109,6 +109,14 @@ class MigrationStatus:
                 return json.load(f)
         except (json.JSONDecodeError, FileNotFoundError):
             return {}
+        
+    @staticmethod
+    def touch(path: pathlib.Path):
+        if os.path.exists(path):
+            return
+        
+        with open(path, "w") as f:
+            return json.dump({}, f)
 
     @staticmethod
     def build_updated_migration_statuses(

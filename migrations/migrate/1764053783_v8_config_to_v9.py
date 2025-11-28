@@ -4,8 +4,8 @@ from migrations import *
 TARGET = BASE_PATH / "config.schema.json"
 
 class v8_config_to_v9(ConfigMigration):
-    def up(self, txn):
-        for config in configs(TARGET):
+    def up(self, txn, ctx):
+        for config in configs(TARGET, ctx=ctx):
             with txn.load_for_update(config) as content:
                 # pregame_weather -> weather.pregame
                 pregame_weather = content["pregame_weather"]
@@ -24,6 +24,6 @@ class v8_config_to_v9(ConfigMigration):
 
                 del content["preferred_game_delay_multiplier"]
 
-    def down(self, txn):
+    def down(self, txn, ctx):
         # up() deletes keys, so is irreversible
         raise IrreversibleMigration

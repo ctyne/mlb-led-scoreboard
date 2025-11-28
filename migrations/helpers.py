@@ -1,6 +1,8 @@
 import pathlib
+from typing import Optional, Any
 
 from migrations.transaction import Transaction
+from migrations.context import MigrationContext
 
 
 SCHEMA_IDENTIFIER = "schema"
@@ -25,7 +27,11 @@ class Keypath:
         return self.__str__()
 
 
-def configs(file_paths: list[pathlib.Path], expand_schema: bool = True) -> list[pathlib.Path]:
+def configs(
+    file_paths: list[pathlib.Path] | pathlib.Path,
+    expand_schema: bool = True,
+    ctx: Optional[MigrationContext] = None
+) -> list[pathlib.Path]:
     """
     Returns all subconfigs that match the reference.
 
@@ -34,10 +40,13 @@ def configs(file_paths: list[pathlib.Path], expand_schema: bool = True) -> list[
     When expand_schema is True (default), schema paths return all subconfigs of the corresponding
     custom config family. When False, schema paths return only the schema file itself.
 
+    If ctx is provided with target_files, filters the results to only include those files.
+
     Examples:
         configs("config.json") -> ["config.json", "config.test.json", "config.custom.json"]
         configs("config.schema.json", expand_schema=True) -> ["config.json", "config.test.json", ...]
         configs("config.schema.json", expand_schema=False) -> ["config.schema.json"]
+        configs("config.json", ctx=ctx) -> filtered to ctx.target_files
     """
     if not isinstance(file_paths, list):
         file_paths = [file_paths]
@@ -46,6 +55,13 @@ def configs(file_paths: list[pathlib.Path], expand_schema: bool = True) -> list[
 
     for path in file_paths:
         output.extend(_configs(path, expand_schema))
+
+    # Filter to target_files if ctx is provided
+    if ctx and ctx.target_files is not None:
+        from migrations.manager import MigrationManager
+        # Normalize all paths for comparison
+        target_set = {MigrationManager.normalize_path(f) for f in ctx.target_files}
+        output = [f for f in output if MigrationManager.normalize_path(f) in target_set]
 
     return output
 
@@ -98,18 +114,21 @@ def add_key(
     txn: Transaction,
     file_path: pathlib.Path,
     key: str,
-    value: any,
+    value: Any,
     create_parents: bool = True,
     expand_schema: bool = True,
-):
+    ctx: Optional[MigrationContext] = None,
+) -> None:
     """
     Adds a key at the specified keypath. If `create_parents` is True, any missing keys along the path will be created.
 
     Raises KeyError if the key already exists or parent keys are missing and `create_parents` is False.
 
     If `expand_schema` is True (default), operations on schema files affect all subconfigs.
+
+    If `ctx` is provided with target_files, only operates on those specific files.
     """
-    for path in configs(file_path, expand_schema=expand_schema):
+    for path in configs(file_path, expand_schema=expand_schema, ctx=ctx):
         _add_key(txn, path, key, value, create_parents)
 
 
@@ -117,47 +136,76 @@ def overwrite_key(
     txn: Transaction,
     file_path: pathlib.Path,
     key: str,
-    value: any,
+    value: Any,
     create_parents: bool = True,
     expand_schema: bool = True,
-):
+    ctx: Optional[MigrationContext] = None,
+) -> None:
     """
     Adds or overwrites a key at the specified keypath. If `create_parents` is True, any missing keys along the path will be created.
 
     Raises KeyError if parent keys are missing and `create_parents` is False.
 
     If `expand_schema` is True (default), operations on schema files affect all subconfigs.
+
+    If `ctx` is provided with target_files, only operates on those specific files.
     """
-    for path in configs(file_path, expand_schema=expand_schema):
+    for path in configs(file_path, expand_schema=expand_schema, ctx=ctx):
         _add_key(txn, path, key, value, create_parents, overwrite=True)
 
 
-def remove_key(txn: Transaction, file_path: pathlib.Path, key: str, expand_schema: bool = True):
+def remove_key(
+    txn: Transaction,
+    file_path: pathlib.Path,
+    key: str,
+    expand_schema: bool = True,
+    ctx: Optional[MigrationContext] = None,
+) -> None:
     """
     Removes a key at the specified keypath. If any part is not present, the key is considered already deleted.
 
     If `expand_schema` is True (default), operations on schema files affect all subconfigs.
+
+    If `ctx` is provided with target_files, only operates on those specific files.
     """
-    for path in configs(file_path, expand_schema=expand_schema):
+    for path in configs(file_path, expand_schema=expand_schema, ctx=ctx):
         _remove_key(txn, path, key)
 
 
-def move_key(txn: Transaction, file_path: pathlib.Path, src: str, dst: str, expand_schema: bool = True):
+def move_key(
+    txn: Transaction,
+    file_path: pathlib.Path,
+    src: str,
+    dst: str,
+    expand_schema: bool = True,
+    ctx: Optional[MigrationContext] = None,
+) -> None:
     """
     Moves an object at a specified key to a new key. All intermediate keys must be present. Fails if the value already exists.
 
     If `expand_schema` is True (default), operations on schema files affect all subconfigs.
+
+    If `ctx` is provided with target_files, only operates on those specific files.
     """
-    for path in configs(file_path, expand_schema=expand_schema):
+    for path in configs(file_path, expand_schema=expand_schema, ctx=ctx):
         _move_key(txn, path, src, dst)
 
-def rename_key(txn: Transaction, file_path: pathlib.Path, src: str, name: str, expand_schema: bool = True):
+def rename_key(
+    txn: Transaction,
+    file_path: pathlib.Path,
+    src: str,
+    name: str,
+    expand_schema: bool = True,
+    ctx: Optional[MigrationContext] = None,
+) -> None:
     """
     Renames a specified key to a new key. All intermediate keys must be present. Fails if the value already exists.
 
     If `expand_schema` is True (default), operations on schema files affect all subconfigs.
+
+    If `ctx` is provided with target_files, only operates on those specific files.
     """
-    for path in configs(file_path, expand_schema=expand_schema):
+    for path in configs(file_path, expand_schema=expand_schema, ctx=ctx):
         _rename_key(txn, path, src, name)
 
 
