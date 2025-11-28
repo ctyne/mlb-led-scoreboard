@@ -66,6 +66,10 @@ class MigrationExecutionPlan:
 
         # Load all files and their current migration state
         configs = MigrationManager.fetch_configs()
+
+        # Validate that all non-schema files are tracked
+        MigrationExecutionPlan.validate_all_files_tracked(configs)
+
         for path, applied_migrations in configs:
             plan.file_states[path] = FileState(path, applied_migrations)
 
@@ -108,3 +112,30 @@ class MigrationExecutionPlan:
         for path in file_paths:
             if path in self.file_states:
                 self.file_states[path].applied_migrations.discard(migration_version)
+
+    @staticmethod
+    def validate_all_files_tracked(configs: list[tuple[pathlib.Path, list[str]]]) -> None:
+        """
+        Detect custom config files that were created outside the migration system.
+
+        Raises an exception if any non-schema files exist but aren't tracked in custom-status.json.
+        This catches cases where users manually copy files (e.g., cp config.json config.custom.json)
+        instead of using the proper 'subconfig' command.
+        """
+        from migrations.status import MigrationStatus
+        from migrations.exceptions import UntrackedConfigError
+
+        custom_status = MigrationStatus._load_status(MigrationStatus.CUSTOM_STATUS_FILE)
+
+        untracked_files = []
+        for path, _ in configs:
+            # Assuming schemas are always tracked
+            if MigrationManager.is_schema(path):
+                continue
+
+            file_key = MigrationManager.normalize_path(path)
+            if file_key not in custom_status:
+                untracked_files.append(path)
+
+        if untracked_files:
+            raise UntrackedConfigError(untracked_files)
