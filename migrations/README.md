@@ -134,7 +134,7 @@ Returns a list of all config paths that match the reference. For custom configs,
 When `expand_schema=True` (default), schema paths return all subconfigs of the corresponding custom config family. When `expand_schema=False`, schema paths return only the schema file itself.
 
 ```python
-from migrations.helpers import configs
+from migrations.context import configs
 
 def up(self, txn):
     # Get all subconfigs of config.json (e.g., config.json, config.test.json, etc.)

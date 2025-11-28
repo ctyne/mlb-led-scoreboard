@@ -23,12 +23,13 @@ class Up(CLICommand):
         for migration in plan.migrations:
             files_to_migrate = plan.get_files_needing(migration.version)
 
+            migration_identifier = f"{migration.version} << {migration.__class__.__name__} >>"
             if not files_to_migrate:
-                print(f"MIGRATE {migration.version} - All files up to date, skipping.")
+                print(f"MIGRATE {migration_identifier} - All files up to date, skipping.")
                 continue
 
             print("=" * 80)
-            print(f"MIGRATE {migration.version} << {migration.__class__.__name__} >>")
+            print(f"MIGRATE {migration_identifier}")
 
             migration.execute(MigrationMode.UP, target_files=files_to_migrate)
 

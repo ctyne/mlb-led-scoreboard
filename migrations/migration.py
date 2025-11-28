@@ -2,7 +2,6 @@ from typing import Optional
 import pathlib
 
 from migrations.mode import MigrationMode
-from migrations.transaction import Transaction
 from migrations.status import MigrationStatus
 from migrations.context import MigrationContext
 
@@ -15,13 +14,13 @@ class ConfigMigration:
     def __init__(self, version: str):
         self.version = version
 
-    def up(self, txn: Transaction, ctx: MigrationContext):
-        """Performs a data migration. Pass ctx to helpers to limit which files are migrated."""
+    def up(self, ctx: MigrationContext):
+        """Performs a data migration using the context's methods."""
         raise NotImplementedError("ConfigMigration subclasses must implement up()")
 
-    def down(self, txn: Transaction, ctx: MigrationContext):
+    def down(self, ctx: MigrationContext):
         """
-        Reverses a migration. Pass ctx to helpers to limit which files are rolled back.
+        Reverses a migration using the context's methods.
 
         Raises IrreversibleMigration if migration cannot be reversed.
         """
@@ -33,22 +32,21 @@ class ConfigMigration:
         If target_files is provided, only those files will be operated on.
         """
         with MigrationContext(target_files=target_files) as ctx:
-            with Transaction() as txn:
-                if mode == MigrationMode.DOWN:
-                    result = self.down(txn, ctx)
-                elif mode == MigrationMode.UP:
-                    result = self.up(txn, ctx)
+            if mode == MigrationMode.DOWN:
+                result = self.down(ctx)
+            elif mode == MigrationMode.UP:
+                result = self.up(ctx)
 
-                custom_status, schema_status = MigrationStatus.build_updated_migration_statuses(
-                    self.version, mode
-                )
+            custom_status, schema_status = MigrationStatus.build_updated_migration_statuses(
+                self.version, mode
+            )
 
-                if custom_status.dirty:
-                    txn.write(MigrationStatus.CUSTOM_STATUS_FILE, custom_status.data)
-                if schema_status.dirty:
-                    txn.write(MigrationStatus.SCHEMA_STATUS_FILE, schema_status.data)
+            if custom_status.dirty:
+                ctx.write(MigrationStatus.CUSTOM_STATUS_FILE, custom_status.data)
+            if schema_status.dirty:
+                ctx.write(MigrationStatus.SCHEMA_STATUS_FILE, schema_status.data)
 
-            return result
+        return result
 
     @property
     def filename(self):

@@ -9,10 +9,10 @@ from migrations import *
 
 
 class {}(ConfigMigration):
-    def up(self, txn):
+    def up(self, ctx: MigrationContext):
         raise NotImplementedError("Migration logic not implemented.")
 
-    def down(self, txn):
+    def down(self, ctx: MigrationContext):
         # Implement the logic to revert the migration if necessary.
         # Raises IrreversibleMigration by default.
         raise IrreversibleMigration

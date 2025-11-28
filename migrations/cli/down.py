@@ -24,12 +24,13 @@ class Down(CLICommand):
         for migration in reversed(plan.migrations):
             files_to_rollback = plan.get_files_having(migration.version)
 
+            migration_identifier = f"{migration.version} << {migration.__class__.__name__} >>"
             if not files_to_rollback:
-                print(f"ROLLBACK {migration.version} - No files have this migration, skipping.")
+                print(f"ROLLBACK {migration_identifier} - No files have this migration, skipping.")
                 continue
 
             print("=" * 80)
-            print(f"ROLLBACK {migration.version} << {migration.__class__.__name__} >>")
+            print(f"ROLLBACK {migration_identifier}")
 
             migration.execute(MigrationMode.DOWN, target_files=files_to_rollback)
 
