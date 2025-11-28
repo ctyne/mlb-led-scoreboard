@@ -7,10 +7,10 @@ from migrations.transaction import Transaction
 
 
 class Init(CLICommand):
-    def __init__(self, _arguments):
+    def __init__(self, _arguments) -> None:
         pass
 
-    def execute(self):
+    def execute(self) -> None:
         """
         Initialize custom config files by copying from schema files (*.schema.json).
         New files inherit migration status from schemas.

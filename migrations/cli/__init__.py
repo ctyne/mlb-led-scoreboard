@@ -8,7 +8,7 @@ from migrations.cli.subconfig import Subconfig
 from migrations.cli.reset import Reset
 
 
-def positive_int(value):
+def positive_int(value) -> int:
     """Custom argparse type for positive integers."""
     ivalue = int(value)
 
@@ -37,7 +37,7 @@ class CLI:
     }
 
     @staticmethod
-    def execute():
+    def execute() -> None:
         parser = argparse.ArgumentParser(
             description="Data migration manager for mlb-led-scoreboard configuration objects."
         )
@@ -105,7 +105,7 @@ class CLI:
         cmd(args).execute()
 
     @staticmethod
-    def require_initialization():
+    def require_initialization() -> None:
         """Ensure the migration system has been initialized before running commands."""
         from migrations.status import MigrationStatus
 

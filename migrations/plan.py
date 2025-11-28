@@ -1,12 +1,4 @@
-"""
-Migration execution planning.
-
-Provides a structured approach to determining which files need which migrations,
-enabling per-file migration tracking instead of all-or-nothing execution.
-"""
-
 import pathlib
-from typing import Optional
 
 from migrations.mode import MigrationMode
 from migrations.manager import MigrationManager

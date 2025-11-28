@@ -8,10 +8,10 @@ class Up(CLICommand):
     Migrates all pending migrations, unless --step is specified. If step is present, migrates up to that amount.
     """
 
-    def __init__(self, arguments):
+    def __init__(self, arguments) -> None:
         self.step = arguments.step
 
-    def execute(self):
+    def execute(self) -> None:
         print("Executing migrations...")
 
         plan = MigrationExecutionPlan.build(mode=MigrationMode.UP)

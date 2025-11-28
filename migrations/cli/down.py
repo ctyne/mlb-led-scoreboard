@@ -8,10 +8,10 @@ class Down(CLICommand):
     Rolls back a migration or multiple migrations, if --step is specified.
     """
 
-    def __init__(self, arguments):
+    def __init__(self, arguments) -> None:
         self.step = arguments.step
 
-    def execute(self):
+    def execute(self) -> None:
         print("Rolling back migrations...")
 
         plan = MigrationExecutionPlan.build(mode=MigrationMode.DOWN)

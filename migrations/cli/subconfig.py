@@ -20,14 +20,14 @@ class Subconfig(CLICommand):
         <name>.schema.json
     """
 
-    def __init__(self, arguments):
+    def __init__(self, arguments) -> None:
         self.subconfig = pathlib.Path(arguments.subconfig)
         self.reference = (
             pathlib.Path(arguments.reference) if arguments.reference else Subconfig.infer_reference(self.subconfig)
         )
         self.schema = self.reference.with_suffix("").with_suffix(".schema.json")
 
-    def execute(self):
+    def execute(self) -> None:
         print(f"Initializing subconfig...")
 
         validation_error = self.validate_paths()

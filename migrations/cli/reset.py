@@ -6,10 +6,10 @@ from migrations.manager import MigrationManager
 
 
 class Reset(CLICommand):
-    def __init__(self, arguments):
+    def __init__(self, arguments) -> None:
         self.force = arguments.force
 
-    def execute(self):
+    def execute(self) -> None:
         """
         Removes custom configurations and resets (destroys) the custom status migration checkpoint.
         The migration system must be reinitialized via Init.
