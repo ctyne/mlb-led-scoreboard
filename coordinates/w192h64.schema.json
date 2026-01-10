@@ -272,8 +272,6 @@
       }
     },
     "name": {
-      "full": true,
-      "shorten_on_high_line_score": true,
       "away": {
         "font_name": "9x18B",
         "x": 4,

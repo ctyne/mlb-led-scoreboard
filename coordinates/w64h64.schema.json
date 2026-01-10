@@ -236,8 +236,6 @@
       }
     },
     "name": {
-      "full": true,
-      "shorten_on_high_line_score": true,
       "away": {
         "x": 4,
         "y": 8
