@@ -1,6 +1,6 @@
-from migrations.manager import MigrationManager
 from migrations.migration import MigrationMode
 from migrations.cli.command import CLICommand
+from migrations.plan import MigrationExecutionPlan
 
 
 class Down(CLICommand):
@@ -8,36 +8,33 @@ class Down(CLICommand):
     Rolls back a migration or multiple migrations, if --step is specified.
     """
 
-    def __init__(self, arguments):
+    def __init__(self, arguments) -> None:
         self.step = arguments.step
 
-    def execute(self):
+    def execute(self) -> None:
         print("Rolling back migrations...")
 
-        migrations = MigrationManager.load_migrations()
-        if len(migrations) == 0:
+        plan = MigrationExecutionPlan.build(mode=MigrationMode.DOWN)
+
+        if not plan.has_work(mode=MigrationMode.DOWN):
             print("No migrations to roll back.")
             return
 
-        configs = MigrationManager.fetch_configs()
+        # Process migrations in reverse order for rollback
+        for migration in reversed(plan.migrations):
+            files_to_rollback = plan.get_files_having(migration.version)
 
-        for migration in migrations[::-1]:
+            migration_identifier = f"{migration.version} << {migration.__class__.__name__} >>"
+            if not files_to_rollback:
+                print(f"ROLLBACK {migration_identifier} - No files have this migration, skipping.")
+                continue
+
             print("=" * 80)
-            print(f"ROLLBACK {migration.version} << {migration.__class__.__name__} >>")
+            print(f"ROLLBACK {migration_identifier}")
 
-            able = False
+            migration.execute(MigrationMode.DOWN, target_files=files_to_rollback)
 
-            for _, applied_migrations in configs:
-                if migration.version in applied_migrations:
-                    able = True
-                    break
-
-            if able:
-                migration.execute(MigrationMode.DOWN)
-                self.step -= 1
-            else:
-                print("\t-- Migration not yet applied to any files, skipping. --")
-
+            self.step -= 1
             if self.step == 0:
                 break
 

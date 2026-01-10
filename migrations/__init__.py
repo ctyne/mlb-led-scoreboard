@@ -7,5 +7,5 @@ COORDINATES_PATH = BASE_PATH / "coordinates"
 MIGRATIONS_PATH = pathlib.Path(__file__).parent / "migrate"
 
 from migrations.migration import *
-from migrations.helpers import *
+from migrations.context import *
 from migrations.exceptions import *

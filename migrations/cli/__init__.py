@@ -1,13 +1,14 @@
-import argparse
+import argparse, os
 
 from migrations.cli.up import Up
 from migrations.cli.down import Down
 from migrations.cli.generate import Generate
 from migrations.cli.init import Init
 from migrations.cli.subconfig import Subconfig
+from migrations.cli.reset import Reset
 
 
-def positive_int(value):
+def positive_int(value) -> int:
     """Custom argparse type for positive integers."""
     ivalue = int(value)
 
@@ -25,16 +26,18 @@ class CLI:
         "down": Down,
         "init": Init,
         "subconfig": Subconfig,
+        "reset": Reset,
         # Aliases
         "g": Generate,
         "u": Up,
         "d": Down,
         "i": Init,
         "s": Subconfig,
+        "r": Reset,
     }
 
     @staticmethod
-    def execute():
+    def execute() -> None:
         parser = argparse.ArgumentParser(
             description="Data migration manager for mlb-led-scoreboard configuration objects."
         )
@@ -42,6 +45,12 @@ class CLI:
 
         # "init" command
         subparsers.add_parser("init", aliases=["i"], help="Initialize config files from schemas")
+
+        # "reset" command
+        reset_parser = subparsers.add_parser(
+            "reset", aliases=["r"], help="Resets custom migrations, preserving schemas"
+        )
+        reset_parser.add_argument("-f", "--force", action="store_true", help="Skip confirmation and force reset")
 
         # "subconfig" command
         subconfig_parser = subparsers.add_parser(
@@ -85,8 +94,28 @@ class CLI:
         args = parser.parse_args()
 
         if args.command not in CLI.COMMANDS:
-            # TODO
-            raise
+            print(f"\nError: Unknown command '{args.command}'")
+            exit(1)
+
+        # Check if migration system is initialized (except for init/reset commands)
+        if args.command not in ["init", "i", "reset", "r"]:
+            CLI.require_initialization()
 
         cmd = CLI.COMMANDS[args.command]
         cmd(args).execute()
+
+    @staticmethod
+    def require_initialization() -> None:
+        """Ensure the migration system has been initialized before running commands."""
+        from migrations.status import MigrationStatus
+
+        if not os.path.exists(MigrationStatus.CUSTOM_STATUS_FILE):
+            print(
+                """\
+Error: Migration system is not initialized yet.
+
+Please run the following command first:
+  python -m migrations init
+"""
+            )
+            exit(1)

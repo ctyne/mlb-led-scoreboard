@@ -1,4 +1,4 @@
-import json, pathlib, shutil
+import pathlib, shutil
 
 from migrations.cli.command import CLICommand
 from migrations.manager import MigrationManager
@@ -7,10 +7,10 @@ from migrations.transaction import Transaction
 
 
 class Init(CLICommand):
-    def __init__(self, _arguments):
+    def __init__(self, _arguments) -> None:
         pass
 
-    def execute(self):
+    def execute(self) -> None:
         """
         Initialize custom config files by copying from schema files (*.schema.json).
         New files inherit migration status from schemas.
@@ -25,6 +25,8 @@ class Init(CLICommand):
         schema_status = MigrationStatus._load_status(MigrationStatus.SCHEMA_STATUS_FILE)
 
         # Load existing custom status
+        # This file isn't tracked, so touch it first. Fine to do outside of a transaction.
+        MigrationStatus.touch(MigrationStatus.CUSTOM_STATUS_FILE)
         custom_status = MigrationStatus._load_status(MigrationStatus.CUSTOM_STATUS_FILE)
 
         copied_files = []
@@ -57,9 +59,7 @@ class Init(CLICommand):
         # Save custom status atomically (write-then-swap) if we copied any files
         if copied_files:
             with Transaction() as txn:
-                with txn.load_for_update(MigrationStatus.CUSTOM_STATUS_FILE) as content:
-                    # Writing to content saves it atomically
-                    content = json.dumps(custom_status, indent=2)
+                txn.write(MigrationStatus.CUSTOM_STATUS_FILE, custom_status)
 
         # Report results
         print("=" * 80)

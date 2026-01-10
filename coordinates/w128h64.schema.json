@@ -283,7 +283,9 @@
         "font_name": "9x18B",
         "x": 4,
         "y": 29
-      }
+      },
+      "full": true,
+      "shorten_on_high_line_score": true
     },
     "record": {
       "enabled": false,
@@ -298,9 +300,6 @@
       }
     },
     "line_score": {
-      "show_hits_and_errors": true,
-      "compress_digits": true,
-      "spacing": 5,
       "away": {
         "font_name": "9x18B",
         "x": 126,
@@ -310,7 +309,10 @@
         "font_name": "9x18B",
         "x": 126,
         "y": 29
-      }
+      },
+      "show_hits_and_errors": true,
+      "compress_digits": true,
+      "spacing": 5
     }
   },
   "offday": {

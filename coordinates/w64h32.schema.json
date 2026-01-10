@@ -262,7 +262,9 @@
       "home": {
         "x": 4,
         "y": 13
-      }
+      },
+      "full": true,
+      "shorten_on_high_line_score": true
     },
     "accent": {
       "away": {
@@ -291,9 +293,6 @@
       }
     },
     "line_score": {
-      "show_hits_and_errors": true,
-      "compress_digits": false,
-      "spacing": 3,
       "away": {
         "x": 62,
         "y": 6
@@ -301,7 +300,10 @@
       "home": {
         "x": 62,
         "y": 13
-      }
+      },
+      "show_hits_and_errors": true,
+      "compress_digits": false,
+      "spacing": 3
     }
   },
   "offday": {
