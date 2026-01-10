@@ -219,17 +219,17 @@ def upsert_config(config, schema, options={}, result=None, changeset=None, path=
 def custom_config_files():
   '''
   Iterates over any directories that might contain custom configuration and checks for a custom `.json` config with a
-  matching `.example` schema.
+  matching `.schema` schema.
   '''
   files = []
 
   for directory, options in VALIDATIONS.items():
     for file in os.listdir(directory):
-      if file.endswith(".example.json"):
+      if file.endswith(".schema.json"):
         continue
 
       if file.endswith(".json"):
-        filename = file.split(".")[0] + ".example.json"
+        filename = file.split(".")[0] + ".schema.json"
         expected_schema_path = os.path.join(directory, filename)
         if os.path.isfile(expected_schema_path):
           files.append((directory, file, options))
@@ -288,7 +288,7 @@ def perform_validation():
     with open(os.path.join(directory, file)) as config_file:
       config = json.load(config_file)
 
-    schema_filename= file.split(".")[0] + ".example.json"
+    schema_filename= file.split(".")[0] + ".schema.json"
     with open(os.path.join(directory, schema_filename)) as schema_file:
       schema = json.load(schema_file)
 

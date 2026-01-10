@@ -241,7 +241,7 @@ See [RGBMatrixEmulator](https://github.com/ty-porter/RGBMatrixEmulator) for emul
 
 ### Configuration
 
-A default `config.example.json` file is included for reference. Copy this file to `config.json` and modify the values as needed.
+A default `config.schema.json` file is included for reference. Copy this file to `config.json` and modify the values as needed.
 
 ```
 "preferred":                              Options for team and division preference
