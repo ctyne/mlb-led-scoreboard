@@ -30,7 +30,7 @@ class Schedule:
             self.starttime = time.time()
             try:
                 # add sportId=51 to additionally get WBC games
-                self.__all_games = statsapi.schedule(self.date.strftime("%Y-%m-%d"), sportId=51)
+                self.__all_games = statsapi.schedule(self.date.strftime("%Y-%m-%d"), sportId="1,51")
             except:
                 debug.exception("Networking error while refreshing schedule")
                 return UpdateStatus.FAIL
