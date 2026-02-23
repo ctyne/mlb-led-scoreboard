@@ -22,13 +22,12 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
         # Determine number of address lines based on panel rows
         # 64x32 panels typically use 1/16 scan = 4 address lines
         # 64x64 panels typically use 1/32 scan = 5 address lines
-        # Some boards (like Seekgreat) use 1-based addressing, requiring 5 lines for 32-row panels
         panel_rows = options.rows  # Single panel height
         n_addr_lines = {
             16: 4,   # 1/16 scan
-            32: 5,   # 1/32 scan (for boards with 1-based addressing like Seekgreat)
-            64: 6    # 1/64 scan
-        }.get(panel_rows, 5)  # Default to 5 address lines
+            32: 4,   # 1/16 scan (most common for 64x32 panels)
+            64: 5    # 1/32 scan
+        }.get(panel_rows, 4)  # Default to 4 address lines
 
         # Create geometry - use total display dimensions
         # For a single 64x32 panel: width=64, height=32
