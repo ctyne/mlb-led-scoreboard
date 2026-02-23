@@ -61,16 +61,20 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
             print(f"DEBUG: Could not list pinouts: {e}")
         
         # Determine pinout based on --led-gpio-mapping option
-        # Use AdafruitMatrixHat as default (most common for Pi5)
+        # Default to Active3 for Seekgreat and similar boards
         pinout_map = {
             'adafruit-hat': piomatter.Pinout.AdafruitMatrixHat,
             'adafruit-hat-pwm': piomatter.Pinout.AdafruitMatrixHat,
+            'adafruit-bonnet': piomatter.Pinout.AdafruitMatrixBonnet,
+            'regular': piomatter.Pinout.Active3,
+            'classic': piomatter.Pinout.Active3,
+            'active3': piomatter.Pinout.Active3,
         }
         
-        # Get the mapping from options if available
-        hardware_mapping = getattr(options, 'hardware_mapping', 'adafruit-hat').lower()
-        pinout = pinout_map.get(hardware_mapping, piomatter.Pinout.AdafruitMatrixHat)
-        print(f"DEBUG: Using pinout: {pinout}")
+        # Get the mapping from options if available, default to Active3
+        hardware_mapping = getattr(options, 'hardware_mapping', 'active3').lower()
+        pinout = pinout_map.get(hardware_mapping, piomatter.Pinout.Active3)
+        print(f"DEBUG: Using pinout: {pinout} (from mapping: {hardware_mapping})")
         
         self._matrix = piomatter.PioMatter(
             colorspace=piomatter.Colorspace.RGB888Packed,
