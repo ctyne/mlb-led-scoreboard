@@ -12,10 +12,12 @@ This fork adds support for Raspberry Pi 5 using the Adafruit PioMatter library a
 
 ### For Raspberry Pi 5:
 - Raspberry Pi 5 (4GB or 8GB recommended)
-- Adafruit RGB Matrix Bonnet or HAT
+- RGB Matrix HAT/Adapter (Seekgreat Rev 3.8, Adafruit RGB Matrix Bonnet/HAT, or compatible)
 - HUB75 RGB LED Matrix Panel (tested with 64x32)
 - 5V Power Supply (4-5A per panel)
 - MicroSD card (16GB+ recommended)
+
+**Note:** This fork has been tested and confirmed working with the Seekgreat RGB Matrix Adapter Board Rev 3.8.
 
 ### For Raspberry Pi 4 and Earlier:
 - Same as original project (see main README.md)
@@ -59,6 +61,10 @@ sudo udevadm trigger
 ### On Raspberry Pi 5:
 
 ```bash
+# Default (uses Active3 pinout for Seekgreat and similar boards)
+sudo python3 main.py --pi5 --led-rows=32 --led-cols=64
+
+# For Adafruit HAT/Bonnet, specify the hardware mapping:
 sudo python3 main.py --pi5 --led-rows=32 --led-cols=64 --led-gpio-mapping=adafruit-hat
 ```
 
@@ -70,7 +76,25 @@ sudo python3 main.py --led-rows=32 --led-cols=64 --led-gpio-mapping=adafruit-hat
 
 ## Configuration
 
-The `--pi5` flag tells the software to use the PioMatter driver instead of the hzeller driver. All other configuration options remain the same.
+The `--pi5` flag tells the software to use the PioMatter driver instead of the hzeller driver.
+
+### Hardware Pinout Mapping:
+
+The default pinout is `active3` which works with:
+- Seekgreat RGB Matrix Adapter Board Rev 3.8
+- Most generic RGB Matrix HATs
+
+For Adafruit boards, use:
+```bash
+--led-gpio-mapping=adafruit-hat     # For Adafruit Matrix HAT
+--led-gpio-mapping=adafruit-bonnet  # For Adafruit Matrix Bonnet
+```
+
+**Testing Your Board:** If you're unsure which pinout to use, run:
+```bash
+sudo python3 test_pinouts.py
+```
+This will cycle through all available pinouts and flash colors to help you identify the correct one.
 
 ### Common Options:
 

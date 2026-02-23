@@ -32,33 +32,21 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
         # Create geometry - use total display dimensions
         # For a single 64x32 panel: width=64, height=32
         # PioMatter's geometry describes the overall display configuration
-        print(f"DEBUG: Creating geometry - width={width}, height={height}, n_addr_lines={n_addr_lines}")
         self._geometry = piomatter.Geometry(
             width=width,  # Total width (cols * chain)
             height=height,  # Total height (rows * parallel)
             n_addr_lines=n_addr_lines,
             rotation=piomatter.Orientation.Normal
         )
-        print("DEBUG: Geometry created successfully")
 
         # Create PIL canvas
-        print("DEBUG: Creating PIL canvas")
         self._canvas = Image.new('RGB', (width, height), (0, 0, 0))
         self._draw = ImageDraw.Draw(self._canvas)
 
         # Create framebuffer - must be contiguous numpy array
-        print("DEBUG: Creating framebuffer")
         self._framebuffer = np.zeros((height, width, 3), dtype=np.uint8)
 
         # Initialize PioMatter (chain/parallel handled by geometry)
-        print("DEBUG: Initializing PioMatter display")
-        
-        # List available pinouts for debugging
-        try:
-            available_pinouts = [attr for attr in dir(piomatter.Pinout) if not attr.startswith('_')]
-            print(f"DEBUG: Available pinouts: {available_pinouts}")
-        except Exception as e:
-            print(f"DEBUG: Could not list pinouts: {e}")
         
         # Determine pinout based on --led-gpio-mapping option
         # Default to Active3 for Seekgreat and similar boards
@@ -74,7 +62,6 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
         # Get the mapping from options if available, default to Active3
         hardware_mapping = getattr(options, 'hardware_mapping', 'active3').lower()
         pinout = pinout_map.get(hardware_mapping, piomatter.Pinout.Active3)
-        print(f"DEBUG: Using pinout: {pinout} (from mapping: {hardware_mapping})")
         
         self._matrix = piomatter.PioMatter(
             colorspace=piomatter.Colorspace.RGB888Packed,
@@ -82,34 +69,10 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
             framebuffer=self._framebuffer,
             geometry=self._geometry
         )
-        print("DEBUG: PioMatter display initialized successfully")
         
-        # Try to start/enable the display if such method exists
-        try:
-            if hasattr(self._matrix, 'start'):
-                print("DEBUG: Calling matrix.start()")
-                self._matrix.start()
-            if hasattr(self._matrix, 'enable'):
-                print("DEBUG: Calling matrix.enable()")
-                self._matrix.enable()
-        except Exception as e:
-            print(f"DEBUG: Could not start/enable matrix: {e}")
-        
-        # Do an initial show to activate the display
-        print("DEBUG: Doing initial matrix.show() to activate display")
-        try:
-            self._framebuffer[:] = 255  # Fill with white to test
-            self._matrix.show()
-            print("DEBUG: Initial show() completed - display should be white")
-            import time
-            time.sleep(2)
-            self._framebuffer[:] = 0  # Clear back to black
-            self._matrix.show()
-            print("DEBUG: Cleared to black")
-        except Exception as e:
-            print(f"ERROR in initial show: {e}")
-            import traceback
-            traceback.print_exc()
+        # Do an initial clear to activate the display
+        self._framebuffer[:] = 0
+        self._matrix.show()
 
         self._width = width
         self._height = height
@@ -131,16 +94,12 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
 
     def SwapOnVSync(self, canvas):
         """Swap buffers and update the display."""
-        print("DEBUG: SwapOnVSync called")
         if isinstance(canvas, PioMatterCanvas):
             try:
                 # Copy canvas content to framebuffer
-                print("DEBUG: Copying canvas to framebuffer")
                 self._framebuffer[:] = np.asarray(canvas._image)
                 # Update the display
-                print("DEBUG: Calling matrix.show()")
                 self._matrix.show()
-                print("DEBUG: matrix.show() completed")
             except Exception as e:
                 print(f"ERROR in SwapOnVSync: {e}")
                 import traceback
@@ -180,7 +139,6 @@ class PioMatterCanvas:
 
     def Fill(self, r, g, b):
         """Fill the entire canvas with a color."""
-        print(f"DEBUG: Fill called with RGB({r}, {g}, {b})")
         self._image.paste(Image.new('RGB', (self.width, self.height), (r, g, b)))
 
     def SetPixel(self, x, y, r, g, b):
@@ -213,7 +171,6 @@ class PioMatterFont:
 
     def LoadFont(self, path):
         """Load a BDF font. Convert to PIL font."""
-        print(f"DEBUG: LoadFont called with path={path}")
         # Store the path for reference
         self._font_path = path
 
@@ -223,18 +180,13 @@ class PioMatterFont:
         try:
             # Try to load as BDF (PIL supports BDF)
             from PIL import ImageFont
-            print(f"DEBUG: Attempting to load BDF font: {path}")
             self._font = ImageFont.load(path)
-            print(f"DEBUG: BDF font loaded successfully")
-        except Exception as e:
-            print(f"DEBUG: BDF load failed ({e}), trying TrueType fallback")
+        except Exception:
             # Fall back to default font
             try:
                 # Try DejaVu Sans Mono which is commonly available
                 self._font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 10)
-                print(f"DEBUG: Using DejaVu Sans Mono fallback")
-            except Exception as e2:
-                print(f"DEBUG: TrueType fallback failed ({e2}), using default font")
+            except Exception:
                 # Ultimate fallback to default
                 self._font = ImageFont.load_default()
 
@@ -256,14 +208,11 @@ class PioMatterGraphicsAdapter(GraphicsBase):
 
     def DrawText(self, canvas, font, x, y, color, text):
         """Draw text using PIL."""
-        print(f"DEBUG: DrawText called - text='{text}', x={x}, y={y}")
         if isinstance(canvas, PioMatterCanvas):
             try:
                 pil_color = color.to_tuple() if isinstance(color, PioMatterColor) else color
-                print(f"DEBUG: Drawing text with color={pil_color}, font={font._font if hasattr(font, '_font') else None}")
                 # Note: PIL text baseline is different from hzeller, may need adjustment
                 canvas._draw.text((x, y - 10), text, fill=pil_color, font=font._font if hasattr(font, '_font') else None)
-                print(f"DEBUG: Text drawn successfully")
                 return len(text) * 6  # Approximate width
             except Exception as e:
                 print(f"ERROR in DrawText: {e}")
