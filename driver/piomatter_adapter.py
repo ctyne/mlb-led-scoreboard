@@ -32,27 +32,33 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
         # Create geometry - use total display dimensions
         # For a single 64x32 panel: width=64, height=32
         # PioMatter's geometry describes the overall display configuration
+        print(f"DEBUG: Creating geometry - width={width}, height={height}, n_addr_lines={n_addr_lines}")
         self._geometry = piomatter.Geometry(
             width=width,  # Total width (cols * chain)
             height=height,  # Total height (rows * parallel)
             n_addr_lines=n_addr_lines,
             rotation=piomatter.Orientation.Normal
         )
+        print("DEBUG: Geometry created successfully")
 
         # Create PIL canvas
+        print("DEBUG: Creating PIL canvas")
         self._canvas = Image.new('RGB', (width, height), (0, 0, 0))
         self._draw = ImageDraw.Draw(self._canvas)
 
         # Create framebuffer
+        print("DEBUG: Creating framebuffer")
         self._framebuffer = np.asarray(self._canvas).copy()
 
         # Initialize PioMatter (chain/parallel handled by geometry)
+        print("DEBUG: Initializing PioMatter display")
         self._matrix = piomatter.PioMatter(
             colorspace=piomatter.Colorspace.RGB888Packed,
             pinout=piomatter.Pinout.AdafruitMatrixBonnet,
             framebuffer=self._framebuffer,
             geometry=self._geometry
         )
+        print("DEBUG: PioMatter display initialized successfully")
 
         self._width = width
         self._height = height
@@ -74,12 +80,16 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
 
     def SwapOnVSync(self, canvas):
         """Swap buffers and update the display."""
+        print("DEBUG: SwapOnVSync called")
         if isinstance(canvas, PioMatterCanvas):
             try:
                 # Copy canvas content to framebuffer
+                print("DEBUG: Copying canvas to framebuffer")
                 self._framebuffer[:] = np.asarray(canvas._image)
                 # Update the display
+                print("DEBUG: Calling matrix.show()")
                 self._matrix.show()
+                print("DEBUG: matrix.show() completed")
             except Exception as e:
                 print(f"ERROR in SwapOnVSync: {e}")
                 import traceback
@@ -119,6 +129,7 @@ class PioMatterCanvas:
 
     def Fill(self, r, g, b):
         """Fill the entire canvas with a color."""
+        print(f"DEBUG: Fill called with RGB({r}, {g}, {b})")
         self._image.paste(Image.new('RGB', (self.width, self.height), (r, g, b)))
 
     def SetPixel(self, x, y, r, g, b):
