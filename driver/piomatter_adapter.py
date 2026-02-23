@@ -277,13 +277,13 @@ class PioMatterGraphicsAdapter(GraphicsBase):
                             bbyoff = glyph.meta.get('bbyoff', 0)
                             dwx0 = glyph.meta.get('dwx0', bitmap.width())
                             
-                            # Get bitmap as 2D list (1=pixel set, 0=pixel clear)
+                            # Get bitmap as list of strings ('0' and '1' chars)
                             pixels = bitmap.todata(1)
                             
                             # Draw glyph bitmap
                             for row_idx, row in enumerate(pixels):
-                                for col_idx, pixel in enumerate(row):
-                                    if pixel:
+                                for col_idx, pixel_char in enumerate(row):
+                                    if pixel_char == '1':  # Check if character is '1'
                                         px = current_x + bbxoff + col_idx
                                         py = y - bbyoff - (len(pixels) - row_idx - 1)
                                         canvas._draw.point((px, py), fill=pil_color)
