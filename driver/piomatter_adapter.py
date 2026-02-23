@@ -19,18 +19,21 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
         width = options.cols * options.chain_length
         height = options.rows * options.parallel
 
-        # Determine number of address lines based on rows
-        # Common configurations: 16 rows = 4 addr lines, 32 rows = 5 addr lines
+        # Determine number of address lines based on panel rows (not total rows)
+        # Each individual panel's rows, not the total display
+        # Common configurations: 16 rows = 4 addr lines, 32 rows = 5 addr lines, 64 rows = 6 addr lines
+        panel_rows = options.rows  # Single panel height
         n_addr_lines = {
             16: 4,
             32: 5,
             64: 6
-        }.get(options.rows, 4)
+        }.get(panel_rows, 5)  # Default to 5 for 32-row panels
 
-        # Create geometry
+        # Create geometry - PioMatter expects dimensions of a SINGLE panel
+        # The library handles chaining and parallel internally
         self._geometry = piomatter.Geometry(
-            width=width,
-            height=height,
+            width=options.cols,  # Single panel width
+            height=panel_rows,    # Single panel height
             n_addr_lines=n_addr_lines,
             rotation=piomatter.Orientation.Normal
         )
@@ -42,12 +45,14 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
         # Create framebuffer
         self._framebuffer = np.asarray(self._canvas).copy()
 
-        # Initialize PioMatter
+        # Initialize PioMatter with single panel geometry
         self._matrix = piomatter.PioMatter(
             colorspace=piomatter.Colorspace.RGB888Packed,
             pinout=piomatter.Pinout.AdafruitMatrixBonnet,
             framebuffer=self._framebuffer,
-            geometry=self._geometry
+            geometry=self._geometry,
+            chain=options.chain_length,
+            parallel=options.parallel
         )
 
         self._width = width
