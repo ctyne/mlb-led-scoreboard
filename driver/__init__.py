@@ -113,7 +113,7 @@ class DriverWrapper:
                 return self._graphics_adapter
         
         # Default: pass through to driver
-        if hasattr(self, 'driver'):
+        if 'driver' in self.__dict__:
             return getattr(self.driver, name)
         
         raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
