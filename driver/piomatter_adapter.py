@@ -173,64 +173,81 @@ class PioMatterFont:
         self._font_path = None
 
     def LoadFont(self, path):
-        """Load a BDF font. Convert to PIL font."""
-        from PIL import ImageFont, BdfFontFile, Image
+        """Load a BDF font."""
         import os
         
         # Store the path for reference
         self._font_path = path
-
-        # Try to load BDF font using BdfFontFile and convert to PIL font
+        self._font = None
+        
+        # Try to load BDF font using bdfparser library
         try:
-            with open(path, 'rb') as f:
-                bdf = BdfFontFile.BdfFontFile(f)
-                # Convert BdfFontFile to a usable PIL font
-                self._font = bdf.getfont()
-                print(f"Successfully loaded BDF font: {path}")
-                return True
+            import bdfparser
+            font = bdfparser.Font(path)
+            self._font = font
+            self._is_bdf = True
+            print(f"Successfully loaded BDF font with bdfparser: {path}")
+            return True
         except Exception as e:
-            print(f"Failed to load BDF font {path}: {e}")
+            print(f"Failed to load BDF font {path} with bdfparser: {e}")
         
         # Fallback to 4x6.bdf
         try:
+            import bdfparser
             fallback_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
                                          'assets', 'fonts', 'patched', '4x6.bdf')
-            with open(fallback_path, 'rb') as f:
-                bdf = BdfFontFile.BdfFontFile(f)
-                self._font = bdf.getfont()
-                print(f"Successfully loaded fallback BDF: {fallback_path}")
-                return True
+            font = bdfparser.Font(fallback_path)
+            self._font = font
+            self._is_bdf = True
+            print(f"Successfully loaded fallback BDF with bdfparser: {fallback_path}")
+            return True
         except Exception as e:
-            print(f"Failed to load 4x6.bdf: {e}")
+            print(f"Failed to load 4x6.bdf with bdfparser: {e}")
         
-        # Try loading a very small TrueType font (5 point size to approximate 4x6 pixels)
+        # Try loading a very small TrueType font as last resort
         try:
-            # Try common monospace fonts at small size
+            from PIL import ImageFont
             for ttf_path in [
                 "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
                 "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
             ]:
                 if os.path.exists(ttf_path):
-                    self._font = ImageFont.truetype(ttf_path, size=5)  # 5pt font for smaller size
-                    print(f"Using TrueType fallback at 5pt: {ttf_path}")
+                    self._font = ImageFont.truetype(ttf_path, size=4)  # 4pt for smallest size
+                    self._is_bdf = False
+                    print(f"Using TrueType fallback at 4pt: {ttf_path}")
                     return True
         except Exception as e:
             print(f"Failed to load TrueType font: {e}")
         
         # Ultimate fallback - PIL default
         try:
+            from PIL import ImageFont
             self._font = ImageFont.load_default()
+            self._is_bdf = False
             print("Using PIL default font")
         except Exception:
             self._font = None
+            self._is_bdf = False
         
         return True
 
     def CharacterWidth(self, char):
         """Get character width."""
         if self._font:
-            bbox = self._font.getbbox(char)
-            return bbox[2] - bbox[0]
+            # BDF font using bdfparser
+            if hasattr(self, '_is_bdf') and self._is_bdf:
+                try:
+                    glyph = self._font.glyph(char)
+                    return glyph.advance_width
+                except Exception:
+                    return 4  # Default for missing chars
+            # PIL font
+            else:
+                try:
+                    bbox = self._font.getbbox(char)
+                    return bbox[2] - bbox[0]
+                except Exception:
+                    return 6
         return 6  # Default fallback
 
 
@@ -241,13 +258,32 @@ class PioMatterGraphicsAdapter(GraphicsBase):
         pass
 
     def DrawText(self, canvas, font, x, y, color, text):
-        """Draw text using PIL."""
+        """Draw text using PIL or BDF font."""
         if isinstance(canvas, PioMatterCanvas):
             try:
                 pil_color = color.to_tuple() if isinstance(color, PioMatterColor) else color
-                # Note: PIL text baseline is different from hzeller, may need adjustment
-                canvas._draw.text((x, y - 10), text, fill=pil_color, font=font._font if hasattr(font, '_font') else None)
-                return len(text) * 6  # Approximate width
+                
+                # Check if this is a BDF font (using bdfparser) or PIL font
+                if hasattr(font, '_is_bdf') and font._is_bdf and font._font:
+                    # Render BDF font pixel by pixel
+                    current_x = x
+                    for char in text:
+                        try:
+                            glyph = font._font.glyph(char)
+                            # Draw glyph bitmap
+                            for dy in range(glyph.height):
+                                for dx in range(glyph.width):
+                                    if glyph.bitmap[dy][dx]:
+                                        canvas._draw.point((current_x + dx, y + dy), fill=pil_color)
+                            current_x += glyph.advance_width
+                        except Exception:
+                            # Character not found, skip it
+                            current_x += 4  # Default spacing
+                    return current_x - x  # Return width
+                else:
+                    # Use PIL font rendering
+                    canvas._draw.text((x, y - 10), text, fill=pil_color, font=font._font if hasattr(font, '_font') else None)
+                    return len(text) * 6  # Approximate width
             except Exception as e:
                 print(f"ERROR in DrawText: {e}")
                 import traceback
