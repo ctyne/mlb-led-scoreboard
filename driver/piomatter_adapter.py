@@ -75,10 +75,15 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
     def SwapOnVSync(self, canvas):
         """Swap buffers and update the display."""
         if isinstance(canvas, PioMatterCanvas):
-            # Copy canvas content to framebuffer
-            self._framebuffer[:] = np.asarray(canvas._image)
-            # Update the display
-            self._matrix.show()
+            try:
+                # Copy canvas content to framebuffer
+                self._framebuffer[:] = np.asarray(canvas._image)
+                # Update the display
+                self._matrix.show()
+            except Exception as e:
+                print(f"ERROR in SwapOnVSync: {e}")
+                import traceback
+                traceback.print_exc()
         return canvas
 
     def SetImage(self, image, offset_x=0, offset_y=0):
