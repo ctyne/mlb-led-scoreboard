@@ -59,6 +59,33 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
             geometry=self._geometry
         )
         print("DEBUG: PioMatter display initialized successfully")
+        
+        # Try to start/enable the display if such method exists
+        try:
+            if hasattr(self._matrix, 'start'):
+                print("DEBUG: Calling matrix.start()")
+                self._matrix.start()
+            if hasattr(self._matrix, 'enable'):
+                print("DEBUG: Calling matrix.enable()")
+                self._matrix.enable()
+        except Exception as e:
+            print(f"DEBUG: Could not start/enable matrix: {e}")
+        
+        # Do an initial show to activate the display
+        print("DEBUG: Doing initial matrix.show() to activate display")
+        try:
+            self._framebuffer[:] = 255  # Fill with white to test
+            self._matrix.show()
+            print("DEBUG: Initial show() completed - display should be white")
+            import time
+            time.sleep(2)
+            self._framebuffer[:] = 0  # Clear back to black
+            self._matrix.show()
+            print("DEBUG: Cleared to black")
+        except Exception as e:
+            print(f"ERROR in initial show: {e}")
+            import traceback
+            traceback.print_exc()
 
         self._width = width
         self._height = height
