@@ -289,11 +289,8 @@ class PioMatterGraphicsAdapter(GraphicsBase):
                                         canvas._draw.point((px, py), fill=pil_color)
                             current_x += dwx0
                         except Exception as e:
-                            # Character not found, skip it
-                            print(f"Warning: Could not render char '{char}': {e}")
-                            import traceback
-                            traceback.print_exc()
-                            current_x += 4  # Default spacing
+                            # Character not found, skip with default spacing
+                            current_x += 4
                     return current_x - x  # Return width
                 else:
                     # Use PIL font rendering
