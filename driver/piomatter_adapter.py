@@ -162,6 +162,7 @@ class PioMatterFont:
 
     def LoadFont(self, path):
         """Load a BDF font. Convert to PIL font."""
+        print(f"DEBUG: LoadFont called with path={path}")
         # Store the path for reference
         self._font_path = path
 
@@ -171,13 +172,18 @@ class PioMatterFont:
         try:
             # Try to load as BDF (PIL supports BDF)
             from PIL import ImageFont
+            print(f"DEBUG: Attempting to load BDF font: {path}")
             self._font = ImageFont.load(path)
-        except Exception:
+            print(f"DEBUG: BDF font loaded successfully")
+        except Exception as e:
+            print(f"DEBUG: BDF load failed ({e}), trying TrueType fallback")
             # Fall back to default font
             try:
                 # Try DejaVu Sans Mono which is commonly available
                 self._font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 10)
-            except Exception:
+                print(f"DEBUG: Using DejaVu Sans Mono fallback")
+            except Exception as e2:
+                print(f"DEBUG: TrueType fallback failed ({e2}), using default font")
                 # Ultimate fallback to default
                 self._font = ImageFont.load_default()
 
@@ -199,11 +205,20 @@ class PioMatterGraphicsAdapter(GraphicsBase):
 
     def DrawText(self, canvas, font, x, y, color, text):
         """Draw text using PIL."""
+        print(f"DEBUG: DrawText called - text='{text}', x={x}, y={y}")
         if isinstance(canvas, PioMatterCanvas):
-            pil_color = color.to_tuple() if isinstance(color, PioMatterColor) else color
-            # Note: PIL text baseline is different from hzeller, may need adjustment
-            canvas._draw.text((x, y - 10), text, fill=pil_color, font=font._font if hasattr(font, '_font') else None)
-            return len(text) * 6  # Approximate width
+            try:
+                pil_color = color.to_tuple() if isinstance(color, PioMatterColor) else color
+                print(f"DEBUG: Drawing text with color={pil_color}, font={font._font if hasattr(font, '_font') else None}")
+                # Note: PIL text baseline is different from hzeller, may need adjustment
+                canvas._draw.text((x, y - 10), text, fill=pil_color, font=font._font if hasattr(font, '_font') else None)
+                print(f"DEBUG: Text drawn successfully")
+                return len(text) * 6  # Approximate width
+            except Exception as e:
+                print(f"ERROR in DrawText: {e}")
+                import traceback
+                traceback.print_exc()
+                return 0
 
     def DrawLine(self, canvas, x1, y1, x2, y2, color):
         """Draw a line using PIL."""
