@@ -52,9 +52,23 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
 
         # Initialize PioMatter (chain/parallel handled by geometry)
         print("DEBUG: Initializing PioMatter display")
+        
+        # Determine pinout based on --led-gpio-mapping option or default to Regular
+        # Seekgreat boards typically use the Regular/Classic pinout
+        pinout_map = {
+            'adafruit-hat': piomatter.Pinout.AdafruitMatrixHat,
+            'adafruit-hat-pwm': piomatter.Pinout.AdafruitMatrixHat,
+            'regular': piomatter.Pinout.Regular,
+            'classic': piomatter.Pinout.Regular,
+        }
+        
+        # Get the mapping from options if available, default to Regular for Seekgreat
+        pinout = pinout_map.get(getattr(options, 'hardware_mapping', 'regular').lower(), piomatter.Pinout.Regular)
+        print(f"DEBUG: Using pinout: {pinout}")
+        
         self._matrix = piomatter.PioMatter(
             colorspace=piomatter.Colorspace.RGB888Packed,
-            pinout=piomatter.Pinout.AdafruitMatrixBonnet,
+            pinout=pinout,
             framebuffer=self._framebuffer,
             geometry=self._geometry
         )
