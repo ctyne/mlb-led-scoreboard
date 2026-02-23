@@ -19,15 +19,15 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
         width = options.cols * options.chain_length
         height = options.rows * options.parallel
 
-        # Determine number of address lines based on panel rows (not total rows)
-        # Each individual panel's rows, not the total display
-        # Common configurations: 16 rows = 4 addr lines, 32 rows = 5 addr lines, 64 rows = 6 addr lines
+        # Determine number of address lines based on panel rows
+        # 64x32 panels typically use 1/16 scan = 4 address lines
+        # 64x64 panels typically use 1/32 scan = 5 address lines
         panel_rows = options.rows  # Single panel height
         n_addr_lines = {
-            16: 4,
-            32: 5,
-            64: 6
-        }.get(panel_rows, 5)  # Default to 5 for 32-row panels
+            16: 4,   # 1/16 scan
+            32: 4,   # 1/16 scan (most common for 64x32 panels)
+            64: 5    # 1/32 scan
+        }.get(panel_rows, 4)  # Default to 4 address lines
 
         # Create geometry - PioMatter expects dimensions of a SINGLE panel
         # The library handles chaining and parallel internally
