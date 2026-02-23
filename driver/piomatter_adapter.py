@@ -185,18 +185,18 @@ class PioMatterFont:
         except Exception:
             pass
         
-        # Fallback to tom-thumb.bdf
+        # Fallback to 4x6.bdf
         try:
             from PIL import ImageFont
             import os
             fallback_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
-                                         'assets', 'fonts', 'patched', 'tom-thumb.bdf')
+                                         'assets', 'fonts', 'patched', '4x6.bdf')
             self._font = ImageFont.load(fallback_path)
             return True
         except Exception:
             pass
         
-        # Ultimate fallback to PIL default if tom-thumb not found
+        # Ultimate fallback to PIL default if 4x6 not found
         try:
             from PIL import ImageFont
             self._font = ImageFont.load_default()
