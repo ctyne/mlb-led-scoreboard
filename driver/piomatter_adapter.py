@@ -177,22 +177,32 @@ class PioMatterFont:
         # Store the path for reference
         self._font_path = path
 
-        # Try to find a similar TrueType font
-        # For now, use a default PIL font
-        # Users may need to install specific fonts
+        # Try to load the requested BDF font first
         try:
-            # Try to load as BDF (PIL supports BDF)
             from PIL import ImageFont
             self._font = ImageFont.load(path)
+            return True
         except Exception:
-            # Fall back to default font
-            try:
-                # Try DejaVu Sans Mono which is commonly available
-                self._font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 10)
-            except Exception:
-                # Ultimate fallback to default
-                self._font = ImageFont.load_default()
-
+            pass
+        
+        # Fallback to tom-thumb.bdf
+        try:
+            from PIL import ImageFont
+            import os
+            fallback_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
+                                         'assets', 'fonts', 'patched', 'tom-thumb.bdf')
+            self._font = ImageFont.load(fallback_path)
+            return True
+        except Exception:
+            pass
+        
+        # Ultimate fallback to PIL default if tom-thumb not found
+        try:
+            from PIL import ImageFont
+            self._font = ImageFont.load_default()
+        except Exception:
+            self._font = None
+        
         return True
 
     def CharacterWidth(self, char):
