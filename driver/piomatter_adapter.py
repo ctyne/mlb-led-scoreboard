@@ -46,9 +46,9 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
         self._canvas = Image.new('RGB', (width, height), (0, 0, 0))
         self._draw = ImageDraw.Draw(self._canvas)
 
-        # Create framebuffer
+        # Create framebuffer - must be contiguous numpy array
         print("DEBUG: Creating framebuffer")
-        self._framebuffer = np.asarray(self._canvas).copy()
+        self._framebuffer = np.zeros((height, width, 3), dtype=np.uint8)
 
         # Initialize PioMatter (chain/parallel handled by geometry)
         print("DEBUG: Initializing PioMatter display")
