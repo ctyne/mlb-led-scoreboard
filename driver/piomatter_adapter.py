@@ -128,6 +128,10 @@ class PioMatterColor:
         self.r = r
         self.g = g
         self.b = b
+        # Aliases for compatibility
+        self.red = r
+        self.green = g
+        self.blue = b
 
     def to_tuple(self):
         return (self.r, self.g, self.b)
