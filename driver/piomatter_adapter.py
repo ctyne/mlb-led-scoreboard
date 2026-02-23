@@ -53,17 +53,23 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
         # Initialize PioMatter (chain/parallel handled by geometry)
         print("DEBUG: Initializing PioMatter display")
         
-        # Determine pinout based on --led-gpio-mapping option or default to Regular
-        # Seekgreat boards typically use the Regular/Classic pinout
+        # List available pinouts for debugging
+        try:
+            available_pinouts = [attr for attr in dir(piomatter.Pinout) if not attr.startswith('_')]
+            print(f"DEBUG: Available pinouts: {available_pinouts}")
+        except Exception as e:
+            print(f"DEBUG: Could not list pinouts: {e}")
+        
+        # Determine pinout based on --led-gpio-mapping option
+        # Use AdafruitMatrixHat as default (most common for Pi5)
         pinout_map = {
             'adafruit-hat': piomatter.Pinout.AdafruitMatrixHat,
             'adafruit-hat-pwm': piomatter.Pinout.AdafruitMatrixHat,
-            'regular': piomatter.Pinout.Regular,
-            'classic': piomatter.Pinout.Regular,
         }
         
-        # Get the mapping from options if available, default to Regular for Seekgreat
-        pinout = pinout_map.get(getattr(options, 'hardware_mapping', 'regular').lower(), piomatter.Pinout.Regular)
+        # Get the mapping from options if available
+        hardware_mapping = getattr(options, 'hardware_mapping', 'adafruit-hat').lower()
+        pinout = pinout_map.get(hardware_mapping, piomatter.Pinout.AdafruitMatrixHat)
         print(f"DEBUG: Using pinout: {pinout}")
         
         self._matrix = piomatter.PioMatter(
