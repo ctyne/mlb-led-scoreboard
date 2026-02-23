@@ -174,32 +174,47 @@ class PioMatterFont:
 
     def LoadFont(self, path):
         """Load a BDF font. Convert to PIL font."""
+        from PIL import ImageFont
+        import os
+        
         # Store the path for reference
         self._font_path = path
 
         # Try to load the requested BDF font first
         try:
-            from PIL import ImageFont
             self._font = ImageFont.load(path)
             return True
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Failed to load font {path}: {e}")
         
         # Fallback to 4x6.bdf
         try:
-            from PIL import ImageFont
-            import os
             fallback_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
                                          'assets', 'fonts', 'patched', '4x6.bdf')
             self._font = ImageFont.load(fallback_path)
+            print(f"Using fallback font: {fallback_path}")
             return True
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Failed to load 4x6.bdf: {e}")
         
-        # Ultimate fallback to PIL default if 4x6 not found
+        # Try loading a very small TrueType font (4 point size to approximate 4x6 pixels)
         try:
-            from PIL import ImageFont
+            # Try common monospace fonts at 4pt to get approximately 4x6 pixels
+            for ttf_path in [
+                "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+                "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
+            ]:
+                if os.path.exists(ttf_path):
+                    self._font = ImageFont.truetype(ttf_path, size=6)  # 6pt font
+                    print(f"Using TrueType fallback at 6pt: {ttf_path}")
+                    return True
+        except Exception as e:
+            print(f"Failed to load TrueType font: {e}")
+        
+        # Ultimate fallback - create a minimal default
+        try:
             self._font = ImageFont.load_default()
+            print("Using PIL default font")
         except Exception:
             self._font = None
         
