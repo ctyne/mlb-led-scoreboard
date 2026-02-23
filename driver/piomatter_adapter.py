@@ -270,14 +270,22 @@ class PioMatterGraphicsAdapter(GraphicsBase):
                     for char in text:
                         try:
                             glyph = font._font.glyph(char)
+                            # Get glyph properties
+                            bbx = glyph.meta.get('BBX', [glyph.width, glyph.height, 0, 0])
+                            offset_x = bbx[2] if len(bbx) > 2 else 0
+                            offset_y = bbx[3] if len(bbx) > 3 else 0
+                            
                             # Draw glyph bitmap
-                            for dy in range(glyph.height):
-                                for dx in range(glyph.width):
-                                    if glyph.bitmap[dy][dx]:
-                                        canvas._draw.point((current_x + dx, y + dy), fill=pil_color)
+                            for row_idx, row in enumerate(glyph.bitmap):
+                                for col_idx, pixel in enumerate(row):
+                                    if pixel:
+                                        px = current_x + offset_x + col_idx
+                                        py = y - offset_y - (glyph.height - row_idx - 1)
+                                        canvas._draw.point((px, py), fill=pil_color)
                             current_x += glyph.advance_width
-                        except Exception:
+                        except Exception as e:
                             # Character not found, skip it
+                            print(f"Warning: Could not render char '{char}': {e}")
                             current_x += 4  # Default spacing
                     return current_x - x  # Return width
                 else:
