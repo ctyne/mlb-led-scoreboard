@@ -238,7 +238,8 @@ class PioMatterFont:
             if hasattr(self, '_is_bdf') and self._is_bdf:
                 try:
                     glyph = self._font.glyph(char)
-                    return glyph.advance_width
+                    dwidth = glyph.meta.get('DWIDTH', [4, 0])
+                    return dwidth[0]
                 except Exception:
                     return 4  # Default for missing chars
             # PIL font
@@ -270,19 +271,25 @@ class PioMatterGraphicsAdapter(GraphicsBase):
                     for char in text:
                         try:
                             glyph = font._font.glyph(char)
-                            # Get glyph properties
-                            bbx = glyph.meta.get('BBX', [glyph.width, glyph.height, 0, 0])
-                            offset_x = bbx[2] if len(bbx) > 2 else 0
-                            offset_y = bbx[3] if len(bbx) > 3 else 0
+                            # Get glyph properties from metadata
+                            bbx = glyph.meta.get('BBX', [4, 6, 0, 0])
+                            glyph_width = bbx[0]
+                            glyph_height = bbx[1]
+                            offset_x = bbx[2]
+                            offset_y = bbx[3]
+                            
+                            # Get DWIDTH (device width - how much to advance cursor)
+                            dwidth = glyph.meta.get('DWIDTH', [glyph_width, 0])
+                            advance = dwidth[0]
                             
                             # Draw glyph bitmap
                             for row_idx, row in enumerate(glyph.bitmap):
                                 for col_idx, pixel in enumerate(row):
                                     if pixel:
                                         px = current_x + offset_x + col_idx
-                                        py = y - offset_y - (glyph.height - row_idx - 1)
+                                        py = y - offset_y - (glyph_height - row_idx - 1)
                                         canvas._draw.point((px, py), fill=pil_color)
-                            current_x += glyph.advance_width
+                            current_x += advance
                         except Exception as e:
                             # Character not found, skip it
                             print(f"Warning: Could not render char '{char}': {e}")
