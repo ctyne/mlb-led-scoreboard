@@ -49,19 +49,22 @@ class PioMatterMatrixAdapter(MatrixDriverBase):
         # Initialize PioMatter (chain/parallel handled by geometry)
         
         # Determine pinout based on --led-gpio-mapping option
-        # Default to Active3 for Seekgreat and similar boards
+        # Default to Active3BGR for Seekgreat boards (colors are BGR order)
         pinout_map = {
             'adafruit-hat': piomatter.Pinout.AdafruitMatrixHat,
             'adafruit-hat-pwm': piomatter.Pinout.AdafruitMatrixHat,
+            'adafruit-hat-bgr': piomatter.Pinout.AdafruitMatrixHatBGR,
             'adafruit-bonnet': piomatter.Pinout.AdafruitMatrixBonnet,
-            'regular': piomatter.Pinout.Active3,
-            'classic': piomatter.Pinout.Active3,
+            'adafruit-bonnet-bgr': piomatter.Pinout.AdafruitMatrixBonnetBGR,
+            'regular': piomatter.Pinout.Active3BGR,
+            'classic': piomatter.Pinout.Active3BGR,
             'active3': piomatter.Pinout.Active3,
+            'active3-bgr': piomatter.Pinout.Active3BGR,
         }
         
-        # Get the mapping from options if available, default to Active3
-        hardware_mapping = getattr(options, 'hardware_mapping', 'active3').lower()
-        pinout = pinout_map.get(hardware_mapping, piomatter.Pinout.Active3)
+        # Get the mapping from options if available, default to Active3BGR
+        hardware_mapping = getattr(options, 'hardware_mapping', 'active3-bgr').lower()
+        pinout = pinout_map.get(hardware_mapping, piomatter.Pinout.Active3BGR)
         
         self._matrix = piomatter.PioMatter(
             colorspace=piomatter.Colorspace.RGB888Packed,

@@ -127,7 +127,7 @@ def _create_pi5_options_class():
             self.cols = 64
             self.chain_length = 1
             self.parallel = 1
-            self.hardware_mapping = 'active3'  # Default for Seekgreat and similar boards
+            self.hardware_mapping = 'active3-bgr'  # Default for Seekgreat boards (BGR color order)
             self.gpio_slowdown = 4
             self.brightness = 100
             self.pwm_bits = 11
