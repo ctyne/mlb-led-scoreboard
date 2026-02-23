@@ -112,6 +112,10 @@ class PioMatterCanvas:
         """Clear the canvas."""
         self._image.paste(Image.new('RGB', (self.width, self.height), (0, 0, 0)))
 
+    def Fill(self, r, g, b):
+        """Fill the entire canvas with a color."""
+        self._image.paste(Image.new('RGB', (self.width, self.height), (r, g, b)))
+
     def SetPixel(self, x, y, r, g, b):
         """Set a single pixel."""
         self._draw.point((x, y), fill=(r, g, b))
