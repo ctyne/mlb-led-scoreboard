@@ -174,17 +174,18 @@ class PioMatterFont:
 
     def LoadFont(self, path):
         """Load a BDF font. Convert to PIL font."""
-        from PIL import ImageFont, BdfFontFile
+        from PIL import ImageFont, BdfFontFile, Image
         import os
         
         # Store the path for reference
         self._font_path = path
 
-        # Try to load BDF font using BdfFontFile (for standalone BDF files)
+        # Try to load BDF font using BdfFontFile and convert to PIL font
         try:
             with open(path, 'rb') as f:
-                bdf_font = BdfFontFile.BdfFontFile(f)
-                self._font = bdf_font
+                bdf = BdfFontFile.BdfFontFile(f)
+                # Convert BdfFontFile to a usable PIL font
+                self._font = bdf.getfont()
                 print(f"Successfully loaded BDF font: {path}")
                 return True
         except Exception as e:
@@ -195,14 +196,14 @@ class PioMatterFont:
             fallback_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
                                          'assets', 'fonts', 'patched', '4x6.bdf')
             with open(fallback_path, 'rb') as f:
-                bdf_font = BdfFontFile.BdfFontFile(f)
-                self._font = bdf_font
+                bdf = BdfFontFile.BdfFontFile(f)
+                self._font = bdf.getfont()
                 print(f"Successfully loaded fallback BDF: {fallback_path}")
                 return True
         except Exception as e:
             print(f"Failed to load 4x6.bdf: {e}")
         
-        # Try loading a very small TrueType font (4-5 point size to approximate 4x6 pixels)
+        # Try loading a very small TrueType font (5 point size to approximate 4x6 pixels)
         try:
             # Try common monospace fonts at small size
             for ttf_path in [
