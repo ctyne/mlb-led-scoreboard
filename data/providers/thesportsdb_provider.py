@@ -27,13 +27,13 @@ class TheSportsDBProvider(BaseProvider):
         Sport.SOCCER: "4328"  # English Premier League (can support others)
     }
     
-    def __init__(self, sport: Sport, api_key: str = "3"):
+    def __init__(self, sport: Sport, api_key: str = "123"):
         """
         Initialize TheSportsDB provider for a specific sport.
         
         Args:
             sport: The sport this provider will fetch (NBA, NHL, NFL, SOCCER)
-            api_key: TheSportsDB API key (default "3" is the free/test key)
+            api_key: TheSportsDB API key (default "123" for better access than free tier)
         """
         super().__init__(api_key)
         self._sport = sport
