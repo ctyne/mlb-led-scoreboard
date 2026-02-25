@@ -144,7 +144,14 @@ def __refresh_gameday(render_thread, data):  # type: (threading.Thread, Data) ->
         if data.should_rotate_to_next_game():
             if data.scrolling_finished:
                 time_delta = time.time() - starttime
-                rotate_rate = data.config.rotate_rate_for_status(data.current_game.status())
+                
+                # Get rotation rate - use current MLB game status or default for other sports
+                if data.current_game_is_other_sport or data.current_game is None:
+                    # For other sports, use default live rate (15 seconds)
+                    rotate_rate = 15.0
+                else:
+                    rotate_rate = data.config.rotate_rate_for_status(data.current_game.status())
+                
                 if time_delta >= rotate_rate:
                     starttime = time.time()
                     data.advance_to_next_game()
