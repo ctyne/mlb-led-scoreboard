@@ -176,6 +176,10 @@ class PioMatterFont:
         """Load a BDF font."""
         import os
         
+        # Check if this font is already loaded
+        if self._font is not None and self._font_path == path:
+            return True
+        
         # Store the path for reference
         self._font_path = path
         self._font = None
