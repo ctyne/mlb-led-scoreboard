@@ -8,6 +8,7 @@ from typing import List, Optional, Dict
 from datetime import date, datetime
 from data.models.base_game import BaseGame, GameStatus, Sport
 from data.models.nba_game import NBAGame
+from data.models.nhl_game import NHLGame
 from data.providers.base_provider import BaseProvider
 
 
@@ -176,7 +177,9 @@ class ESPNProvider(BaseProvider):
         """Parse ESPN event JSON to a game model."""
         if self._sport == Sport.NBA:
             return self._parse_nba_event(event)
-        # TODO: Add parsers for other sports (NHL, NFL, MLB)
+        elif self._sport == Sport.NHL:
+            return self._parse_nhl_event(event)
+        # TODO: Add parsers for NFL, MLB, Soccer
         return None
     
     def _parse_nba_event(self, event: dict) -> Optional[NBAGame]:
@@ -251,5 +254,91 @@ class ESPNProvider(BaseProvider):
                 [int(ls.get("value", 0)) for ls in home_linescores],
                 [int(ls.get("value", 0)) for ls in away_linescores]
             )
+        
+        return game
+    
+    def _parse_nhl_event(self, event: dict) -> Optional[NHLGame]:
+        """Parse ESPN NHL event to NHLGame model."""
+        game = NHLGame()
+        
+        # Get competition data (first competition in the event)
+        competition = event.get("competitions", [{}])[0]
+        competitors = competition.get("competitors", [])
+        
+        # Basic game info
+        game.game_id = str(event.get("id", ""))
+        
+        # Find home and away teams
+        home = next((c for c in competitors if c.get("homeAway") == "home"), {})
+        away = next((c for c in competitors if c.get("homeAway") == "away"), {})
+        
+        home_team = home.get("team", {})
+        away_team = away.get("team", {})
+        
+        game.home_team = home_team.get("displayName", "Unknown")
+        game.away_team = away_team.get("displayName", "Unknown")
+        game.home_team_id = str(home_team.get("id", ""))
+        game.away_team_id = str(away_team.get("id", ""))
+        
+        # Scores
+        game.home_score = int(home.get("score", 0))
+        game.away_score = int(away.get("score", 0))
+        
+        # Game status
+        status_data = competition.get("status", {})
+        status_type = status_data.get("type", {})
+        state = status_type.get("state", "pre")
+        
+        if state == "pre":
+            game.status = GameStatus.SCHEDULED
+        elif state == "in":
+            game.status = GameStatus.LIVE
+        else:  # post
+            game.status = GameStatus.FINAL
+        
+        # Period info (for live/final games)
+        if game.status == GameStatus.LIVE or game.status == GameStatus.FINAL:
+            game.period = int(status_type.get("period", 0))
+            
+            # Check for OT/SO
+            if game.period > 3:
+                game.is_overtime = True
+                # Check if shootout (ESPN uses "STATUS_SHOOTOUT" or period type)
+                detail = status_type.get("detail", "").lower()
+                if "shootout" in detail or "so" in detail:
+                    game.is_shootout = True
+            
+            # Time remaining
+            display_clock = status_data.get("displayClock", "")
+            if display_clock and display_clock != "0:00":
+                game.time_remaining = display_clock
+        
+        # Start time (for scheduled games)
+        date_str = competition.get("date")
+        if date_str:
+            try:
+                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                game.start_time = dt
+            except:
+                pass
+        
+        # Period-by-period scores (linescores)
+        home_linescores = home.get("linescores", [])
+        away_linescores = away.get("linescores", [])
+        
+        if home_linescores:
+            game.home_periods = [int(ls.get("value", 0)) for ls in home_linescores]
+            game.away_periods = [int(ls.get("value", 0)) for ls in away_linescores]
+        
+        # Additional stats (if available)
+        stats = home.get("statistics", [])
+        for stat in stats:
+            if stat.get("name") == "shots":
+                game.home_shots = int(stat.get("displayValue", 0))
+        
+        stats = away.get("statistics", [])
+        for stat in stats:
+            if stat.get("name") == "shots":
+                game.away_shots = int(stat.get("displayValue", 0))
         
         return game
