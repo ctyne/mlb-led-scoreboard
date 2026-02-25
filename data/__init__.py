@@ -125,10 +125,11 @@ class Data:
             
             # Determine if this index is MLB or NBA
             if self.combined_game_index < mlb_count:
-                # It's an MLB game - get directly from list
+                # It's an MLB game - get directly from list and convert to Game object
                 self.current_game_is_other_sport = False
                 self.current_other_sport_game = None
-                game = mlb_games[self.combined_game_index]
+                scheduled_game = mlb_games[self.combined_game_index]
+                game = Game.from_scheduled(scheduled_game, self.config.preferred_game_delay_multiplier, self.config.api_refresh_rate)
                 
                 if game:
                     self.current_game = game
@@ -137,7 +138,7 @@ class Data:
                     self.print_game_data_debug()
                     self.network_issues = False
                 else:
-                    debug.warning(f"MLB game at index {self.combined_game_index} is None")
+                    debug.warning(f"Failed to create Game object at index {self.combined_game_index}")
             else:
                 # It's an NBA game
                 nba_index = self.combined_game_index - mlb_count
