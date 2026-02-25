@@ -314,7 +314,7 @@ class MainRenderer:
             self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
     def __draw_nba_game(self, game):
-        """Draw NBA game on LED matrix - MLB-style layout."""
+        """Draw NBA game on LED matrix - uses mascot names at top."""
         self.canvas.Clear()
         from driver import graphics
         
@@ -328,35 +328,40 @@ class MainRenderer:
         yellow = graphics.Color(255, 255, 0)
         gray = graphics.Color(100, 100, 100)
         
-        away_abbrev = self._abbreviate_nba_team(game.away_team)
-        home_abbrev = self._abbreviate_nba_team(game.home_team)
+        # Get mascot names (e.g., "Bucks", "Cavaliers")
+        away_name = self._get_nba_mascot(game.away_team)
+        home_name = self._get_nba_mascot(game.home_team)
         
         if game.is_live():
-            # Live game - MLB-style layout
-            # Top row: NBA | Period | Time remaining
+            # Live game - mascot names at top, scores on right
+            # Top bar: NBA | Period | Time
             graphics.DrawText(self.canvas, font, 1, 6, yellow, "NBA")
-            period = game.get_period_label()  # "Q1", "Q4", "OT", etc.
+            period = game.get_period_label()  # "Q1", "Q4", "OT"
             graphics.DrawText(self.canvas, font, 17, 6, white, period)
             if game.time_remaining:
                 time_text = game.time_remaining[:5]  # "12:34"
-                graphics.DrawText(self.canvas, font, 35, 6, white, time_text)
+                graphics.DrawText(self.canvas, font, 33, 6, white, time_text)
             
-            # Away team row: Name left, Score right (red if leading)
-            away_color = red if game.away_score > game.home_score else white
-            graphics.DrawText(self.canvas, font, 1, 15, white, away_abbrev)
+            # Determine leader
+            away_leading = game.away_score > game.home_score
+            home_leading = game.home_score > game.away_score
+            
+            # Away team: Name left, Score right (red if leading)
+            away_color = red if away_leading else white
+            graphics.DrawText(self.canvas, font, 1, 15, white, away_name[:10])
             away_score = str(game.away_score)
             score_x = 64 - len(away_score) * 4 - 1
             graphics.DrawText(self.canvas, font, score_x, 15, away_color, away_score)
             
-            # Home team row: Name left, Score right (red if leading)
-            home_color = red if game.home_score > game.away_score else white
-            graphics.DrawText(self.canvas, font, 1, 24, white, home_abbrev)
+            # Home team: Name left, Score right (red if leading)
+            home_color = red if home_leading else white
+            graphics.DrawText(self.canvas, font, 1, 24, white, home_name[:10])
             home_score = str(game.home_score)
             score_x = 64 - len(home_score) * 4 - 1
             graphics.DrawText(self.canvas, font, score_x, 24, home_color, home_score)
             
         elif game.is_final():
-            # Final - show winner in green
+            # Final - show winner in green, loser in gray
             graphics.DrawText(self.canvas, font, 1, 6, green, "NBA")
             graphics.DrawText(self.canvas, font, 17, 6, white, "FINAL")
             
@@ -366,14 +371,14 @@ class MainRenderer:
             
             # Away team
             away_color = green if away_won else gray
-            graphics.DrawText(self.canvas, font, 1, 15, away_color, away_abbrev)
+            graphics.DrawText(self.canvas, font, 1, 15, away_color, away_name[:10])
             away_score = str(game.away_score)
             score_x = 64 - len(away_score) * 4 - 1
             graphics.DrawText(self.canvas, font, score_x, 15, away_color, away_score)
             
             # Home team
             home_color = green if home_won else gray
-            graphics.DrawText(self.canvas, font, 1, 24, home_color, home_abbrev)
+            graphics.DrawText(self.canvas, font, 1, 24, home_color, home_name[:10])
             home_score = str(game.home_score)
             score_x = 64 - len(home_score) * 4 - 1
             graphics.DrawText(self.canvas, font, score_x, 24, home_color, home_score)
@@ -411,9 +416,23 @@ class MainRenderer:
                     graphics.DrawText(self.canvas, font, 17, 6, white, "TBD")
             
             # Team names
-            graphics.DrawText(self.canvas, font, 1, 15, white, away_abbrev)
-            graphics.DrawText(self.canvas, font, 1, 24, white, home_abbrev)
-            graphics.DrawText(self.canvas, font, 40, 20, white, "vs")
+            graphics.DrawText(self.canvas, font, 1, 15, white, away_name[:10])
+            graphics.DrawText(self.canvas, font, 1, 24, white, home_name[:10])
+            graphics.DrawText(self.canvas, font, 28, 20, white, "at")
+        
+        self.canvas = self.matrix.SwapOnVSync(self.canvas)
+    
+    def _get_nba_mascot(self, team_name):
+        """Extract mascot from team name (e.g., 'Milwaukee Bucks' -> 'Bucks')."""
+        # If it's already short, return it
+        if len(team_name) <= 10:
+            return team_name
+        
+        # Split and take last word (mascot)
+        parts = team_name.split()
+        if len(parts) >= 2:
+            return parts[-1]  # "Bucks", "Cavaliers", "Lakers", etc.
+        return team_name[:10]
         
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
