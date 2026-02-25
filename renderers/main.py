@@ -356,9 +356,14 @@ class MainRenderer:
         score_x = 64 - len(home_score) * 4 - 1
         graphics.DrawText(self.canvas, font, score_x, 13, home_text_color, home_score)
         
-        # Bottom row: Period and time (centered)
-        white = graphics.Color(255, 255, 255)
-        yellow = graphics.Color(255, 255, 0)
+        # Bottom section background (MLB default background color)
+        # Rows 14-31 (18 pixels tall) - dark blue background
+        mlb_bg = graphics.Color(7, 14, 25)
+        for y in range(14, 32):
+            graphics.DrawLine(self.canvas, 0, y, 63, y, mlb_bg)
+        
+        # Bottom row: Period and time (MLB yellow)
+        mlb_yellow = graphics.Color(255, 235, 59)
         gray = graphics.Color(150, 150, 150)
         
         if game.is_live():
@@ -367,9 +372,9 @@ class MainRenderer:
             status_text = f"{period} {time_text}".strip()
             # Center the status text
             status_x = (64 - len(status_text) * 4) // 2
-            graphics.DrawText(self.canvas, font, status_x, 20, yellow, status_text)
+            graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status_text)
         elif game.is_final():
-            graphics.DrawText(self.canvas, font, 22, 20, gray, "FINAL")
+            graphics.DrawText(self.canvas, font, 22, 20, mlb_yellow, "FINAL")
         else:
             # Pregame - show start time
             if game.start_time:
@@ -390,12 +395,12 @@ class MainRenderer:
                     local_time = utc_time.astimezone(local_offset)
                     time_str = local_time.strftime("%I:%M%p").lstrip('0').lower()
                     time_x = (64 - len(time_str) * 4) // 2
-                    graphics.DrawText(self.canvas, font, time_x, 20, white, time_str)
+                    graphics.DrawText(self.canvas, font, time_x, 20, mlb_yellow, time_str)
                 except Exception as e:
                     debug.log(f"Time parse error: {e}")
-                    graphics.DrawText(self.canvas, font, 26, 20, white, "TBD")
+                    graphics.DrawText(self.canvas, font, 26, 20, mlb_yellow, "TBD")
             else:
-                graphics.DrawText(self.canvas, font, 26, 20, white, "TBD")
+                graphics.DrawText(self.canvas, font, 26, 20, mlb_yellow, "TBD")
         
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
