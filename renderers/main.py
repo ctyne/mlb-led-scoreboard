@@ -314,95 +314,74 @@ class MainRenderer:
             self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
     def __draw_nba_game(self, game):
-        """Draw NBA game on LED matrix - uses mascot names at top."""
+        """Draw NBA game with team colors and backgrounds."""
         self.canvas.Clear()
         from driver import graphics
         
         # Use cached font
         font = self._get_font()
         
-        # Colors
-        white = graphics.Color(255, 255, 255)
-        red = graphics.Color(255, 0, 0)
-        green = graphics.Color(0, 255, 0)
-        yellow = graphics.Color(255, 255, 0)
-        gray = graphics.Color(100, 100, 100)
-        
-        # Get mascot names (e.g., "Bucks", "Cavaliers")
+        # Get mascot names
         away_name = self._get_nba_mascot(game.away_team)
         home_name = self._get_nba_mascot(game.home_team)
         
+        # Get team colors
+        away_colors = self._get_nba_team_colors(game.away_team)
+        home_colors = self._get_nba_team_colors(game.home_team)
+        
+        # Draw backgrounds and accents (like MLB)
+        # Away team background (top 7 pixels: rows 0-6, text at y=6)
+        self._draw_filled_box(0, 0, 64, 7, home_colors['bg'])
+        # Away team accent (left 2 pixels)
+        self._draw_filled_box(0, 0, 2, 7, away_colors['accent'])
+        
+        # Home team background (middle 7 pixels: rows 7-13, text at y=13)
+        self._draw_filled_box(0, 7, 64, 7, home_colors['bg'])
+        # Home team accent (left 2 pixels)
+        self._draw_filled_box(0, 7, 2, 7, home_colors['accent'])
+        
+        # Text colors
+        away_text_color = graphics.Color(away_colors['text']['r'], away_colors['text']['g'], away_colors['text']['b'])
+        home_text_color = graphics.Color(home_colors['text']['r'], home_colors['text']['g'], home_colors['text']['b'])
+        
+        # Away team: Name and score
+        graphics.DrawText(self.canvas, font, 4, 6, away_text_color, away_name[:10])
+        away_score = str(game.away_score)
+        score_x = 64 - len(away_score) * 4 - 1
+        graphics.DrawText(self.canvas, font, score_x, 6, away_text_color, away_score)
+        
+        # Home team: Name and score
+        graphics.DrawText(self.canvas, font, 4, 13, home_text_color, home_name[:10])
+        home_score = str(game.home_score)
+        score_x = 64 - len(home_score) * 4 - 1
+        graphics.DrawText(self.canvas, font, score_x, 13, home_text_color, home_score)
+        
+        # Bottom row: Period and time (centered)
+        white = graphics.Color(255, 255, 255)
+        yellow = graphics.Color(255, 255, 0)
+        gray = graphics.Color(150, 150, 150)
+        
         if game.is_live():
-            # Live game - mascot names at top, scores on right
-            # Top bar: NBA | Period | Time
-            graphics.DrawText(self.canvas, font, 1, 6, yellow, "NBA")
             period = game.get_period_label()  # "Q1", "Q4", "OT"
-            graphics.DrawText(self.canvas, font, 17, 6, white, period)
-            if game.time_remaining:
-                time_text = game.time_remaining[:5]  # "12:34"
-                graphics.DrawText(self.canvas, font, 33, 6, white, time_text)
-            
-            # Determine leader
-            away_leading = game.away_score > game.home_score
-            home_leading = game.home_score > game.away_score
-            
-            # Away team: Name left, Score right (red if leading)
-            away_color = red if away_leading else white
-            graphics.DrawText(self.canvas, font, 1, 15, white, away_name[:10])
-            away_score = str(game.away_score)
-            score_x = 64 - len(away_score) * 4 - 1
-            graphics.DrawText(self.canvas, font, score_x, 15, away_color, away_score)
-            
-            # Home team: Name left, Score right (red if leading)
-            home_color = red if home_leading else white
-            graphics.DrawText(self.canvas, font, 1, 24, white, home_name[:10])
-            home_score = str(game.home_score)
-            score_x = 64 - len(home_score) * 4 - 1
-            graphics.DrawText(self.canvas, font, score_x, 24, home_color, home_score)
-            
+            time_text = game.time_remaining[:5] if game.time_remaining else ""
+            status_text = f"{period} {time_text}".strip()
+            # Center the status text
+            status_x = (64 - len(status_text) * 4) // 2
+            graphics.DrawText(self.canvas, font, status_x, 20, yellow, status_text)
         elif game.is_final():
-            # Final - show winner in green, loser in gray
-            graphics.DrawText(self.canvas, font, 1, 6, green, "NBA")
-            graphics.DrawText(self.canvas, font, 17, 6, white, "FINAL")
-            
-            # Determine winner
-            away_won = game.away_score > game.home_score
-            home_won = game.home_score > game.away_score
-            
-            # Away team
-            away_color = green if away_won else gray
-            graphics.DrawText(self.canvas, font, 1, 15, away_color, away_name[:10])
-            away_score = str(game.away_score)
-            score_x = 64 - len(away_score) * 4 - 1
-            graphics.DrawText(self.canvas, font, score_x, 15, away_color, away_score)
-            
-            # Home team
-            home_color = green if home_won else gray
-            graphics.DrawText(self.canvas, font, 1, 24, home_color, home_name[:10])
-            home_score = str(game.home_score)
-            score_x = 64 - len(home_score) * 4 - 1
-            graphics.DrawText(self.canvas, font, score_x, 24, home_color, home_score)
-            
+            graphics.DrawText(self.canvas, font, 22, 20, gray, "FINAL")
         else:
-            # Pregame - show game time
-            graphics.DrawText(self.canvas, font, 1, 6, yellow, "NBA")
-            
-            # Show start time if available
+            # Pregame - show start time
             if game.start_time:
-                from datetime import datetime
                 import time as time_module
                 try:
-                    # start_time is already a datetime object
-                    # Convert to local time using system timezone
+                    from datetime import timezone
                     if time_module.daylight:
                         offset_sec = time_module.altzone
                     else:
                         offset_sec = time_module.timezone
-                    # Create timezone-aware local time
-                    from datetime import timezone
                     local_offset = timezone(timedelta(seconds=-offset_sec))
                     
-                    # If start_time is naive, assume it's UTC
                     if game.start_time.tzinfo is None:
                         utc_time = game.start_time.replace(tzinfo=timezone.utc)
                     else:
@@ -410,17 +389,85 @@ class MainRenderer:
                     
                     local_time = utc_time.astimezone(local_offset)
                     time_str = local_time.strftime("%I:%M%p").lstrip('0').lower()
-                    graphics.DrawText(self.canvas, font, 17, 6, white, time_str)
+                    time_x = (64 - len(time_str) * 4) // 2
+                    graphics.DrawText(self.canvas, font, time_x, 20, white, time_str)
                 except Exception as e:
                     debug.log(f"Time parse error: {e}")
-                    graphics.DrawText(self.canvas, font, 17, 6, white, "TBD")
-            
-            # Team names
-            graphics.DrawText(self.canvas, font, 1, 15, white, away_name[:10])
-            graphics.DrawText(self.canvas, font, 1, 24, white, home_name[:10])
-            graphics.DrawText(self.canvas, font, 28, 20, white, "at")
+                    graphics.DrawText(self.canvas, font, 26, 20, white, "TBD")
+            else:
+                graphics.DrawText(self.canvas, font, 26, 20, white, "TBD")
         
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
+    
+    def _draw_filled_box(self, x, y, width, height, color):
+        """Draw a filled rectangle (like MLB team backgrounds)."""
+        from driver import graphics
+        c = graphics.Color(color['r'], color['g'], color['b'])
+        for h in range(height):
+            graphics.DrawLine(self.canvas, x, y + h, x + width - 1, y + h, c)
+    
+    def _get_nba_team_colors(self, team_name):
+        """Get team colors (background, accent, text) for NBA teams."""
+        # Default colors
+        colors = {
+            'bg': {'r': 0, 'g': 0, 'b': 0},  # black background
+            'accent': {'r': 200, 'g': 200, 'b': 200},  # gray accent
+            'text': {'r': 255, 'g': 255, 'b': 255}  # white text
+        }
+        
+        team_lower = team_name.lower()
+        
+        # NBA team colors (background, accent, text)
+        if 'bucks' in team_lower or 'milwaukee' in team_lower:
+            colors = {
+                'bg': {'r': 0, 'g': 71, 'b': 27},  # dark green
+                'accent': {'r': 102, 'g': 45, 'b': 145},  # purple
+                'text': {'r': 240, 'g': 235, 'b': 210}  # cream
+            }
+        elif 'cavaliers' in team_lower or 'cleveland' in team_lower:
+            colors = {
+                'bg': {'r': 134, 'g': 0, 'b': 56},  # wine/maroon
+                'accent': {'r': 253, 'g': 187, 'b': 48},  # gold
+                'text': {'r': 255, 'g': 255, 'b': 255}  # white
+            }
+        elif 'lakers' in team_lower or 'los angeles lakers' in team_lower:
+            colors = {
+                'bg': {'r': 85, 'g': 37, 'b': 130},  # purple
+                'accent': {'r': 253, 'g': 185, 'b': 39},  # gold
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'celtics' in team_lower or 'boston' in team_lower:
+            colors = {
+                'bg': {'r': 0, 'g': 122, 'b': 51},  # green
+                'accent': {'r': 139, 'g': 111, 'b': 78},  # gold
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'warriors' in team_lower or 'golden state' in team_lower:
+            colors = {
+                'bg': {'r': 29, 'g': 66, 'b': 138},  # blue
+                'accent': {'r': 255, 'g': 199, 'b': 44},  # gold
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'heat' in team_lower or 'miami' in team_lower:
+            colors = {
+                'bg': {'r': 152, 'g': 0, 'b': 46},  # red
+                'accent': {'r': 249, 'g': 160, 'b': 27},  # orange
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'bulls' in team_lower or 'chicago' in team_lower:
+            colors = {
+                'bg': {'r': 206, 'g': 17, 'b': 65},  # red
+                'accent': {'r': 0, 'g': 0, 'b': 0},  # black
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'knicks' in team_lower or 'new york' in team_lower:
+            colors = {
+                'bg': {'r': 0, 'g': 107, 'b': 182},  # blue
+                'accent': {'r': 245, 'g': 132, 'b': 38},  # orange
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        
+        return colors
     
     def _get_nba_mascot(self, team_name):
         """Extract mascot from team name (e.g., 'Milwaukee Bucks' -> 'Bucks')."""
