@@ -279,7 +279,7 @@ class MainRenderer:
         return not self.data.schedule.games_live()
     
     def __draw_other_sport_game(self):
-        """Draw NBA/NHL/NFL/Soccer games."""
+        """Draw NBA/NHL/Soccer games."""
         game = self.data.current_other_sport_game
         from data.models.base_game import Sport
         
@@ -287,6 +287,8 @@ class MainRenderer:
             self.__draw_nba_game(game)
         elif game.sport == Sport.NHL:
             self.__draw_nhl_game(game)
+        elif game.sport == Sport.SOCCER:
+            self.__draw_soccer_game(game)
         else:
             debug.log(f"Sport {game.sport.value} not yet supported")
             self.canvas.Clear()
@@ -527,6 +529,134 @@ class MainRenderer:
             "Seattle Kraken": "SEA", "St. Louis Blues": "STL", "Tampa Bay Lightning": "TBL",
             "Toronto Maple Leafs": "TOR", "Vancouver Canucks": "VAN", "Vegas Golden Knights": "VGK",
             "Washington Capitals": "WSH", "Winnipeg Jets": "WPG"
+        }
+        return abbrevs.get(team_name, team_name[:3].upper())
+    
+    def __draw_soccer_game(self, game):
+        """Draw Soccer/Football game on the LED matrix."""
+        self.canvas.Clear()
+        from driver import graphics
+        
+        # Load fonts
+        font = graphics.Font()
+        font.LoadFont("assets/fonts/patched/4x6.bdf")
+        
+        # Colors
+        white = graphics.Color(255, 255, 255)
+        red = graphics.Color(255, 0, 0)
+        green = graphics.Color(0, 255, 0)
+        blue = graphics.Color(100, 150, 255)
+        yellow = graphics.Color(255, 255, 0)
+        gray = graphics.Color(100, 100, 100)
+        
+        away_abbrev = self._abbreviate_soccer_team(game.away_team)
+        home_abbrev = self._abbreviate_soccer_team(game.home_team)
+        
+        if game.is_live():
+            # Live match layout
+            # Row 1: League indicator | Half | Minute
+            graphics.DrawText(self.canvas, font, 1, 6, green, "FOOTY")
+            period = game.get_period_label()
+            graphics.DrawText(self.canvas, font, 30, 6, yellow, period)
+            
+            if game.minute:
+                minute_text = game.minute[:4]  # "45'+2" or "67"
+                graphics.DrawText(self.canvas, font, 48, 6, white, minute_text)
+            
+            # Row 2: Away Team | Score (right-aligned)
+            away_color = red if game.away_score > game.home_score else white
+            graphics.DrawText(self.canvas, font, 1, 15, away_color, away_abbrev)
+            away_score = str(game.away_score)
+            score_x = 64 - len(away_score) * 5 - 2
+            graphics.DrawText(self.canvas, font, score_x, 15, away_color, away_score)
+            
+            # Row 3: Home Team | Score (right-aligned)
+            home_color = red if game.home_score > game.away_score else white
+            graphics.DrawText(self.canvas, font, 1, 24, home_color, home_abbrev)
+            home_score = str(game.home_score)
+            score_x = 64 - len(home_score) * 5 - 2
+            graphics.DrawText(self.canvas, font, score_x, 24, home_color, home_score)
+            
+        elif game.is_final():
+            # Final match layout
+            graphics.DrawText(self.canvas, font, 1, 6, green, "FOOTY")
+            graphics.DrawText(self.canvas, font, 30, 6, red, "FT")
+            
+            # Show if ET/PK win
+            if game.is_penalty_shootout:
+                graphics.DrawText(self.canvas, font, 45, 6, yellow, "PK")
+            elif game.is_extra_time:
+                graphics.DrawText(self.canvas, font, 45, 6, yellow, "ET")
+            
+            # Determine winner (or draw)
+            if game.away_score > game.home_score:
+                away_color, home_color = green, gray
+            elif game.home_score > game.away_score:
+                away_color, home_color = gray, green
+            else:
+                # Draw
+                away_color, home_color = white, white
+            
+            # Away team
+            graphics.DrawText(self.canvas, font, 1, 15, away_color, away_abbrev)
+            away_score = str(game.away_score)
+            score_x = 64 - len(away_score) * 5 - 2
+            graphics.DrawText(self.canvas, font, score_x, 15, away_color, away_score)
+            
+            # Home team
+            graphics.DrawText(self.canvas, font, 1, 24, home_color, home_abbrev)
+            home_score = str(game.home_score)
+            score_x = 64 - len(home_score) * 5 - 2
+            graphics.DrawText(self.canvas, font, score_x, 24, home_color, home_score)
+            
+        else:
+            # Scheduled/Pregame layout
+            graphics.DrawText(self.canvas, font, 1, 6, green, "FOOTY")
+            
+            # Matchup centered
+            matchup = f"{away_abbrev} @ {home_abbrev}"
+            matchup_x = (64 - len(matchup) * 5) // 2
+            graphics.DrawText(self.canvas, font, matchup_x, 15, white, matchup)
+            
+            # Time (if available)
+            if hasattr(game, 'start_time') and game.start_time:
+                time_str = str(game.start_time)
+                if len(time_str) > 8:
+                    try:
+                        from datetime import datetime
+                        dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+                        time_str = dt.strftime("%-I:%M%p").replace('M', '')
+                    except:
+                        time_str = time_str[:8]
+                
+                time_x = (64 - len(time_str) * 5) // 2
+                graphics.DrawText(self.canvas, font, time_x, 24, yellow, time_str)
+        
+        self.canvas = self.matrix.SwapOnVSync(self.canvas)
+    
+    def _abbreviate_soccer_team(self, team_name):
+        """Abbreviate soccer team names."""
+        # Premier League teams
+        abbrevs = {
+            "Arsenal": "ARS", "Aston Villa": "AVL", "Bournemouth": "BOU",
+            "Brentford": "BRE", "Brighton": "BHA", "Brighton & Hove Albion": "BHA",
+            "Chelsea": "CHE", "Crystal Palace": "CRY", "Everton": "EVE",
+            "Fulham": "FUL", "Ipswich Town": "IPS", "Leicester City": "LEI",
+            "Liverpool": "LIV", "Manchester City": "MCI", "Manchester United": "MUN",
+            "Newcastle United": "NEW", "Nottingham Forest": "NFO", "Southampton": "SOU",
+            "Tottenham": "TOT", "Tottenham Hotspur": "TOT", "West Ham": "WHU",
+            "West Ham United": "WHU", "Wolverhampton": "WOL", "Wolves": "WOL",
+            # MLS teams (common ones)
+            "Atlanta United": "ATL", "Austin FC": "ATX", "Charlotte FC": "CLT",
+            "Chicago Fire": "CHI", "FC Cincinnati": "CIN", "Colorado Rapids": "COL",
+            "Columbus Crew": "CLB", "DC United": "DC", "FC Dallas": "DAL",
+            "Houston Dynamo": "HOU", "Inter Miami": "MIA", "LA Galaxy": "LAG",
+            "LAFC": "LFC", "Minnesota United": "MIN", "Montreal Impact": "MTL",
+            "Nashville SC": "NSH", "New England Revolution": "NE", "NYCFC": "NYC",
+            "New York Red Bulls": "RB", "Orlando City": "ORL", "Philadelphia Union": "PHI",
+            "Portland Timbers": "POR", "Real Salt Lake": "RSL", "San Jose Earthquakes": "SJ",
+            "Seattle Sounders": "SEA", "Sporting Kansas City": "SKC", "Toronto FC": "TOR",
+            "Vancouver Whitecaps": "VAN"
         }
         return abbrevs.get(team_name, team_name[:3].upper())
 
