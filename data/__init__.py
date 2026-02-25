@@ -109,11 +109,15 @@ class Data:
         """Advance to the next game in rotation (MLB or other sports)."""
         if self.multi_sport.enabled and self.other_sport_games:
             # Create combined list of all games
-            mlb_count = self.schedule.num_games()
+            # Access schedule's internal _games list directly
+            mlb_games = getattr(self.schedule, '_games', [])
+            mlb_count = len(mlb_games)
             nba_count = len(self.other_sport_games)
             total_games = mlb_count + nba_count
             
             if total_games == 0:
+                debug.warning("No games available (MLB or NBA)")
+                self.network_issues = True
                 return
             
             # Move to next game in combined rotation
@@ -121,24 +125,19 @@ class Data:
             
             # Determine if this index is MLB or NBA
             if self.combined_game_index < mlb_count:
-                # It's an MLB game - use schedule's rotation
-                was_other_sport = self.current_game_is_other_sport
+                # It's an MLB game - get directly from list
                 self.current_game_is_other_sport = False
                 self.current_other_sport_game = None
-                
-                # Always get the next MLB game
-                game = self.schedule.next_game()
+                game = mlb_games[self.combined_game_index]
                 
                 if game:
-                    # Only update if it changed or we're switching from other sport
-                    if was_other_sport or self.current_game is None or game.game_id != self.current_game.game_id:
-                        self.current_game = game
-                        self.game_changed_time = time.time()
-                        self.__update_layout_state()
-                        self.print_game_data_debug()
+                    self.current_game = game
+                    self.game_changed_time = time.time()
+                    self.__update_layout_state()
+                    self.print_game_data_debug()
                     self.network_issues = False
                 else:
-                    debug.warning(f"Failed to get MLB game at combined index {self.combined_game_index}")
+                    debug.warning(f"MLB game at index {self.combined_game_index} is None")
             else:
                 # It's an NBA game
                 nba_index = self.combined_game_index - mlb_count
