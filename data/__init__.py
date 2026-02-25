@@ -105,24 +105,76 @@ class Data:
 
 
     def advance_to_next_game(self):
-        game = self.schedule.next_game()
-        if game is None:
-            self.network_issues = True
-            return
-
-        if game.game_id != self.current_game.game_id:
-            self.current_game = game
+        """Advance to the next game in rotation (MLB or other sports)."""
+        if self.multi_sport.enabled and self.other_sport_games:
+            # Combine MLB and other sport games for rotation
+            all_games = []
+            
+            # Add MLB games
+            for i in range(self.schedule.num_games()):
+                all_games.append({"type": "mlb", "index": i})
+            
+            # Add other sport games
+            for i, game in enumerate(self.other_sport_games):
+                all_games.append({"type": "other", "index": i, "game": game})
+            
+            if not all_games:
+                return
+            
+            # Find current position
+            current_pos = 0
+            if self.current_game_is_other_sport and self.current_other_sport_game:
+                # Find current other sport game
+                for i, item in enumerate(all_games):
+                    if item["type"] == "other" and item.get("game") == self.current_other_sport_game:
+                        current_pos = i
+                        break
+            elif self.current_game:
+                # Find current MLB game
+                for i in range(self.schedule.num_games()):
+                    if self.schedule.games[i] == self.current_game:
+                        for j, item in enumerate(all_games):
+                            if item["type"] == "mlb" and item["index"] == i:
+                                current_pos = j
+                                break
+                        break
+            
+            # Move to next game
+            next_pos = (current_pos + 1) % len(all_games)
+            next_game_info = all_games[next_pos]
+            
+            if next_game_info["type"] == "mlb":
+                self.current_game_is_other_sport = False
+                self.current_other_sport_game = None
+                self.current_game = self.schedule.games[next_game_info["index"]]
+                self.__update_layout_state()
+            else:
+                self.current_game_is_other_sport = True
+                self.current_other_sport_game = next_game_info["game"]
+                self.current_game = None  # Clear MLB game
+            
             self.game_changed_time = time.time()
-            self.__update_layout_state()
-            self.print_game_data_debug()
-            self.network_issues = False
+            self.scrolling_finished = False
+        else:
+            # Original MLB-only behavior
+            game = self.schedule.next_game()
+            if game is None:
+                self.network_issues = True
+                return
 
-        elif self.current_game is not None:
-            # prefer to update the existing game rather than
-            # rotating if its the same game.
-            # this helps with e.g. the delay logic
-            debug.log("Rotating to the same game, refreshing instead")
-            self.refresh_game()
+            if game.game_id != self.current_game.game_id:
+                self.current_game = game
+                self.game_changed_time = time.time()
+                self.__update_layout_state()
+                self.print_game_data_debug()
+                self.network_issues = False
+
+            elif self.current_game is not None:
+                # prefer to update the existing game rather than
+                # rotating if its the same game.
+                # this helps with e.g. the delay logic
+                debug.log("Rotating to the same game, refreshing instead")
+                self.refresh_game()
 
     def refresh_standings(self):
         self.__process_network_status(self.standings.update())
@@ -135,6 +187,14 @@ class Data:
 
     def refresh_schedule(self, force=False):
         self.__process_network_status(self.schedule.update(force))
+        
+        # Also refresh other sports if enabled
+        if self.multi_sport.enabled:
+            try:
+                self.other_sport_games = self.multi_sport.get_todays_games()
+                debug.log(f"Refreshed: {len(self.other_sport_games)} other sport games")
+            except Exception as e:
+                debug.log(f"Error refreshing other sport games: {e}")
 
     def __process_network_status(self, status):
         if status == UpdateStatus.SUCCESS:
