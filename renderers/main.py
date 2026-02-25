@@ -274,6 +274,88 @@ class MainRenderer:
     def no_games_cond(self) -> bool:
         """A condition that is true only while there are no games live"""
         return not self.data.schedule.games_live()
+    
+    def __draw_other_sport_game(self):
+        """Draw NBA/NHL/NFL/Soccer games."""
+        game = self.data.current_other_sport_game
+        from data.models.base_game import Sport
+        
+        if game.sport == Sport.NBA:
+            self.__draw_nba_game(game)
+        else:
+            debug.log(f"Sport {game.sport.value} not yet supported")
+            self.canvas.Clear()
+            from driver import graphics
+            font = graphics.Font()
+            font.LoadFont("fonts/4x6.bdf")
+            white = graphics.Color(255, 255, 255)
+            graphics.DrawText(self.canvas, font, 1, 10, white, f"{game.sport.value}")
+            graphics.DrawText(self.canvas, font, 1, 18, white, game.away_team[:10])
+            graphics.DrawText(self.canvas, font, 1, 25, white, game.home_team[:10])
+            self.canvas = self.matrix.SwapOnVSync(self.canvas)
+    
+    def __draw_nba_game(self, game):
+        """Draw NBA game on the LED matrix."""
+        self.canvas.Clear()
+        from driver import graphics
+        
+        font = graphics.Font()
+        font.LoadFont("fonts/4x6.bdf")
+        
+        white = graphics.Color(255, 255, 255)
+        red = graphics.Color(255, 0, 0)
+        green = graphics.Color(0, 255, 0)
+        yellow = graphics.Color(255, 255, 0)
+        
+        away_abbrev = self._abbreviate_nba_team(game.away_team)
+        home_abbrev = self._abbreviate_nba_team(game.home_team)
+        
+        y_pos = 6
+        graphics.DrawText(self.canvas, font, 1, y_pos, green, "NBA")
+        y_pos += 8
+        
+        if game.is_live():
+            away_text = f"{away_abbrev} {game.away_score}"
+            home_text = f"{home_abbrev} {game.home_score}"
+            graphics.DrawText(self.canvas, font, 1, y_pos, red if game.away_score > game.home_score else white, away_text)
+            y_pos += 7
+            graphics.DrawText(self.canvas, font, 1, y_pos, red if game.home_score > game.away_score else white, home_text)
+            y_pos += 8
+            period_text = game.get_period_label()
+            graphics.DrawText(self.canvas, font, 1, y_pos, yellow, period_text)
+            if game.time_remaining:
+                graphics.DrawText(self.canvas, font, 30, y_pos, white, game.time_remaining[:5])
+        elif game.is_final():
+            graphics.DrawText(self.canvas, font, 1, y_pos, white, f"{away_abbrev} {game.away_score}")
+            y_pos += 7
+            graphics.DrawText(self.canvas, font, 1, y_pos, white, f"{home_abbrev} {game.home_score}")
+            y_pos += 8
+            graphics.DrawText(self.canvas, font, 1, y_pos, red, "FINAL")
+        else:
+            graphics.DrawText(self.canvas, font, 1, y_pos, white, f"{away_abbrev} @")
+            y_pos += 7
+            graphics.DrawText(self.canvas, font, 1, y_pos, white, home_abbrev)
+            y_pos += 8
+            if game.game_time_local:
+                graphics.DrawText(self.canvas, font, 1, y_pos, yellow, game.game_time_local[:5])
+        
+        self.canvas = self.matrix.SwapOnVSync(self.canvas)
+    
+    def _abbreviate_nba_team(self, team_name):
+        """Abbreviate NBA team names."""
+        abbrevs = {
+            "Atlanta Hawks": "ATL", "Boston Celtics": "BOS", "Brooklyn Nets": "BKN",
+            "Charlotte Hornets": "CHA", "Chicago Bulls": "CHI", "Cleveland Cavaliers": "CLE",
+            "Dallas Mavericks": "DAL", "Denver Nuggets": "DEN", "Detroit Pistons": "DET",
+            "Golden State Warriors": "GSW", "Houston Rockets": "HOU", "Indiana Pacers": "IND",
+            "LA Clippers": "LAC", "Los Angeles Lakers": "LAL", "Memphis Grizzlies": "MEM",
+            "Miami Heat": "MIA", "Milwaukee Bucks": "MIL", "Minnesota Timberwolves": "MIN",
+            "New Orleans Pelicans": "NOP", "New York Knicks": "NYK", "Oklahoma City Thunder": "OKC",
+            "Orlando Magic": "ORL", "Philadelphia 76ers": "PHI", "Phoenix Suns": "PHX",
+            "Portland Trail Blazers": "POR", "Sacramento Kings": "SAC", "San Antonio Spurs": "SAS",
+            "Toronto Raptors": "TOR", "Utah Jazz": "UTA", "Washington Wizards": "WAS"
+        }
+        return abbrevs.get(team_name, team_name[:3].upper())
 
 
 def permanent_cond() -> bool:
