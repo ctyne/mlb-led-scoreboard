@@ -393,7 +393,7 @@ class MainRenderer:
                         utc_time = game.start_time
                     
                     local_time = utc_time.astimezone(local_offset)
-                    time_str = local_time.strftime("%I:%M%p").lstrip('0').lower()
+                    time_str = local_time.strftime("%I:%M%p").lstrip('0')  # Keep PM capitalized
                     time_x = (64 - len(time_str) * 4) // 2
                     graphics.DrawText(self.canvas, font, time_x, 20, mlb_yellow, time_str)
                 except Exception as e:
