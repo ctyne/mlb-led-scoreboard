@@ -171,6 +171,7 @@ class PioMatterFont:
     def __init__(self):
         self._font = None
         self._font_path = None
+        self._is_bdf = False
 
     def LoadFont(self, path):
         """Load a BDF font."""
@@ -180,9 +181,8 @@ class PioMatterFont:
         if self._font is not None and self._font_path == path:
             return True
         
-        # Store the path for reference
+        # Store the path for reference (but don't reset font until we try to load)
         self._font_path = path
-        self._font = None
         
         # Try to load BDF font using bdfparser library
         try:
