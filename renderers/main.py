@@ -382,27 +382,33 @@ class MainRenderer:
             # Pregame - show game time
             graphics.DrawText(self.canvas, font, 1, 6, yellow, "NBA")
             
-            # Convert UTC to local time
-            if game.game_time:
+            # Show start time if available
+            if game.start_time:
                 from datetime import datetime
+                import time as time_module
                 try:
-                    # Parse ESPN time (usually UTC)
-                    utc_time = datetime.strptime(game.game_time, "%Y-%m-%dT%H:%MZ")
+                    # start_time is already a datetime object
                     # Convert to local time using system timezone
-                    from datetime import timezone
-                    import time as time_module
-                    # Get local timezone offset
                     if time_module.daylight:
                         offset_sec = time_module.altzone
                     else:
                         offset_sec = time_module.timezone
+                    # Create timezone-aware local time
+                    from datetime import timezone
                     local_offset = timezone(timedelta(seconds=-offset_sec))
-                    local_time = utc_time.replace(tzinfo=timezone.utc).astimezone(local_offset)
+                    
+                    # If start_time is naive, assume it's UTC
+                    if game.start_time.tzinfo is None:
+                        utc_time = game.start_time.replace(tzinfo=timezone.utc)
+                    else:
+                        utc_time = game.start_time
+                    
+                    local_time = utc_time.astimezone(local_offset)
                     time_str = local_time.strftime("%I:%M%p").lstrip('0').lower()
                     graphics.DrawText(self.canvas, font, 17, 6, white, time_str)
                 except Exception as e:
                     debug.log(f"Time parse error: {e}")
-                    graphics.DrawText(self.canvas, font, 17, 6, white, game.game_time[:5])
+                    graphics.DrawText(self.canvas, font, 17, 6, white, "TBD")
             
             # Team names
             graphics.DrawText(self.canvas, font, 1, 15, white, away_abbrev)
