@@ -298,50 +298,96 @@ class MainRenderer:
             self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
     def __draw_nba_game(self, game):
-        """Draw NBA game on the LED matrix."""
+        """Draw NBA game on the LED matrix in a compact, readable format."""
         self.canvas.Clear()
         from driver import graphics
         
+        # Load fonts
         font = graphics.Font()
         font.LoadFont("assets/fonts/patched/4x6.bdf")
         
+        # Colors
         white = graphics.Color(255, 255, 255)
         red = graphics.Color(255, 0, 0)
         green = graphics.Color(0, 255, 0)
+        blue = graphics.Color(100, 100, 255)
         yellow = graphics.Color(255, 255, 0)
+        gray = graphics.Color(100, 100, 100)
         
         away_abbrev = self._abbreviate_nba_team(game.away_team)
         home_abbrev = self._abbreviate_nba_team(game.home_team)
         
-        y_pos = 6
-        graphics.DrawText(self.canvas, font, 1, y_pos, green, "NBA")
-        y_pos += 8
-        
         if game.is_live():
-            away_text = f"{away_abbrev} {game.away_score}"
-            home_text = f"{home_abbrev} {game.home_score}"
-            graphics.DrawText(self.canvas, font, 1, y_pos, red if game.away_score > game.home_score else white, away_text)
-            y_pos += 7
-            graphics.DrawText(self.canvas, font, 1, y_pos, red if game.home_score > game.away_score else white, home_text)
-            y_pos += 8
-            period_text = game.get_period_label()
-            graphics.DrawText(self.canvas, font, 1, y_pos, yellow, period_text)
+            # Live game layout - compact and information-dense
+            # Row 1: NBA | Period | Time
+            graphics.DrawText(self.canvas, font, 1, 6, blue, "NBA")
+            period = game.get_period_label()
+            graphics.DrawText(self.canvas, font, 22, 6, yellow, period)
             if game.time_remaining:
-                graphics.DrawText(self.canvas, font, 30, y_pos, white, game.time_remaining[:5])
+                time_text = game.time_remaining[:5]  # "12:34" or "0:45"
+                graphics.DrawText(self.canvas, font, 40, 6, white, time_text)
+            
+            # Row 2: Away Team | Score (larger, right-aligned)
+            away_color = red if game.away_score > game.home_score else white
+            graphics.DrawText(self.canvas, font, 1, 15, away_color, away_abbrev)
+            away_score = str(game.away_score)
+            score_x = 64 - len(away_score) * 5 - 2
+            graphics.DrawText(self.canvas, font, score_x, 15, away_color, away_score)
+            
+            # Row 3: Home Team | Score (larger, right-aligned)
+            home_color = red if game.home_score > game.away_score else white
+            graphics.DrawText(self.canvas, font, 1, 24, home_color, home_abbrev)
+            home_score = str(game.home_score)
+            score_x = 64 - len(home_score) * 5 - 2
+            graphics.DrawText(self.canvas, font, score_x, 24, home_color, home_score)
+            
         elif game.is_final():
-            graphics.DrawText(self.canvas, font, 1, y_pos, white, f"{away_abbrev} {game.away_score}")
-            y_pos += 7
-            graphics.DrawText(self.canvas, font, 1, y_pos, white, f"{home_abbrev} {game.home_score}")
-            y_pos += 8
-            graphics.DrawText(self.canvas, font, 1, y_pos, red, "FINAL")
+            # Final game layout
+            graphics.DrawText(self.canvas, font, 1, 6, blue, "NBA")
+            graphics.DrawText(self.canvas, font, 22, 6, red, "FINAL")
+            
+            # Determine winner
+            away_winner = game.away_score > game.home_score
+            home_winner = game.home_score > game.away_score
+            
+            # Away team
+            away_color = green if away_winner else gray
+            graphics.DrawText(self.canvas, font, 1, 15, away_color, away_abbrev)
+            away_score = str(game.away_score)
+            score_x = 64 - len(away_score) * 5 - 2
+            graphics.DrawText(self.canvas, font, score_x, 15, away_color, away_score)
+            
+            # Home team
+            home_color = green if home_winner else gray
+            graphics.DrawText(self.canvas, font, 1, 24, home_color, home_abbrev)
+            home_score = str(game.home_score)
+            score_x = 64 - len(home_score) * 5 - 2
+            graphics.DrawText(self.canvas, font, score_x, 24, home_color, home_score)
+            
         else:
-            # Scheduled game
-            graphics.DrawText(self.canvas, font, 1, y_pos, white, f"{away_abbrev} @")
-            y_pos += 7
-            graphics.DrawText(self.canvas, font, 1, y_pos, white, home_abbrev)
-            y_pos += 8
+            # Scheduled/Pregame layout
+            graphics.DrawText(self.canvas, font, 1, 6, blue, "NBA")
+            
+            # Matchup centered
+            matchup = f"{away_abbrev} @ {home_abbrev}"
+            matchup_x = (64 - len(matchup) * 5) // 2
+            graphics.DrawText(self.canvas, font, matchup_x, 15, white, matchup)
+            
+            # Time (if available)
             if hasattr(game, 'start_time') and game.start_time:
-                graphics.DrawText(self.canvas, font, 1, y_pos, yellow, str(game.start_time)[:5])
+                # Format time nicely (e.g., "7:00 PM" -> "7:00P")
+                time_str = str(game.start_time)
+                if len(time_str) > 8:
+                    # Try to parse datetime
+                    try:
+                        from datetime import datetime
+                        dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+                        time_str = dt.strftime("%-I:%M%p").replace('M', '')  # "7:00P"
+                    except:
+                        time_str = time_str[:8]
+                
+                time_x = (64 - len(time_str) * 5) // 2
+                graphics.DrawText(self.canvas, font, time_x, 24, yellow, time_str)
         
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
