@@ -646,6 +646,9 @@ class MainRenderer:
             "Newcastle United": "NEW", "Nottingham Forest": "NFO", "Southampton": "SOU",
             "Tottenham": "TOT", "Tottenham Hotspur": "TOT", "West Ham": "WHU",
             "West Ham United": "WHU", "Wolverhampton": "WOL", "Wolves": "WOL",
+            # Championship teams
+            "Wrexham": "WXM", "Leeds United": "LEE", "Sheffield United": "SHU",
+            "Burnley": "BUR", "Middlesbrough": "MID", "Sunderland": "SUN",
             # MLS teams (common ones)
             "Atlanta United": "ATL", "Austin FC": "ATX", "Charlotte FC": "CLT",
             "Chicago Fire": "CHI", "FC Cincinnati": "CIN", "Colorado Rapids": "COL",

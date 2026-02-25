@@ -28,8 +28,16 @@ class ESPNProvider(BaseProvider):
         Sport.NHL: "hockey/nhl",
         Sport.NFL: "football/nfl",
         Sport.MLB: "baseball/mlb",
-        Sport.SOCCER: "soccer/eng.1"  # Premier League (can support others)
+        Sport.SOCCER: "soccer/eng.1"  # Default to Premier League
     }
+    
+    # Multiple soccer leagues (will check all for favorite teams)
+    SOCCER_LEAGUES = [
+        "soccer/eng.1",  # Premier League
+        "soccer/eng.2",  # Championship
+        "soccer/eng.3",  # League One
+        "soccer/usa.1"   # MLS
+    ]
     
     def __init__(self, sport: Sport):
         """
@@ -60,10 +68,35 @@ class ESPNProvider(BaseProvider):
         Returns:
             List of BaseGame objects
         """
-        # ESPN scoreboard endpoint with date parameter
-        url = f"{self.BASE_URL}/{self.sport_path}/scoreboard"
+        all_games = []
         
-        # Format date as YYYYMMDD
+        # For soccer, check multiple leagues
+        if self._sport == Sport.SOCCER:
+            for league_path in self.SOCCER_LEAGUES:
+                url = f"{self.BASE_URL}/{league_path}/scoreboard"
+                date_str = game_date.strftime("%Y%m%d")
+                params = {"dates": date_str}
+                
+                try:
+                    response = requests.get(url, params=params, timeout=10)
+                    response.raise_for_status()
+                    data = response.json()
+                    events = data.get("events", [])
+                    
+                    for event in events:
+                        game = self._parse_event_to_game(event)
+                        if game:
+                            # Filter by team IDs if provided
+                            if team_ids is None or game.home_team_id in team_ids or game.away_team_id in team_ids:
+                                all_games.append(game)
+                except Exception as e:
+                    # Continue to next league if one fails
+                    continue
+            
+            return all_games
+        
+        # For other sports, use single endpoint
+        url = f"{self.BASE_URL}/{self.sport_path}/scoreboard"
         date_str = game_date.strftime("%Y%m%d")
         params = {"dates": date_str}
         

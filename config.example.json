@@ -55,15 +55,13 @@
 		"sports": ["NBA", "NHL", "SOCCER"],
 		"favorite_teams": {
 			"NBA": [
-				{"name": "Milwaukee Bucks", "id": "15"},
-				{"name": "Boston Celtics", "id": "2"}
+				{"name": "Milwaukee Bucks", "id": "15"}
 			],
 			"NHL": [
-				{"name": "Boston Bruins", "id": "6"}
+				{"name": "New Jersey Devils", "id": "1"}
 			],
 			"SOCCER": [
-				{"name": "Liverpool", "id": "364"},
-				{"name": "Arsenal", "id": "359"}
+				{"name": "Wrexham", "id": "352"}
 			]
 		},
 		"api_provider": "espn"
