@@ -121,16 +121,24 @@ class Data:
             
             # Determine if this index is MLB or NBA
             if self.combined_game_index < mlb_count:
-                # It's an MLB game
+                # It's an MLB game - use schedule's rotation
+                was_other_sport = self.current_game_is_other_sport
                 self.current_game_is_other_sport = False
                 self.current_other_sport_game = None
+                
+                # Always get the next MLB game
                 game = self.schedule.next_game()
+                
                 if game:
-                    self.current_game = game
-                    self.game_changed_time = time.time()
-                    self.__update_layout_state()
-                    self.print_game_data_debug()
+                    # Only update if it changed or we're switching from other sport
+                    if was_other_sport or self.current_game is None or game.game_id != self.current_game.game_id:
+                        self.current_game = game
+                        self.game_changed_time = time.time()
+                        self.__update_layout_state()
+                        self.print_game_data_debug()
                     self.network_issues = False
+                else:
+                    debug.warning(f"Failed to get MLB game at combined index {self.combined_game_index}")
             else:
                 # It's an NBA game
                 nba_index = self.combined_game_index - mlb_count

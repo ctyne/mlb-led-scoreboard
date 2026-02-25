@@ -103,6 +103,9 @@ class MainRenderer:
             return
         
         game = self.data.current_game
+        if game is None:
+            debug.warning("current_game is None in __draw_game, skipping render")
+            return
         bgcolor = self.data.config.scoreboard_colors.color("default.background")
         self.canvas.Fill(bgcolor["r"], bgcolor["g"], bgcolor["b"])
         scoreboard = Scoreboard(game)
