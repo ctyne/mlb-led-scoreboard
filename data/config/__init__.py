@@ -73,6 +73,14 @@ class Config:
 
         self.debug = json["debug"]
         self.demo_date = json["demo_date"]
+        
+        # Multi-sport configuration (optional)
+        multi_sport_config = json.get("multi_sport", {})
+        self.multi_sport_enabled = multi_sport_config.get("enabled", False)
+        self.multi_sport_sports = multi_sport_config.get("sports", ["MLB"])
+        self.multi_sport_favorite_teams = multi_sport_config.get("favorite_teams", {})
+        self.multi_sport_api_provider = multi_sport_config.get("api_provider", "espn")
+        
         # Make sure the scrolling speed setting is in range so we don't crash
         try:
             self.scrolling_speed = SCROLLING_SPEEDS[json["scrolling_speed"]]

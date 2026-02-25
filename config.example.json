@@ -49,5 +49,16 @@
 	"pregame_weather": true,
 	"scrolling_speed": 2,
 	"debug": false,
-	"demo_date": false
+	"demo_date": false,
+	"multi_sport": {
+		"enabled": false,
+		"sports": ["MLB", "NBA"],
+		"favorite_teams": {
+			"NBA": [
+				{"name": "Milwaukee Bucks", "id": "15"},
+				{"name": "Boston Celtics", "id": "2"}
+			]
+		},
+		"api_provider": "espn"
+	}
 }
