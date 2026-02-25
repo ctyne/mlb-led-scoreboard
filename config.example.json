@@ -51,12 +51,19 @@
 	"debug": false,
 	"demo_date": false,
 	"multi_sport": {
-		"enabled": false,
-		"sports": ["MLB", "NBA"],
+		"enabled": true,
+		"sports": ["NBA", "NHL", "SOCCER"],
 		"favorite_teams": {
 			"NBA": [
 				{"name": "Milwaukee Bucks", "id": "15"},
 				{"name": "Boston Celtics", "id": "2"}
+			],
+			"NHL": [
+				{"name": "Boston Bruins", "id": "6"}
+			],
+			"SOCCER": [
+				{"name": "Liverpool", "id": "364"},
+				{"name": "Arsenal", "id": "359"}
 			]
 		},
 		"api_provider": "espn"

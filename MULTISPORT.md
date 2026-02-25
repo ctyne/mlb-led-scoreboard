@@ -5,8 +5,8 @@ The MLB LED Scoreboard now supports displaying games from multiple sports includ
 - ⚾ **MLB** (existing functionality via statsapi)
 - 🏀 **NBA** (via ESPN API) ✅ **WORKING**
 - 🏒 **NHL** (via ESPN API) ✅ **WORKING**
-- 🏈 **NFL** (coming soon)
-- ⚽ **Soccer** (coming soon)
+- ⚽ **Soccer** (via ESPN API) ✅ **WORKING** - Premier League & MLS
+- 🏈 **NFL** (coming soon - off-season)
 
 ## How It Works
 
@@ -27,7 +27,7 @@ Add this section to your `config.json`:
 ```json
 "multi_sport": {
   "enabled": true,
-  "sports": ["NBA", "NHL"],
+  "sports": ["NBA", "NHL", "SOCCER"],
   "favorite_teams": {
     "NBA": [
       {"name": "Milwaukee Bucks", "id": "15"},
@@ -36,6 +36,10 @@ Add this section to your `config.json`:
     "NHL": [
       {"name": "Boston Bruins", "id": "6"},
       {"name": "Toronto Maple Leafs", "id": "10"}
+    ],
+    "SOCCER": [
+      {"name": "Liverpool", "id": "364"},
+      {"name": "Arsenal", "id": "359"}
     ]
   },
   "api_provider": "espn"
@@ -110,6 +114,30 @@ Add this section to your `config.json`:
 - Washington Capitals: 15
 - Winnipeg Jets: 52
 
+**Soccer Team IDs (Premier League):**
+- Arsenal: 359
+- Aston Villa: 362
+- Bournemouth: 349
+- Brentford: 337
+- Brighton & Hove Albion: 331
+- Chelsea: 363
+- Crystal Palace: 384
+- Everton: 368
+- Fulham: 370
+- Ipswich Town: 373
+- Leicester City: 375
+- Liverpool: 364
+- Manchester City: 382
+- Manchester United: 360
+- Newcastle United: 361
+- Nottingham Forest: 393
+- Southampton: 376
+- Tottenham Hotspur: 367
+- West Ham United: 371
+- Wolverhampton Wanderers: 380
+
+**Note:** For MLS teams, use the ESPN team search or check ESPN's MLS page for team IDs.
+
 ## What Gets Displayed
 
 ### NBA Games
@@ -133,9 +161,20 @@ The scoreboard shows:
 - OT/Shootout games highlighted in orange
 - Leader highlighted in red (live), winner in green (final)
 
+### Soccer/Football Games
+The scoreboard shows:
+- Team names (abbreviated, e.g., LIV, ARS, MUN)
+- Current scores (for live/final games)
+- Half/Period (1H, 2H, ET for extra time, PK for penalties)
+- Match minute (e.g., "45'+2" for injury time)
+- Game time (for scheduled games)
+- "FOOTY" indicator
+- Draws shown in white, wins in green (final)
+- ET/PK matches highlighted with indicators
+
 ### Game Rotation
 - Games rotate every ~15 seconds (same as MLB)
-- MLB, NBA, and NHL games are included in the rotation
+- MLB, NBA, NHL, and Soccer games are included in the rotation
 - Live games from any sport are prioritized
 
 ## Architecture
@@ -144,6 +183,7 @@ The scoreboard shows:
 - `data/models/base_game.py` - Abstract base class for all sports
 - `data/models/nba_game.py` - NBA-specific game model
 - `data/models/nhl_game.py` - NHL-specific game model
+- `data/models/soccer_game.py` - Soccer-specific game model
 - `data/providers/base_provider.py` - Provider interface
 - `data/providers/espn_provider.py` - ESPN API integration (NBA, NHL, NFL)
 - `data/scheduler.py` - Multi-sport game scheduler
