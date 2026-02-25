@@ -331,27 +331,27 @@ class MainRenderer:
         
         # Draw backgrounds and accents (like MLB)
         # Away team background (top 7 pixels: rows 0-6, text at y=6)
-        self._draw_filled_box(0, 0, 64, 7, home_colors['bg'])
-        # Away team accent (left 2 pixels)
-        self._draw_filled_box(0, 0, 2, 7, away_colors['accent'])
+        self._draw_filled_box(0, 0, 64, 7, away_colors['bg'])
+        # Away team accent (left 3 pixels)
+        self._draw_filled_box(0, 0, 3, 7, away_colors['accent'])
         
         # Home team background (middle 7 pixels: rows 7-13, text at y=13)
         self._draw_filled_box(0, 7, 64, 7, home_colors['bg'])
-        # Home team accent (left 2 pixels)
-        self._draw_filled_box(0, 7, 2, 7, home_colors['accent'])
+        # Home team accent (left 3 pixels)
+        self._draw_filled_box(0, 7, 3, 7, home_colors['accent'])
         
         # Text colors
         away_text_color = graphics.Color(away_colors['text']['r'], away_colors['text']['g'], away_colors['text']['b'])
         home_text_color = graphics.Color(home_colors['text']['r'], home_colors['text']['g'], home_colors['text']['b'])
         
-        # Away team: Name and score
-        graphics.DrawText(self.canvas, font, 4, 6, away_text_color, away_name[:10])
+        # Away team: Name and score (offset 5 pixels to account for 3px accent + 2px margin)
+        graphics.DrawText(self.canvas, font, 5, 6, away_text_color, away_name[:10])
         away_score = str(game.away_score)
         score_x = 64 - len(away_score) * 4 - 1
         graphics.DrawText(self.canvas, font, score_x, 6, away_text_color, away_score)
         
         # Home team: Name and score
-        graphics.DrawText(self.canvas, font, 4, 13, home_text_color, home_name[:10])
+        graphics.DrawText(self.canvas, font, 5, 13, home_text_color, home_name[:10])
         home_score = str(game.home_score)
         score_x = 64 - len(home_score) * 4 - 1
         graphics.DrawText(self.canvas, font, score_x, 13, home_text_color, home_score)
