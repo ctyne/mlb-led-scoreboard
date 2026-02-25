@@ -37,18 +37,23 @@ class Schedule:
                 games = self.__all_games
 
                 if self.config.rotation_only_preferred:
+                    debug.log(f"Filtering for preferred teams: {self.config.preferred_teams}")
+                    debug.log(f"All games before filter: {len(self.__all_games)}")
                     games = Schedule.__filter_list_of_games(self.__all_games, self.config.preferred_teams)
+                    debug.log(f"Games after preferred filter: {len(games)}")
                 if self.config.rotation_only_live:
                     live_games = [g for g in games if status.is_live(g["status"]) or status.is_fresh(g["status"])]
                     if live_games:
                         # we never have games drop down to [], since we may still be indexing into it
                         # but this is fine, since self.games_live() is will work even if we don't do this update
                         games = live_games
+                        debug.log(f"Games after live filter: {len(games)}")
 
                 if len(games) > 0:
                     self.current_idx %= len(games)
 
                 self._games = games
+                debug.log(f"Final _games count: {len(self._games)}")
 
                 return UpdateStatus.SUCCESS
 
