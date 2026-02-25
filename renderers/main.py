@@ -97,6 +97,11 @@ class MainRenderer:
 
     # Draws the provided game on the canvas
     def __draw_game(self):
+        # Check if we're showing a non-MLB game
+        if self.data.current_game_is_other_sport and self.data.current_other_sport_game:
+            self.__draw_other_sport_game()
+            return
+        
         game = self.data.current_game
         bgcolor = self.data.config.scoreboard_colors.color("default.background")
         self.canvas.Fill(bgcolor["r"], bgcolor["g"], bgcolor["b"])

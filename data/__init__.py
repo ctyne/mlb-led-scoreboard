@@ -12,6 +12,7 @@ from data.scoreboard.pregame import Pregame
 from data.standings import Standings
 from data.update import UpdateStatus
 from data.weather import Weather
+from data.multi_sport import MultiSportData
 
 
 class Data:
@@ -19,10 +20,25 @@ class Data:
         # Save the parsed config
         self.config = config
 
-        # get schedule
+        # Initialize multi-sport support FIRST
+        self.multi_sport = MultiSportData(config)
+        self.current_game_is_other_sport = False
+        self.current_other_sport_game = None
+        self.other_sport_games = []
+
+        # get MLB schedule
         self.schedule: Schedule = Schedule(config)
         # NB: Can return none, but shouldn't matter?
         self.current_game: Game = self.schedule.get_preferred_game()
+
+        # Fetch other sport games if enabled
+        if self.multi_sport.enabled:
+            try:
+                self.other_sport_games = self.multi_sport.get_todays_games()
+                debug.log(f"Found {len(self.other_sport_games)} other sport games")
+            except Exception as e:
+                debug.log(f"Error fetching other sport games: {e}")
+                self.other_sport_games = []
 
         self.game_changed_time = time.time()
         if self.current_game is not None:
@@ -70,6 +86,15 @@ class Data:
         return True
 
     def refresh_game(self):
+        """Refresh current game data."""
+        if self.current_game_is_other_sport:
+            # For other sports, we refresh all games and update the current one
+            self.refresh_other_sports()
+            # Note: Other sport games are already live-updated from ESPN
+            # No individual game update needed like MLB's statsapi
+            return
+        
+        # MLB game refresh
         status = self.current_game.update()
         if status == UpdateStatus.SUCCESS:
             self.__update_layout_state()
