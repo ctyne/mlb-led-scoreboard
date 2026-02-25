@@ -3,8 +3,8 @@
 ## Overview
 The MLB LED Scoreboard now supports displaying games from multiple sports including:
 - ⚾ **MLB** (existing functionality via statsapi)
-- 🏀 **NBA** (via ESPN API)
-- 🏒 **NHL** (coming soon)
+- 🏀 **NBA** (via ESPN API) ✅ **WORKING**
+- 🏒 **NHL** (via ESPN API) ✅ **WORKING**
 - 🏈 **NFL** (coming soon)
 - ⚽ **Soccer** (coming soon)
 
@@ -27,11 +27,15 @@ Add this section to your `config.json`:
 ```json
 "multi_sport": {
   "enabled": true,
-  "sports": ["NBA"],
+  "sports": ["NBA", "NHL"],
   "favorite_teams": {
     "NBA": [
       {"name": "Milwaukee Bucks", "id": "15"},
       {"name": "Boston Celtics", "id": "2"}
+    ],
+    "NHL": [
+      {"name": "Boston Bruins", "id": "6"},
+      {"name": "Toronto Maple Leafs", "id": "10"}
     ]
   },
   "api_provider": "espn"
@@ -72,6 +76,40 @@ Add this section to your `config.json`:
 - Utah Jazz: 26
 - Washington Wizards: 27
 
+**NHL Team IDs:**
+- Anaheim Ducks: 24
+- Arizona Coyotes: 53
+- Boston Bruins: 6
+- Buffalo Sabres: 7
+- Calgary Flames: 20
+- Carolina Hurricanes: 12
+- Chicago Blackhawks: 16
+- Colorado Avalanche: 21
+- Columbus Blue Jackets: 29
+- Dallas Stars: 25
+- Detroit Red Wings: 17
+- Edmonton Oilers: 22
+- Florida Panthers: 13
+- Los Angeles Kings: 26
+- Minnesota Wild: 30
+- Montreal Canadiens: 8
+- Nashville Predators: 18
+- New Jersey Devils: 1
+- New York Islanders: 2
+- New York Rangers: 3
+- Ottawa Senators: 9
+- Philadelphia Flyers: 4
+- Pittsburgh Penguins: 5
+- San Jose Sharks: 28
+- Seattle Kraken: 55
+- St. Louis Blues: 19
+- Tampa Bay Lightning: 14
+- Toronto Maple Leafs: 10
+- Vancouver Canucks: 23
+- Vegas Golden Knights: 54
+- Washington Capitals: 15
+- Winnipeg Jets: 52
+
 ## What Gets Displayed
 
 ### NBA Games
@@ -82,10 +120,22 @@ The scoreboard shows:
 - Time remaining (for live games)
 - Game time (for scheduled games)
 - "NBA" indicator
+- Leader highlighted in red (live), winner in green (final)
+
+### NHL Games
+The scoreboard shows:
+- Team names (abbreviated, e.g., BOS, TOR)
+- Current scores (for live/final games)
+- Period (P1, P2, P3, OT, SO)
+- Time remaining (for live games)
+- Game time (for scheduled games)
+- "NHL" indicator
+- OT/Shootout games highlighted in orange
+- Leader highlighted in red (live), winner in green (final)
 
 ### Game Rotation
 - Games rotate every ~15 seconds (same as MLB)
-- Both MLB and NBA games are included in the rotation
+- MLB, NBA, and NHL games are included in the rotation
 - Live games from any sport are prioritized
 
 ## Architecture
@@ -93,17 +143,17 @@ The scoreboard shows:
 ### Key Files Created
 - `data/models/base_game.py` - Abstract base class for all sports
 - `data/models/nba_game.py` - NBA-specific game model
+- `data/models/nhl_game.py` - NHL-specific game model
 - `data/providers/base_provider.py` - Provider interface
-- `data/providers/espn_provider.py` - ESPN API integration
+- `data/providers/espn_provider.py` - ESPN API integration (NBA, NHL, NFL)
 - `data/scheduler.py` - Multi-sport game scheduler
 - `data/multi_sport.py` - Integration wrapper
-- `renderers/games/nba.py` - NBA game renderer
-- `renderers/main.py` - Updated to support multi-sport
+- `renderers/main.py` - Updated to support multi-sport rendering
 
 ### Integration Points
 - `data/__init__.py`: Data class now tracks both MLB and other sport games
 - `data/config/__init__.py`: Parses multi_sport configuration
-- `renderers/main.py`: Renders NBA games when selected in rotation
+- `renderers/main.py`: Renders NBA/NHL games when selected in rotation
 
 ## Testing on Raspberry Pi
 
