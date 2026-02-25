@@ -109,9 +109,12 @@ class Data:
         if self.multi_sport.enabled and self.other_sport_games:
             # Combine MLB and other sport games for rotation
             all_games = []
+            mlb_games = []
             
-            # Add MLB games
+            # Get MLB games - use schedule.next_game() approach
             for i in range(self.schedule.num_games()):
+                # Store the game index, we'll get actual game later
+                mlb_games.append(i)
                 all_games.append({"type": "mlb", "index": i})
             
             # Add other sport games
@@ -121,40 +124,37 @@ class Data:
             if not all_games:
                 return
             
-            # Find current position
+            # Find current position - simplified approach
             current_pos = 0
-            if self.current_game_is_other_sport and self.current_other_sport_game:
-                # Find current other sport game
+            if self.current_game_is_other_sport:
+                # Find position of current other sport game
                 for i, item in enumerate(all_games):
                     if item["type"] == "other" and item.get("game") == self.current_other_sport_game:
                         current_pos = i
                         break
-            elif self.current_game:
-                # Find current MLB game
-                for i in range(self.schedule.num_games()):
-                    if self.schedule.games[i] == self.current_game:
-                        for j, item in enumerate(all_games):
-                            if item["type"] == "mlb" and item["index"] == i:
-                                current_pos = j
-                                break
-                        break
+            # For MLB games, just move to next in rotation
             
             # Move to next game
             next_pos = (current_pos + 1) % len(all_games)
             next_game_info = all_games[next_pos]
             
             if next_game_info["type"] == "mlb":
+                # Switch to MLB game using schedule's next_game
                 self.current_game_is_other_sport = False
                 self.current_other_sport_game = None
-                self.current_game = self.schedule.games[next_game_info["index"]]
-                self.__update_layout_state()
+                game = self.schedule.next_game()
+                if game:
+                    self.current_game = game
+                    self.game_changed_time = time.time()
+                    self.__update_layout_state()
+                    self.network_issues = False
             else:
+                # Switch to other sport game
                 self.current_game_is_other_sport = True
                 self.current_other_sport_game = next_game_info["game"]
                 self.current_game = None  # Clear MLB game
-            
-            self.game_changed_time = time.time()
-            self.scrolling_finished = False
+                self.game_changed_time = time.time()
+                self.scrolling_finished = False
         else:
             # Original MLB-only behavior
             game = self.schedule.next_game()
