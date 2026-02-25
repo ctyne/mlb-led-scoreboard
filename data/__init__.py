@@ -25,6 +25,7 @@ class Data:
         self.current_game_is_other_sport = False
         self.current_other_sport_game = None
         self.other_sport_games = []
+        self.combined_game_index = 0  # Track position across ALL games
 
         # get MLB schedule
         self.schedule: Schedule = Schedule(config)
@@ -107,39 +108,20 @@ class Data:
     def advance_to_next_game(self):
         """Advance to the next game in rotation (MLB or other sports)."""
         if self.multi_sport.enabled and self.other_sport_games:
-            # Combine MLB and other sport games for rotation
-            all_games = []
-            mlb_games = []
+            # Create combined list of all games
+            mlb_count = self.schedule.num_games()
+            nba_count = len(self.other_sport_games)
+            total_games = mlb_count + nba_count
             
-            # Get MLB games - use schedule.next_game() approach
-            for i in range(self.schedule.num_games()):
-                # Store the game index, we'll get actual game later
-                mlb_games.append(i)
-                all_games.append({"type": "mlb", "index": i})
-            
-            # Add other sport games
-            for i, game in enumerate(self.other_sport_games):
-                all_games.append({"type": "other", "index": i, "game": game})
-            
-            if not all_games:
+            if total_games == 0:
                 return
             
-            # Find current position - simplified approach
-            current_pos = 0
-            if self.current_game_is_other_sport:
-                # Find position of current other sport game
-                for i, item in enumerate(all_games):
-                    if item["type"] == "other" and item.get("game") == self.current_other_sport_game:
-                        current_pos = i
-                        break
-            # For MLB games, just move to next in rotation
+            # Move to next game in combined rotation
+            self.combined_game_index = (self.combined_game_index + 1) % total_games
             
-            # Move to next game
-            next_pos = (current_pos + 1) % len(all_games)
-            next_game_info = all_games[next_pos]
-            
-            if next_game_info["type"] == "mlb":
-                # Switch to MLB game using schedule's next_game
+            # Determine if this index is MLB or NBA
+            if self.combined_game_index < mlb_count:
+                # It's an MLB game
                 self.current_game_is_other_sport = False
                 self.current_other_sport_game = None
                 game = self.schedule.next_game()
@@ -147,14 +129,17 @@ class Data:
                     self.current_game = game
                     self.game_changed_time = time.time()
                     self.__update_layout_state()
+                    self.print_game_data_debug()
                     self.network_issues = False
             else:
-                # Switch to other sport game
+                # It's an NBA game
+                nba_index = self.combined_game_index - mlb_count
                 self.current_game_is_other_sport = True
-                self.current_other_sport_game = next_game_info["game"]
+                self.current_other_sport_game = self.other_sport_games[nba_index]
                 self.current_game = None  # Clear MLB game
                 self.game_changed_time = time.time()
                 self.scrolling_finished = False
+                debug.log(f"Switching to NBA game: {self.current_other_sport_game.away_team} @ {self.current_other_sport_game.home_team}")
         else:
             # Original MLB-only behavior
             game = self.schedule.next_game()
