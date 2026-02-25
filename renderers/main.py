@@ -300,7 +300,7 @@ class MainRenderer:
         from driver import graphics
         
         font = graphics.Font()
-        font.LoadFont("fonts/4x6.bdf")
+        font.LoadFont("assets/fonts/patched/4x6.bdf")
         
         white = graphics.Color(255, 255, 255)
         red = graphics.Color(255, 0, 0)
@@ -332,12 +332,13 @@ class MainRenderer:
             y_pos += 8
             graphics.DrawText(self.canvas, font, 1, y_pos, red, "FINAL")
         else:
+            # Scheduled game
             graphics.DrawText(self.canvas, font, 1, y_pos, white, f"{away_abbrev} @")
             y_pos += 7
             graphics.DrawText(self.canvas, font, 1, y_pos, white, home_abbrev)
             y_pos += 8
-            if game.game_time_local:
-                graphics.DrawText(self.canvas, font, 1, y_pos, yellow, game.game_time_local[:5])
+            if hasattr(game, 'start_time') and game.start_time:
+                graphics.DrawText(self.canvas, font, 1, y_pos, yellow, str(game.start_time)[:5])
         
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
