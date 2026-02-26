@@ -21,9 +21,11 @@ def render_text(canvas, x, y, width, font, text_color, bg_color, text, scroll_po
             left = abs(empty_space_at_start) // w
 
         # Offscreen to the right
-        visible_width = total_width + empty_space_at_start
-        if visible_width > width + w:
-            right =  -((visible_width - width) // w)
+        # Calculate how many characters extend beyond the visible area
+        pixels_beyond_right = (scroll_pos + total_width) - (x + width)
+        if pixels_beyond_right > w:
+            chars_beyond = pixels_beyond_right // w
+            right = len(text) - chars_beyond
 
         # Trim the text to only the visible part
         text = text[left:right]
