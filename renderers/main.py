@@ -661,10 +661,6 @@ class MainRenderer:
         # Draw MLB-style bottom section (rows 14-31)
         self._draw_filled_box(0, 14, 64, 18, mlb_bg_dict)
         
-        # Debug: Log game status
-        from utils import debug
-        debug.log(f"NHL Game Status: is_live={game.is_live()}, is_final={game.is_final()}, status={game.status}")
-        
         # Status text on row 20 in MLB yellow
         if game.is_live():
             # Show top scorers for each team
@@ -687,18 +683,11 @@ class MainRenderer:
         else:
             # Pregame - show scrolling text with records
             from renderers import scrollingtext
-            from utils import debug
-            
-            # Debug: Print directly to console
-            print(f"[DEBUG NHL PREGAME] away_record={game.away_record}, home_record={game.home_record}")
             
             # Build pregame info text
             pregame_text = ""
             if game.away_record and game.home_record:
                 pregame_text = f"{away_name} ({game.away_record}) at {home_name} ({game.home_record})"
-                print(f"[DEBUG NHL PREGAME] Built text: {pregame_text}")
-            else:
-                print(f"[DEBUG NHL PREGAME] No records - skipping scroll text")
             
             # Show start time on row 20
             if hasattr(game, 'start_time') and game.start_time:
@@ -715,24 +704,17 @@ class MainRenderer:
                 except:
                     pass
             
-            # Scrolling text on row 27 if we have pregame info
+            # Scrolling text on row 31 if we have pregame info
             if pregame_text:
                 font_dict = {
                     'font': font,
                     'size': {'width': 4, 'height': 6}  # 4x6 font
                 }
-                print(f"[DEBUG NHL] Calling scrollingtext with:")
-                print(f"  text: '{pregame_text}' (len={len(pregame_text)})")
-                print(f"  width: 64")
-                print(f"  font width: 4")
-                print(f"  Expected pixels: {len(pregame_text) * 4}")
-                print(f"  Should scroll: {len(pregame_text) * 4 > 64}")
                 
                 text_len = scrollingtext.render_text(
                     self.canvas, 0, 31, 64, font_dict, mlb_yellow, mlb_bg_color,
                     pregame_text, self.scrolling_text_pos, center=False
                 )
-                print(f"[DEBUG NHL SCROLL] text_len: {text_len}, pos: {self.scrolling_text_pos}")
                 # Update scroll position
                 if text_len > 0:
                     self.scrolling_text_pos -= 1
