@@ -46,6 +46,30 @@ class SoccerGame(BaseGame):
         else:
             return f"H{self.half}"
     
+    def get_time_remaining(self) -> Optional[str]:
+        """Get match time (soccer doesn't have 'time remaining', returns current minute)."""
+        if self.is_live() and self.minute:
+            return self.minute
+        return None
+    
+    def get_sport_specific_data(self) -> dict:
+        """Return soccer-specific data."""
+        return {
+            'half': self.half,
+            'minute': self.minute,
+            'is_extra_time': self.is_extra_time,
+            'is_penalty_shootout': self.is_penalty_shootout,
+            'home_halves': self.home_halves,
+            'away_halves': self.away_halves,
+            'home_shots': self.home_shots,
+            'away_shots': self.away_shots,
+            'home_corners': self.home_corners,
+            'away_corners': self.away_corners,
+            'home_red_cards': self.home_red_cards,
+            'away_red_cards': self.away_red_cards,
+            'league': self.league
+        }
+    
     def get_match_time(self) -> str:
         """Get formatted match time."""
         if self.minute:

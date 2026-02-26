@@ -43,6 +43,27 @@ class NHLGame(BaseGame):
         else:
             return f"P{self.period}"
     
+    def get_time_remaining(self) -> Optional[str]:
+        """Get time remaining in current period."""
+        if self.is_live() and self.time_remaining:
+            return self.time_remaining
+        return None
+    
+    def get_sport_specific_data(self) -> dict:
+        """Return NHL-specific data."""
+        return {
+            'period': self.period,
+            'time_remaining': self.time_remaining,
+            'is_overtime': self.is_overtime,
+            'is_shootout': self.is_shootout,
+            'home_periods': self.home_periods,
+            'away_periods': self.away_periods,
+            'home_shots': self.home_shots,
+            'away_shots': self.away_shots,
+            'home_powerplay': self.home_powerplay,
+            'away_powerplay': self.away_powerplay
+        }
+    
     def is_live(self) -> bool:
         """Check if game is currently live."""
         return self.status == GameStatus.LIVE
