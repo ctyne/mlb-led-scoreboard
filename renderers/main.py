@@ -605,7 +605,7 @@ class MainRenderer:
         
         # MLB-style colors
         mlb_yellow = graphics.Color(255, 235, 59)
-        mlb_bg = graphics.Color(7, 14, 25)
+        mlb_bg = {'r': 7, 'g': 14, 'b': 25}
         white = graphics.Color(255, 255, 255)
         
         # Draw away team section (rows 0-6)
