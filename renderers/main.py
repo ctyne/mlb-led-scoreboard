@@ -611,18 +611,20 @@ class MainRenderer:
         # Draw away team section (rows 0-6)
         self._draw_filled_box(0, 0, 64, 7, away_colors['bg'])
         self._draw_filled_box(0, 0, 3, 7, away_colors['accent'])
-        graphics.DrawText(self.canvas, font, 5, 6, away_colors['text'], away_name[:9])
+        away_text_color = graphics.Color(away_colors['text']['r'], away_colors['text']['g'], away_colors['text']['b'])
+        graphics.DrawText(self.canvas, font, 5, 6, away_text_color, away_name[:9])
         away_score = str(game.away_score)
         score_x = 64 - len(away_score) * 5 - 2
-        graphics.DrawText(self.canvas, font, score_x, 6, away_colors['text'], away_score)
+        graphics.DrawText(self.canvas, font, score_x, 6, away_text_color, away_score)
         
         # Draw home team section (rows 7-13)
         self._draw_filled_box(0, 7, 64, 7, home_colors['bg'])
         self._draw_filled_box(0, 7, 3, 7, home_colors['accent'])
-        graphics.DrawText(self.canvas, font, 5, 13, home_colors['text'], home_name[:9])
+        home_text_color = graphics.Color(home_colors['text']['r'], home_colors['text']['g'], home_colors['text']['b'])
+        graphics.DrawText(self.canvas, font, 5, 13, home_text_color, home_name[:9])
         home_score = str(game.home_score)
         score_x = 64 - len(home_score) * 5 - 2
-        graphics.DrawText(self.canvas, font, score_x, 13, home_colors['text'], home_score)
+        graphics.DrawText(self.canvas, font, score_x, 13, home_text_color, home_score)
         
         # Draw MLB-style bottom section (rows 14-31)
         self._draw_filled_box(0, 14, 64, 18, mlb_bg)
