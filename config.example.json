@@ -52,10 +52,13 @@
 	"demo_date": false,
 	"multi_sport": {
 		"enabled": true,
-		"sports": ["NBA", "NHL", "SOCCER"],
+		"sports": ["NBA", "NCAAB", "NHL", "SOCCER"],
 		"favorite_teams": {
 			"NBA": [
 				{"name": "Milwaukee Bucks", "id": "15"}
+			],
+			"NCAAB": [
+				{"name": "Wisconsin Badgers", "id": "275"}
 			],
 			"NHL": [
 				{"name": "New Jersey Devils", "id": "1"}

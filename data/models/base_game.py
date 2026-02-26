@@ -22,6 +22,7 @@ class Sport(Enum):
     """Supported sports."""
     MLB = "mlb"
     NBA = "nba"
+    NCAAB = "ncaab"  # NCAA Men's Basketball
     NHL = "nhl"
     NFL = "nfl"
     SOCCER = "soccer"  # EFL and other soccer leagues

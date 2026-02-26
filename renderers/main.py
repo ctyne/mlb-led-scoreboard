@@ -292,12 +292,14 @@ class MainRenderer:
         return not self.data.schedule.games_live()
     
     def __draw_other_sport_game(self):
-        """Draw NBA/NHL/Soccer games."""
+        """Draw NBA/NHL/Soccer/NCAAB games."""
         game = self.data.current_other_sport_game
         from data.models.base_game import Sport
         
         if game.sport == Sport.NBA:
             self.__draw_nba_game(game)
+        elif game.sport == Sport.NCAAB:
+            self.__draw_ncaab_game(game)
         elif game.sport == Sport.NHL:
             self.__draw_nhl_game(game)
         elif game.sport == Sport.SOCCER:
@@ -404,6 +406,11 @@ class MainRenderer:
         
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
+    def __draw_ncaab_game(self, game):
+        """Draw NCAA Basketball game (same layout as NBA)."""
+        # Reuse NBA drawing logic but with NCAAB-specific colors
+        self.__draw_nba_game(game)
+    
     def _draw_filled_box(self, x, y, width, height, color):
         """Draw a filled rectangle (like MLB team backgrounds)."""
         from driver import graphics
@@ -469,6 +476,13 @@ class MainRenderer:
             colors = {
                 'bg': {'r': 0, 'g': 107, 'b': 182},  # blue
                 'accent': {'r': 245, 'g': 132, 'b': 38},  # orange
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        # College Basketball Teams
+        elif 'badgers' in team_lower or 'wisconsin' in team_lower:
+            colors = {
+                'bg': {'r': 197, 'g': 5, 'b': 12},  # cardinal red
+                'accent': {'r': 255, 'g': 255, 'b': 255},  # white
                 'text': {'r': 255, 'g': 255, 'b': 255}
             }
         

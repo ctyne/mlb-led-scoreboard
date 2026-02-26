@@ -1,5 +1,5 @@
 """
-ESPN API provider for NBA, NHL, NFL, MLB, and Soccer.
+ESPN API provider for NBA, NCAAB, NHL, NFL, MLB, and Soccer.
 Free, no authentication required, includes live scores!
 """
 
@@ -8,6 +8,7 @@ from typing import List, Optional, Dict
 from datetime import date, datetime
 from data.models.base_game import BaseGame, GameStatus, Sport
 from data.models.nba_game import NBAGame
+from data.models.ncaab_game import NCAABGame
 from data.models.nhl_game import NHLGame
 from data.models.soccer_game import SoccerGame
 from data.providers.base_provider import BaseProvider
@@ -16,7 +17,7 @@ from data.providers.base_provider import BaseProvider
 class ESPNProvider(BaseProvider):
     """
     Provider for ESPN's public API.
-    Supports NBA, NHL, NFL, MLB with real-time live scores.
+    Supports NBA, NCAAB, NHL, NFL, MLB with real-time live scores.
     No authentication required!
     """
     
@@ -25,6 +26,7 @@ class ESPNProvider(BaseProvider):
     # Sport to ESPN path mapping
     SPORT_PATHS = {
         Sport.NBA: "basketball/nba",
+        Sport.NCAAB: "basketball/mens-college-basketball",
         Sport.NHL: "hockey/nhl",
         Sport.NFL: "football/nfl",
         Sport.MLB: "baseball/mlb",
@@ -211,6 +213,8 @@ class ESPNProvider(BaseProvider):
         """Parse ESPN event JSON to a game model."""
         if self._sport == Sport.NBA:
             return self._parse_nba_event(event)
+        elif self._sport == Sport.NCAAB:
+            return self._parse_ncaab_event(event)
         elif self._sport == Sport.NHL:
             return self._parse_nhl_event(event)
         elif self._sport == Sport.SOCCER:
@@ -290,6 +294,85 @@ class ESPNProvider(BaseProvider):
                 [int(ls.get("value", 0)) for ls in home_linescores],
                 [int(ls.get("value", 0)) for ls in away_linescores]
             )
+        
+        return game
+    
+    def _parse_ncaab_event(self, event: dict) -> Optional[NCAABGame]:
+        """Parse NCAA Men's Basketball event from ESPN (same structure as NBA)."""
+        game = NCAABGame()
+        
+        # Get competition data (first competition in the event)
+        competition = event.get("competitions", [{}])[0]
+        competitors = competition.get("competitors", [])
+        
+        # ESPN returns home/away in competitors array
+        home = next((c for c in competitors if c.get("homeAway") == "home"), {})
+        away = next((c for c in competitors if c.get("homeAway") == "away"), {})
+        
+        # Basic info
+        game.game_id = str(event.get("id", ""))
+        game.home_team = home.get("team", {}).get("displayName", "")
+        game.away_team = away.get("team", {}).get("displayName", "")
+        game.home_team_id = str(home.get("team", {}).get("id", ""))
+        game.away_team_id = str(away.get("team", {}).get("id", ""))
+        
+        # Scores
+        game.home_score = int(home.get("score", 0))
+        game.away_score = int(away.get("score", 0))
+        
+        # Status
+        status = competition.get("status", {})
+        status_type = status.get("type", {})
+        state = status_type.get("state", "pre").lower()
+        
+        if state == "pre":
+            game.status = GameStatus.SCHEDULED
+        elif state == "in":
+            game.status = GameStatus.LIVE
+        elif state == "post":
+            game.status = GameStatus.FINAL
+        
+        # Half info (college uses halves: 1st, 2nd, OT)
+        period = status.get("period", 0)
+        game.half = period
+        
+        # Check for overtime (period > 2)
+        if period > 2:
+            game.is_overtime = True
+        
+        # Time remaining (only for live games)
+        if game.status == GameStatus.LIVE:
+            display_clock = status.get("displayClock", "")
+            game.time_remaining = display_clock
+        
+        # Timing
+        game.game_date = event.get("date", "")[:10]  # Extract YYYY-MM-DD
+        try:
+            game.start_time = datetime.fromisoformat(event.get("date", "").replace("Z", "+00:00"))
+        except:
+            pass
+        
+        # Venue
+        venue = competition.get("venue", {})
+        game.venue = venue.get("fullName")
+        
+        # League info
+        game.league = "NCAAB"
+        game.season = event.get("season", {}).get("year")
+        
+        # Line scores (half by half)
+        home_linescores = home.get("linescores", [])
+        away_linescores = away.get("linescores", [])
+        
+        if len(home_linescores) >= 2:
+            game.home_halves = [
+                int(home_linescores[0].get("value", 0)),
+                int(home_linescores[1].get("value", 0))
+            ]
+            game.away_halves = [
+                int(away_linescores[0].get("value", 0)),
+                int(away_linescores[1].get("value", 0))
+            ]
         
         return game
     
