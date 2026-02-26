@@ -330,12 +330,33 @@ class ESPNProvider(BaseProvider):
                     game.home_avg_points = float(stat.get("displayValue", 0))
                 except:
                     pass
+            # Top scorer (points per game leader)
+            elif stat.get("name") == "pointsPerGame":
+                leaders = stat.get("leaders", [])
+                if leaders:
+                    top_leader = leaders[0]
+                    athlete = top_leader.get("athlete", {})
+                    game.home_top_scorer = {
+                        "name": athlete.get("shortName", ""),
+                        "points": top_leader.get("displayValue", "")
+                    }
+        
         for stat in away_stats:
             if stat.get("name") == "avgPoints":
                 try:
                     game.away_avg_points = float(stat.get("displayValue", 0))
                 except:
                     pass
+            # Top scorer (points per game leader)
+            elif stat.get("name") == "pointsPerGame":
+                leaders = stat.get("leaders", [])
+                if leaders:
+                    top_leader = leaders[0]
+                    athlete = top_leader.get("athlete", {})
+                    game.away_top_scorer = {
+                        "name": athlete.get("shortName", ""),
+                        "points": top_leader.get("displayValue", "")
+                    }
         
         return game
     
@@ -524,11 +545,32 @@ class ESPNProvider(BaseProvider):
         for stat in stats:
             if stat.get("name") == "shots":
                 game.home_shots = int(stat.get("displayValue", 0))
+            # Top scorer (points leader - goals + assists)
+            elif stat.get("name") == "points":
+                leaders = stat.get("leaders", [])
+                if leaders:
+                    top_leader = leaders[0]
+                    athlete = top_leader.get("athlete", {})
+                    # For NHL, we want to show goals and assists if available
+                    game.home_top_scorer = {
+                        "name": athlete.get("shortName", ""),
+                        "points": top_leader.get("displayValue", "")
+                    }
         
         stats = away.get("statistics", [])
         for stat in stats:
             if stat.get("name") == "shots":
                 game.away_shots = int(stat.get("displayValue", 0))
+            # Top scorer (points leader - goals + assists)
+            elif stat.get("name") == "points":
+                leaders = stat.get("leaders", [])
+                if leaders:
+                    top_leader = leaders[0]
+                    athlete = top_leader.get("athlete", {})
+                    game.away_top_scorer = {
+                        "name": athlete.get("shortName", ""),
+                        "points": top_leader.get("displayValue", "")
+                    }
         
         # Pregame stats for scrolling text
         home_records = home.get("records", [])

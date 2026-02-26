@@ -33,6 +33,10 @@ class NBAGame(BaseGame):
         self.away_avg_points: Optional[float] = None  # 115.9
         self.home_avg_points: Optional[float] = None  # 111.5
         
+        # Top scorers for in-game display
+        self.away_top_scorer: Optional[Dict[str, str]] = None  # {"name": "J. Johnson", "points": "23.0"}
+        self.home_top_scorer: Optional[Dict[str, str]] = None  # {"name": "T. Young", "points": "25.5"}
+        
     def get_period_label(self) -> str:
         """Get current quarter label."""
         if self.status == GameStatus.SCHEDULED:

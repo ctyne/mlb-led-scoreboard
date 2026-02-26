@@ -1,7 +1,7 @@
 """NHL game model with hockey-specific properties."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict
 from data.models.base_game import BaseGame, GameStatus, Sport
 
 
@@ -31,6 +31,10 @@ class NHLGame(BaseGame):
         # Pregame stats for scrolling text
         self.away_record: Optional[str] = None  # "29-20-7"
         self.home_record: Optional[str] = None  # "32-20-5"
+        
+        # Top scorers for in-game display
+        self.away_top_scorer: Optional[Dict[str, str]] = None  # {"name": "C. McDavid", "points": "2G 1A"}
+        self.home_top_scorer: Optional[Dict[str, str]] = None  # {"name": "S. Crosby", "points": "1G 2A"}
     
     def get_period_label(self) -> str:
         """Get user-friendly period label (P1, P2, P3, OT, SO)."""

@@ -369,12 +369,14 @@ class MainRenderer:
         gray = graphics.Color(150, 150, 150)
         
         if game.is_live():
-            period = game.get_period_label()  # "Q1", "Q4", "OT"
-            time_text = game.time_remaining[:5] if game.time_remaining else ""
-            status_text = f"{period} {time_text}".strip()
-            # Center the status text
-            status_x = (64 - len(status_text) * 4) // 2
-            graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status_text)
+            # Show top scorers for each team
+            if game.away_top_scorer:
+                scorer_text = f"{game.away_top_scorer['name']} {game.away_top_scorer['points']}"
+                graphics.DrawText(self.canvas, font, 2, 24, mlb_yellow, scorer_text)
+            
+            if game.home_top_scorer:
+                scorer_text = f"{game.home_top_scorer['name']} {game.home_top_scorer['points']}"
+                graphics.DrawText(self.canvas, font, 2, 31, mlb_yellow, scorer_text)
         elif game.is_final():
             graphics.DrawText(self.canvas, font, 22, 20, mlb_yellow, "FINAL")
         else:
@@ -665,11 +667,14 @@ class MainRenderer:
         
         # Status text on row 20 in MLB yellow
         if game.is_live():
-            period = game.get_period_label()
-            time_text = game.time_remaining if game.time_remaining else ""
-            status = f"{period} {time_text}".strip()
-            status_x = (64 - len(status) * 5) // 2
-            graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status)
+            # Show top scorers for each team
+            if game.away_top_scorer:
+                scorer_text = f"{game.away_top_scorer['name']} {game.away_top_scorer['points']}"
+                graphics.DrawText(self.canvas, font, 2, 24, mlb_yellow, scorer_text)
+            
+            if game.home_top_scorer:
+                scorer_text = f"{game.home_top_scorer['name']} {game.home_top_scorer['points']}"
+                graphics.DrawText(self.canvas, font, 2, 31, mlb_yellow, scorer_text)
         elif game.is_final():
             if game.is_shootout:
                 final_text = "FINAL/SO"
