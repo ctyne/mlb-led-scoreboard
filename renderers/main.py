@@ -634,7 +634,8 @@ class MainRenderer:
         
         # MLB-style colors
         mlb_yellow = graphics.Color(255, 235, 59)
-        mlb_bg = {'r': 7, 'g': 14, 'b': 25}
+        mlb_bg_dict = {'r': 7, 'g': 14, 'b': 25}
+        mlb_bg_color = graphics.Color(7, 14, 25)  # For scrollingtext
         white = graphics.Color(255, 255, 255)
         
         # Draw away team section (rows 0-6)
@@ -656,7 +657,7 @@ class MainRenderer:
         graphics.DrawText(self.canvas, font, score_x, 13, home_text_color, home_score)
         
         # Draw MLB-style bottom section (rows 14-31)
-        self._draw_filled_box(0, 14, 64, 18, mlb_bg)
+        self._draw_filled_box(0, 14, 64, 18, mlb_bg_dict)
         
         # Debug: Log game status
         from utils import debug
@@ -716,7 +717,7 @@ class MainRenderer:
                     'size': {'width': 4, 'height': 6}  # 4x6 font
                 }
                 text_len = scrollingtext.render_text(
-                    self.canvas, 0, 27, 64, font_dict, mlb_yellow, mlb_bg,
+                    self.canvas, 0, 27, 64, font_dict, mlb_yellow, mlb_bg_color,
                     pregame_text, self.scrolling_text_pos, center=False
                 )
                 print(f"[DEBUG NHL SCROLL] text_len: {text_len}, pos: {self.scrolling_text_pos}")
