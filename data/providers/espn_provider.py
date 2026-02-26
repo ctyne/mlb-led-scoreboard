@@ -33,12 +33,26 @@ class ESPNProvider(BaseProvider):
         Sport.SOCCER: "soccer/eng.1"  # Default to Premier League
     }
     
-    # Multiple soccer leagues (will check all for favorite teams)
+    # Multiple soccer leagues and competitions (will check all for favorite teams)
+    # Track teams across all competitions, not just league matches
     SOCCER_LEAGUES = [
+        # English Leagues
         "soccer/eng.1",  # Premier League
-        "soccer/eng.2",  # Championship
+        "soccer/eng.2",  # Championship (EFL Championship)
         "soccer/eng.3",  # League One
-        "soccer/usa.1"   # MLS
+        "soccer/eng.4",  # League Two
+        # English Cups
+        "soccer/eng.fa",  # FA Cup
+        "soccer/eng.league_cup",  # EFL Cup (Carabao Cup)
+        # European Competitions
+        "soccer/uefa.champions",  # UEFA Champions League
+        "soccer/uefa.europa",  # UEFA Europa League
+        "soccer/uefa.europa.conf",  # UEFA Europa Conference League
+        # North American
+        "soccer/usa.1",  # MLS
+        # International/Friendlies
+        "soccer/fifa.friendly",  # International friendlies
+        "soccer/club.friendly"   # Club friendlies
     ]
     
     def __init__(self, sport: Sport):
