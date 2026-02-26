@@ -26,12 +26,9 @@ def render_text(canvas, x, y, width, font, text_color, bg_color, text, scroll_po
             right =  -((visible_width - width) // w)
 
         # Trim the text to only the visible part
-        print(f"[DEBUG scrollingtext] Before trim: text_len={len(text)}, left={left}, right={right}")
         text = text[left:right]
-        print(f"[DEBUG scrollingtext] After trim: text_len={len(text)}")
 
         if len(text) == 0:
-            print(f"[DEBUG scrollingtext] Text trimmed to empty - returning 0")
             return 0
 
         # if we trimmed to the left, we need to adjust the scroll position accordingly
