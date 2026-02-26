@@ -9,34 +9,8 @@ def render_text(canvas, x, y, width, font, text_color, bg_color, text, scroll_po
         w = font["size"]["width"]
         total_width = w * len(text)
 
-        # if the text is long enough to scroll, we can trim it to only the visible
-        # part plus one letter on either side to minimize drawing
-        left = None
-        right = None
-
-        empty_space_at_start = scroll_pos - x
-
-        # Offscreen to the left
-        if empty_space_at_start < 0:
-            left = abs(empty_space_at_start) // w
-
-        # Offscreen to the right
-        # Calculate how many characters extend beyond the visible area
-        pixels_beyond_right = (scroll_pos + total_width) - (x + width)
-        if pixels_beyond_right > w:
-            chars_beyond = pixels_beyond_right // w
-            right = len(text) - chars_beyond
-
-        # Trim the text to only the visible part
-        text = text[left:right]
-
-        if len(text) == 0:
-            return 0
-
-        # if we trimmed to the left, we need to adjust the scroll position accordingly
-        if left:
-            scroll_pos += w * left
-
+        # Simply draw the text at the scroll position
+        # TODO: Optimize by trimming offscreen characters
         graphics.DrawText(canvas, font["font"], scroll_pos, y, text_color, text)
 
         # draw one-letter boxes to left and right to hide previous and next letters
