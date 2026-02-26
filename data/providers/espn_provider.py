@@ -309,6 +309,34 @@ class ESPNProvider(BaseProvider):
                 [int(ls.get("value", 0)) for ls in away_linescores]
             )
         
+        # Pregame stats for scrolling text
+        home_records = home.get("records", [])
+        away_records = away.get("records", [])
+        if home_records:
+            overall_record = next((r for r in home_records if r.get("type") == "total"), None)
+            if overall_record:
+                game.home_record = overall_record.get("summary", "")
+        if away_records:
+            overall_record = next((r for r in away_records if r.get("type") == "total"), None)
+            if overall_record:
+                game.away_record = overall_record.get("summary", "")
+        
+        # Average points per game
+        home_stats = home.get("statistics", [])
+        away_stats = away.get("statistics", [])
+        for stat in home_stats:
+            if stat.get("name") == "avgPoints":
+                try:
+                    game.home_avg_points = float(stat.get("displayValue", 0))
+                except:
+                    pass
+        for stat in away_stats:
+            if stat.get("name") == "avgPoints":
+                try:
+                    game.away_avg_points = float(stat.get("displayValue", 0))
+                except:
+                    pass
+        
         return game
     
     def _parse_ncaab_event(self, event: dict) -> Optional[NCAABGame]:
@@ -387,6 +415,34 @@ class ESPNProvider(BaseProvider):
                 int(away_linescores[0].get("value", 0)),
                 int(away_linescores[1].get("value", 0))
             ]
+        
+        # Pregame stats for scrolling text (same as NBA)
+        home_records = home.get("records", [])
+        away_records = away.get("records", [])
+        if home_records:
+            overall_record = next((r for r in home_records if r.get("type") == "total"), None)
+            if overall_record:
+                game.home_record = overall_record.get("summary", "")
+        if away_records:
+            overall_record = next((r for r in away_records if r.get("type") == "total"), None)
+            if overall_record:
+                game.away_record = overall_record.get("summary", "")
+        
+        # Average points per game
+        home_stats = home.get("statistics", [])
+        away_stats = away.get("statistics", [])
+        for stat in home_stats:
+            if stat.get("name") == "avgPoints":
+                try:
+                    game.home_avg_points = float(stat.get("displayValue", 0))
+                except:
+                    pass
+        for stat in away_stats:
+            if stat.get("name") == "avgPoints":
+                try:
+                    game.away_avg_points = float(stat.get("displayValue", 0))
+                except:
+                    pass
         
         return game
     
@@ -473,6 +529,18 @@ class ESPNProvider(BaseProvider):
         for stat in stats:
             if stat.get("name") == "shots":
                 game.away_shots = int(stat.get("displayValue", 0))
+        
+        # Pregame stats for scrolling text
+        home_records = home.get("records", [])
+        away_records = away.get("records", [])
+        if home_records:
+            overall_record = next((r for r in home_records if r.get("type") == "total"), None)
+            if overall_record:
+                game.home_record = overall_record.get("summary", "")  # "32-20-5"
+        if away_records:
+            overall_record = next((r for r in away_records if r.get("type") == "total"), None)
+            if overall_record:
+                game.away_record = overall_record.get("summary", "")  # "29-20-7"
         
         return game
     

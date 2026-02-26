@@ -27,6 +27,12 @@ class NBAGame(BaseGame):
         self.home_fouls: int = 0
         self.away_fouls: int = 0
         
+        # Pregame stats for scrolling text
+        self.away_record: Optional[str] = None  # "28-31"
+        self.home_record: Optional[str] = None  # "15-44"
+        self.away_avg_points: Optional[float] = None  # 115.9
+        self.home_avg_points: Optional[float] = None  # 111.5
+        
     def get_period_label(self) -> str:
         """Get current quarter label."""
         if self.status == GameStatus.SCHEDULED:

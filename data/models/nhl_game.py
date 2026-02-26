@@ -27,6 +27,10 @@ class NHLGame(BaseGame):
         self.away_shots: int = 0
         self.home_powerplay: bool = False
         self.away_powerplay: bool = False
+        
+        # Pregame stats for scrolling text
+        self.away_record: Optional[str] = None  # "29-20-7"
+        self.home_record: Optional[str] = None  # "32-20-5"
     
     def get_period_label(self) -> str:
         """Get user-friendly period label (P1, P2, P3, OT, SO)."""

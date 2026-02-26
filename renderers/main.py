@@ -378,7 +378,20 @@ class MainRenderer:
         elif game.is_final():
             graphics.DrawText(self.canvas, font, 22, 20, mlb_yellow, "FINAL")
         else:
-            # Pregame - show start time
+            # Pregame - show scrolling text with records and stats
+            from renderers import scrollingtext
+            
+            # Build pregame info text
+            pregame_text = ""
+            if game.away_record and game.home_record:
+                pregame_text = f"{away_name} ({game.away_record})"
+                if game.away_avg_points:
+                    pregame_text += f" avg {game.away_avg_points:.1f} PPG"
+                pregame_text += f" at {home_name} ({game.home_record})"
+                if game.home_avg_points:
+                    pregame_text += f" avg {game.home_avg_points:.1f} PPG"
+            
+            # Show start time on row 20
             if game.start_time:
                 import time as time_module
                 try:
@@ -395,7 +408,7 @@ class MainRenderer:
                         utc_time = game.start_time
                     
                     local_time = utc_time.astimezone(local_offset)
-                    time_str = local_time.strftime("%I:%M%p").lstrip('0')  # Keep PM capitalized
+                    time_str = local_time.strftime("%I:%M%p").lstrip('0')
                     time_x = (64 - len(time_str) * 4) // 2
                     graphics.DrawText(self.canvas, font, time_x, 20, mlb_yellow, time_str)
                 except Exception as e:
@@ -403,6 +416,22 @@ class MainRenderer:
                     graphics.DrawText(self.canvas, font, 26, 20, mlb_yellow, "TBD")
             else:
                 graphics.DrawText(self.canvas, font, 26, 20, mlb_yellow, "TBD")
+            
+            # Scrolling text on row 27 if we have pregame info
+            if pregame_text:
+                font_dict = {
+                    'font': font,
+                    'size': {'width': 4, 'height': 6}
+                }
+                text_len = scrollingtext.render_text(
+                    self.canvas, 0, 27, 64, font_dict, mlb_yellow, mlb_bg,
+                    pregame_text, self.scrolling_text_pos, center=False
+                )
+                # Update scroll position (scroll right to left)
+                if text_len > 0:
+                    self.scrolling_text_pos -= 1
+                    if self.scrolling_text_pos + text_len < 0:
+                        self.scrolling_text_pos = 64
         
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
@@ -646,7 +675,15 @@ class MainRenderer:
             final_x = (64 - len(final_text) * 5) // 2
             graphics.DrawText(self.canvas, font, final_x, 20, mlb_yellow, final_text)
         else:
-            # Pregame - show time
+            # Pregame - show scrolling text with records
+            from renderers import scrollingtext
+            
+            # Build pregame info text
+            pregame_text = ""
+            if game.away_record and game.home_record:
+                pregame_text = f"{away_name} ({game.away_record}) at {home_name} ({game.home_record})"
+            
+            # Show start time on row 20
             if hasattr(game, 'start_time') and game.start_time:
                 import time
                 from datetime import datetime
@@ -660,6 +697,22 @@ class MainRenderer:
                     graphics.DrawText(self.canvas, font, time_x, 20, mlb_yellow, time_display)
                 except:
                     pass
+            
+            # Scrolling text on row 27 if we have pregame info
+            if pregame_text:
+                font_dict = {
+                    'font': font,
+                    'size': {'width': 5, 'height': 6}
+                }
+                text_len = scrollingtext.render_text(
+                    self.canvas, 0, 27, 64, font_dict, mlb_yellow, mlb_bg,
+                    pregame_text, self.scrolling_text_pos, center=False
+                )
+                # Update scroll position
+                if text_len > 0:
+                    self.scrolling_text_pos -= 1
+                    if self.scrolling_text_pos + text_len < 0:
+                        self.scrolling_text_pos = 64
         
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     

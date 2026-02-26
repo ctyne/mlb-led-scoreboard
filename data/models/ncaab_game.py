@@ -28,6 +28,12 @@ class NCAABGame(BaseGame):
         self.home_fouls: int = 0
         self.away_fouls: int = 0
         
+        # Pregame stats for scrolling text
+        self.away_record: Optional[str] = None  # "22-5"
+        self.home_record: Optional[str] = None  # "18-9"
+        self.away_avg_points: Optional[float] = None
+        self.home_avg_points: Optional[float] = None
+        
     def get_period_label(self) -> str:
         """Get current half/period label."""
         if self.status == GameStatus.SCHEDULED:
