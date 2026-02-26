@@ -499,109 +499,165 @@ class MainRenderer:
         if len(parts) >= 2:
             return parts[-1]  # "Bucks", "Cavaliers", "Lakers", etc.
         return team_name[:10]
+    
+    def _get_nhl_team_colors(self, team_name):
+        """Get team colors (background, accent, text) for NHL teams."""
+        # Default colors
+        colors = {
+            'bg': {'r': 0, 'g': 0, 'b': 0},  # black background
+            'accent': {'r': 200, 'g': 200, 'b': 200},  # gray accent
+            'text': {'r': 255, 'g': 255, 'b': 255}  # white text
+        }
         
-        self.canvas = self.matrix.SwapOnVSync(self.canvas)
+        team_lower = team_name.lower()
+        
+        # NHL team colors (background, accent, text)
+        if 'devils' in team_lower or 'new jersey' in team_lower:
+            colors = {
+                'bg': {'r': 206, 'g': 17, 'b': 38},  # red
+                'accent': {'r': 0, 'g': 0, 'b': 0},  # black
+                'text': {'r': 255, 'g': 255, 'b': 255}  # white
+            }
+        elif 'rangers' in team_lower and 'new york' in team_lower:
+            colors = {
+                'bg': {'r': 0, 'g': 56, 'b': 168},  # blue
+                'accent': {'r': 206, 'g': 17, 'b': 38},  # red
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'bruins' in team_lower or 'boston' in team_lower:
+            colors = {
+                'bg': {'r': 252, 'g': 181, 'b': 20},  # gold
+                'accent': {'r': 0, 'g': 0, 'b': 0},  # black
+                'text': {'r': 0, 'g': 0, 'b': 0}  # black text
+            }
+        elif 'canadiens' in team_lower or 'montreal' in team_lower:
+            colors = {
+                'bg': {'r': 175, 'g': 30, 'b': 45},  # red
+                'accent': {'r': 25, 'g': 33, 'b': 104},  # blue
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'maple leafs' in team_lower or 'toronto' in team_lower:
+            colors = {
+                'bg': {'r': 0, 'g': 32, 'b': 91},  # blue
+                'accent': {'r': 255, 'g': 255, 'b': 255},  # white
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'penguins' in team_lower or 'pittsburgh' in team_lower:
+            colors = {
+                'bg': {'r': 0, 'g': 0, 'b': 0},  # black
+                'accent': {'r': 252, 'g': 181, 'b': 20},  # gold
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'blackhawks' in team_lower or 'chicago' in team_lower:
+            colors = {
+                'bg': {'r': 207, 'g': 10, 'b': 44},  # red
+                'accent': {'r': 255, 'g': 209, 'b': 0},  # yellow
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'lightning' in team_lower or 'tampa bay' in team_lower:
+            colors = {
+                'bg': {'r': 0, 'g': 40, 'b': 104},  # blue
+                'accent': {'r': 255, 'g': 255, 'b': 255},  # white
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'capitals' in team_lower or 'washington' in team_lower:
+            colors = {
+                'bg': {'r': 4, 'g': 30, 'b': 66},  # navy
+                'accent': {'r': 200, 'g': 16, 'b': 46},  # red
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        elif 'golden knights' in team_lower or 'vegas' in team_lower:
+            colors = {
+                'bg': {'r': 51, 'g': 63, 'b': 72},  # steel gray
+                'accent': {'r': 185, 'g': 151, 'b': 91},  # gold
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
+        
+        return colors
+    
+    def _get_nhl_mascot(self, team_name):
+        """Extract mascot from NHL team name (e.g., 'New Jersey Devils' -> 'Devils')."""
+        # If it's already short, return it
+        if len(team_name) <= 10:
+            return team_name
+        
+        # Split and take last word (mascot)
+        parts = team_name.split()
+        if len(parts) >= 2:
+            return parts[-1]  # "Devils", "Rangers", "Bruins", etc.
+        return team_name[:9]
     
     def __draw_nhl_game(self, game):
-        """Draw NHL game on the LED matrix in a compact, readable format."""
+        """Draw NHL game on the LED matrix matching NBA/MLB style."""
         self.canvas.Clear()
         from driver import graphics
         
         # Use cached font
         font = self._get_font()
         
-        # Colors
+        # Get team colors
+        away_colors = self._get_nhl_team_colors(game.away_team)
+        home_colors = self._get_nhl_team_colors(game.home_team)
+        
+        # Get mascot names
+        away_name = self._get_nhl_mascot(game.away_team)
+        home_name = self._get_nhl_mascot(game.home_team)
+        
+        # MLB-style colors
+        mlb_yellow = graphics.Color(255, 235, 59)
+        mlb_bg = graphics.Color(7, 14, 25)
         white = graphics.Color(255, 255, 255)
-        red = graphics.Color(255, 0, 0)
-        green = graphics.Color(0, 255, 0)
-        blue = graphics.Color(100, 150, 255)
-        yellow = graphics.Color(255, 255, 0)
-        gray = graphics.Color(100, 100, 100)
-        orange = graphics.Color(255, 165, 0)
         
-        away_abbrev = self._abbreviate_nhl_team(game.away_team)
-        home_abbrev = self._abbreviate_nhl_team(game.home_team)
+        # Draw away team section (rows 0-6)
+        self._draw_filled_box(0, 0, 64, 7, away_colors['bg'])
+        self._draw_filled_box(0, 0, 3, 7, away_colors['accent'])
+        graphics.DrawText(self.canvas, font, 5, 6, away_colors['text'], away_name[:9])
+        away_score = str(game.away_score)
+        score_x = 64 - len(away_score) * 5 - 2
+        graphics.DrawText(self.canvas, font, score_x, 6, away_colors['text'], away_score)
         
+        # Draw home team section (rows 7-13)
+        self._draw_filled_box(0, 7, 64, 7, home_colors['bg'])
+        self._draw_filled_box(0, 7, 3, 7, home_colors['accent'])
+        graphics.DrawText(self.canvas, font, 5, 13, home_colors['text'], home_name[:9])
+        home_score = str(game.home_score)
+        score_x = 64 - len(home_score) * 5 - 2
+        graphics.DrawText(self.canvas, font, score_x, 13, home_colors['text'], home_score)
+        
+        # Draw MLB-style bottom section (rows 14-31)
+        self._draw_filled_box(0, 14, 64, 18, mlb_bg)
+        
+        # Status text on row 20 in MLB yellow
         if game.is_live():
-            # Live game layout
-            # Row 1: NHL | Period | Time
-            graphics.DrawText(self.canvas, font, 1, 6, blue, "NHL")
             period = game.get_period_label()
-            
-            # Highlight OT/SO in orange
-            period_color = orange if (game.is_overtime or game.is_shootout) else yellow
-            graphics.DrawText(self.canvas, font, 22, 6, period_color, period)
-            
-            if game.time_remaining:
-                time_text = game.time_remaining[:5]
-                graphics.DrawText(self.canvas, font, 40, 6, white, time_text)
-            
-            # Row 2: Away Team | Score (right-aligned)
-            away_color = red if game.away_score > game.home_score else white
-            graphics.DrawText(self.canvas, font, 1, 15, away_color, away_abbrev)
-            away_score = str(game.away_score)
-            score_x = 64 - len(away_score) * 5 - 2
-            graphics.DrawText(self.canvas, font, score_x, 15, away_color, away_score)
-            
-            # Row 3: Home Team | Score (right-aligned)
-            home_color = red if game.home_score > game.away_score else white
-            graphics.DrawText(self.canvas, font, 1, 24, home_color, home_abbrev)
-            home_score = str(game.home_score)
-            score_x = 64 - len(home_score) * 5 - 2
-            graphics.DrawText(self.canvas, font, score_x, 24, home_color, home_score)
-            
+            time_text = game.time_remaining if game.time_remaining else ""
+            status = f"{period} {time_text}".strip()
+            status_x = (64 - len(status) * 5) // 2
+            graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status)
         elif game.is_final():
-            # Final game layout
-            graphics.DrawText(self.canvas, font, 1, 6, blue, "NHL")
-            
-            # Show if OT/SO win
             if game.is_shootout:
-                graphics.DrawText(self.canvas, font, 22, 6, orange, "FINAL/SO")
+                final_text = "FINAL/SO"
             elif game.is_overtime:
-                graphics.DrawText(self.canvas, font, 22, 6, orange, "FINAL/OT")
+                final_text = "FINAL/OT"
             else:
-                graphics.DrawText(self.canvas, font, 22, 6, red, "FINAL")
-            
-            # Determine winner
-            away_winner = game.away_score > game.home_score
-            home_winner = game.home_score > game.away_score
-            
-            # Away team
-            away_color = green if away_winner else gray
-            graphics.DrawText(self.canvas, font, 1, 15, away_color, away_abbrev)
-            away_score = str(game.away_score)
-            score_x = 64 - len(away_score) * 5 - 2
-            graphics.DrawText(self.canvas, font, score_x, 15, away_color, away_score)
-            
-            # Home team
-            home_color = green if home_winner else gray
-            graphics.DrawText(self.canvas, font, 1, 24, home_color, home_abbrev)
-            home_score = str(game.home_score)
-            score_x = 64 - len(home_score) * 5 - 2
-            graphics.DrawText(self.canvas, font, score_x, 24, home_color, home_score)
-            
+                final_text = "FINAL"
+            final_x = (64 - len(final_text) * 5) // 2
+            graphics.DrawText(self.canvas, font, final_x, 20, mlb_yellow, final_text)
         else:
-            # Scheduled/Pregame layout
-            graphics.DrawText(self.canvas, font, 1, 6, blue, "NHL")
-            
-            # Matchup centered
-            matchup = f"{away_abbrev} @ {home_abbrev}"
-            matchup_x = (64 - len(matchup) * 5) // 2
-            graphics.DrawText(self.canvas, font, matchup_x, 15, white, matchup)
-            
-            # Time (if available)
+            # Pregame - show time
             if hasattr(game, 'start_time') and game.start_time:
+                import time
+                from datetime import datetime
                 time_str = str(game.start_time)
-                if len(time_str) > 8:
-                    try:
-                        from datetime import datetime
-                        dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
-                        time_str = dt.strftime("%-I:%M%p").replace('M', '')
-                    except:
-                        time_str = time_str[:8]
-                
-                time_x = (64 - len(time_str) * 5) // 2
-                graphics.DrawText(self.canvas, font, time_x, 24, yellow, time_str)
+                try:
+                    # Parse ISO timestamp and convert to local time
+                    dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+                    local_dt = dt.astimezone()
+                    time_display = local_dt.strftime("%-I:%M%p")
+                    time_x = (64 - len(time_display) * 5) // 2
+                    graphics.DrawText(self.canvas, font, time_x, 20, mlb_yellow, time_display)
+                except:
+                    pass
         
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
