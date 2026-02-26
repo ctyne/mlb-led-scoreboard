@@ -683,13 +683,16 @@ class MainRenderer:
             from renderers import scrollingtext
             from utils import debug
             
+            # Debug: Print directly to console
+            print(f"[DEBUG NHL PREGAME] away_record={game.away_record}, home_record={game.home_record}")
+            
             # Build pregame info text
             pregame_text = ""
             if game.away_record and game.home_record:
                 pregame_text = f"{away_name} ({game.away_record}) at {home_name} ({game.home_record})"
-                debug.log(f"NHL Pregame text: {pregame_text}")
+                print(f"[DEBUG NHL PREGAME] Built text: {pregame_text}")
             else:
-                debug.log(f"NHL No records - away:{game.away_record}, home:{game.home_record}")
+                print(f"[DEBUG NHL PREGAME] No records - skipping scroll text")
             
             # Show start time on row 20
             if hasattr(game, 'start_time') and game.start_time:
