@@ -724,7 +724,7 @@ class MainRenderer:
                 print(f"  Should scroll: {len(pregame_text) * 4 > 64}")
                 
                 text_len = scrollingtext.render_text(
-                    self.canvas, 0, 27, 64, font_dict, mlb_yellow, mlb_bg_color,
+                    self.canvas, 0, 31, 64, font_dict, mlb_yellow, mlb_bg_color,
                     pregame_text, self.scrolling_text_pos, center=False
                 )
                 print(f"[DEBUG NHL SCROLL] text_len: {text_len}, pos: {self.scrolling_text_pos}")
