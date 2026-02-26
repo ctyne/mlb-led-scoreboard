@@ -716,6 +716,13 @@ class MainRenderer:
                     'font': font,
                     'size': {'width': 4, 'height': 6}  # 4x6 font
                 }
+                print(f"[DEBUG NHL] Calling scrollingtext with:")
+                print(f"  text: '{pregame_text}' (len={len(pregame_text)})")
+                print(f"  width: 64")
+                print(f"  font width: 4")
+                print(f"  Expected pixels: {len(pregame_text) * 4}")
+                print(f"  Should scroll: {len(pregame_text) * 4 > 64}")
+                
                 text_len = scrollingtext.render_text(
                     self.canvas, 0, 27, 64, font_dict, mlb_yellow, mlb_bg_color,
                     pregame_text, self.scrolling_text_pos, center=False
