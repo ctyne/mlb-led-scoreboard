@@ -713,13 +713,13 @@ class MainRenderer:
             if pregame_text:
                 font_dict = {
                     'font': font,
-                    'size': {'width': 5, 'height': 6}
+                    'size': {'width': 4, 'height': 6}  # 4x6 font
                 }
                 text_len = scrollingtext.render_text(
                     self.canvas, 0, 27, 64, font_dict, mlb_yellow, mlb_bg,
                     pregame_text, self.scrolling_text_pos, center=False
                 )
-                debug.log(f"NHL scroll text_len: {text_len}, pos: {self.scrolling_text_pos}")
+                print(f"[DEBUG NHL SCROLL] text_len: {text_len}, pos: {self.scrolling_text_pos}")
                 # Update scroll position
                 if text_len > 0:
                     self.scrolling_text_pos -= 1
