@@ -658,6 +658,10 @@ class MainRenderer:
         # Draw MLB-style bottom section (rows 14-31)
         self._draw_filled_box(0, 14, 64, 18, mlb_bg)
         
+        # Debug: Log game status
+        from utils import debug
+        debug.log(f"NHL Game Status: is_live={game.is_live()}, is_final={game.is_final()}, status={game.status}")
+        
         # Status text on row 20 in MLB yellow
         if game.is_live():
             period = game.get_period_label()
