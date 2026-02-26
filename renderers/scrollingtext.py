@@ -31,9 +31,7 @@ def render_text(canvas, x, y, width, font, text_color, bg_color, text, scroll_po
 
 # Maybe the text is too short and we should just center it instead?
 def __text_should_scroll(text, font, width):
-    should_scroll = len(text) * font["size"]["width"] > width
-    print(f"[DEBUG scrollingtext] text_len={len(text)}, font_width={font['size']['width']}, width={width}, calc={len(text) * font['size']['width']}, should_scroll={should_scroll}")
-    return should_scroll
+    return len(text) * font["size"]["width"] > width
 
 
 def __center_position(text, font, width, x):
