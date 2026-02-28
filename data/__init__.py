@@ -111,43 +111,63 @@ class Data:
         if self.multi_sport.enabled and self.other_sport_games:
             # Create combined list of all games
             # Access schedule's internal _games list directly
-            mlb_games = getattr(self.schedule, '_games', [])
+            mlb_scheduled_games = getattr(self.schedule, '_games', [])
             
-            # Filter other sport games by priority
-            # If there are live games, only show live games
-            # If no live games, show scheduled games
-            # If no live or scheduled, show final games
-            live_games = [g for g in self.other_sport_games if g.is_live()]
-            scheduled_games = [g for g in self.other_sport_games if g.status == GameStatus.SCHEDULED]
-            final_games = [g for g in self.other_sport_games if g.is_final()]
+            # Convert MLB scheduled games to Game objects to check status
+            mlb_game_objects = []
+            for scheduled_game in mlb_scheduled_games:
+                game = Game.from_scheduled(scheduled_game, self.config.preferred_game_delay_multiplier, self.config.api_refresh_rate)
+                if game:
+                    mlb_game_objects.append((scheduled_game, game))
+            
+            # Categorize ALL games (MLB + other sports) by status
+            all_live = []
+            all_scheduled = []
+            all_final = []
+            
+            # Categorize MLB games
+            for scheduled_game, game in mlb_game_objects:
+                game_status = game.status()
+                if game_status == status.IN_PROGRESS or game_status == status.DELAYED:
+                    all_live.append(('mlb', scheduled_game))
+                elif game_status == status.SCHEDULED or game_status == status.WARMUP or game_status == status.PRE_GAME:
+                    all_scheduled.append(('mlb', scheduled_game))
+                elif game_status == status.FINAL:
+                    all_final.append(('mlb', scheduled_game))
+            
+            # Categorize other sport games
+            for game in self.other_sport_games:
+                if game.is_live():
+                    all_live.append(('other', game))
+                elif game.status == GameStatus.SCHEDULED:
+                    all_scheduled.append(('other', game))
+                elif game.is_final():
+                    all_final.append(('other', game))
             
             # Determine which games to show based on priority
-            if live_games:
-                active_other_sport_games = live_games
-            elif scheduled_games:
-                active_other_sport_games = scheduled_games
+            if all_live:
+                active_games = all_live
+            elif all_scheduled:
+                active_games = all_scheduled
             else:
-                active_other_sport_games = final_games
+                active_games = all_final
             
-            mlb_count = len(mlb_games)
-            other_sport_count = len(active_other_sport_games)
-            total_games = mlb_count + other_sport_count
-            
-            if total_games == 0:
+            if len(active_games) == 0:
                 debug.warning("No games available (MLB or other sports)")
                 self.network_issues = True
                 return
             
-            # Move to next game in combined rotation
-            self.combined_game_index = (self.combined_game_index + 1) % total_games
+            # Move to next game in rotation
+            self.combined_game_index = (self.combined_game_index + 1) % len(active_games)
             
-            # Determine if this index is MLB or other sport
-            if self.combined_game_index < mlb_count:
-                # It's an MLB game - get directly from list and convert to Game object
+            # Get the game at this index
+            game_type, game_data = active_games[self.combined_game_index]
+            
+            if game_type == 'mlb':
+                # It's an MLB game
                 self.current_game_is_other_sport = False
                 self.current_other_sport_game = None
-                scheduled_game = mlb_games[self.combined_game_index]
-                game = Game.from_scheduled(scheduled_game, self.config.preferred_game_delay_multiplier, self.config.api_refresh_rate)
+                game = Game.from_scheduled(game_data, self.config.preferred_game_delay_multiplier, self.config.api_refresh_rate)
                 
                 if game:
                     self.current_game = game
@@ -159,9 +179,8 @@ class Data:
                     debug.warning(f"Failed to create Game object at index {self.combined_game_index}")
             else:
                 # It's an other sport game
-                other_sport_index = self.combined_game_index - mlb_count
                 self.current_game_is_other_sport = True
-                self.current_other_sport_game = active_other_sport_games[other_sport_index]
+                self.current_other_sport_game = game_data
                 self.current_game = None  # Clear MLB game
                 self.game_changed_time = time.time()
                 self.scrolling_finished = False
