@@ -51,6 +51,10 @@ class MultiSportData:
             nfl_provider = ESPNProvider(Sport.NFL)
             self.providers.append(nfl_provider)
         
+        if 'SOCCER' in self.sports:
+            soccer_provider = ESPNProvider(Sport.SOCCER)
+            self.providers.append(soccer_provider)
+        
         # Create team ID mappings for filtering
         favorite_team_ids = {}
         for sport_str, teams in self.favorite_teams.items():
