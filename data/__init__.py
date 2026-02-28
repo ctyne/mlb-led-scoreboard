@@ -230,17 +230,22 @@ class Data:
             return
         
         self.last_other_sport_refresh = current_time
+        debug.log("Refreshing other sport games...")
         
         try:
             # Refresh games from ESPN API (ignores 5-min cache)
             self.other_sport_games = self.multi_sport.get_todays_games(refresh=True)
+            debug.log(f"Refreshed {len(self.other_sport_games)} other sport games")
             
             # Update the current game if it's in the refreshed list
             if self.current_other_sport_game:
                 current_id = self.current_other_sport_game.game_id
                 for game in self.other_sport_games:
                     if game.game_id == current_id:
+                        old_score = f"{self.current_other_sport_game.away_score}-{self.current_other_sport_game.home_score}"
+                        new_score = f"{game.away_score}-{game.home_score}"
                         self.current_other_sport_game = game
+                        debug.log(f"Updated current game: {game.away_team} @ {game.home_team} ({old_score} -> {new_score})")
                         break
         except Exception as e:
             debug.log(f"Error refreshing other sport games: {e}")
