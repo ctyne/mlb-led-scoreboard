@@ -627,8 +627,8 @@ class ESPNProvider(BaseProvider):
         
         # Match time (for live/final games)
         if game.status == GameStatus.LIVE or game.status == GameStatus.FINAL:
-            # Period (half)
-            period = int(status_type.get("period", 0))
+            # Period (half) - it's in status_data, not status_type
+            period = int(status_data.get("period", 0))
             game.half = period
             
             # Match minute
