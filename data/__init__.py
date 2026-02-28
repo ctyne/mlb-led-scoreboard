@@ -13,6 +13,7 @@ from data.standings import Standings
 from data.update import UpdateStatus
 from data.weather import Weather
 from data.multi_sport import MultiSportData
+from data.models.base_game import GameStatus
 
 
 class Data:
@@ -111,19 +112,36 @@ class Data:
             # Create combined list of all games
             # Access schedule's internal _games list directly
             mlb_games = getattr(self.schedule, '_games', [])
+            
+            # Filter other sport games by priority
+            # If there are live games, only show live games
+            # If no live games, show scheduled games
+            # If no live or scheduled, show final games
+            live_games = [g for g in self.other_sport_games if g.is_live()]
+            scheduled_games = [g for g in self.other_sport_games if g.status == GameStatus.SCHEDULED]
+            final_games = [g for g in self.other_sport_games if g.is_final()]
+            
+            # Determine which games to show based on priority
+            if live_games:
+                active_other_sport_games = live_games
+            elif scheduled_games:
+                active_other_sport_games = scheduled_games
+            else:
+                active_other_sport_games = final_games
+            
             mlb_count = len(mlb_games)
-            nba_count = len(self.other_sport_games)
-            total_games = mlb_count + nba_count
+            other_sport_count = len(active_other_sport_games)
+            total_games = mlb_count + other_sport_count
             
             if total_games == 0:
-                debug.warning("No games available (MLB or NBA)")
+                debug.warning("No games available (MLB or other sports)")
                 self.network_issues = True
                 return
             
             # Move to next game in combined rotation
             self.combined_game_index = (self.combined_game_index + 1) % total_games
             
-            # Determine if this index is MLB or NBA
+            # Determine if this index is MLB or other sport
             if self.combined_game_index < mlb_count:
                 # It's an MLB game - get directly from list and convert to Game object
                 self.current_game_is_other_sport = False
@@ -140,14 +158,14 @@ class Data:
                 else:
                     debug.warning(f"Failed to create Game object at index {self.combined_game_index}")
             else:
-                # It's an NBA game
-                nba_index = self.combined_game_index - mlb_count
+                # It's an other sport game
+                other_sport_index = self.combined_game_index - mlb_count
                 self.current_game_is_other_sport = True
-                self.current_other_sport_game = self.other_sport_games[nba_index]
+                self.current_other_sport_game = active_other_sport_games[other_sport_index]
                 self.current_game = None  # Clear MLB game
                 self.game_changed_time = time.time()
                 self.scrolling_finished = False
-                debug.log(f"Switching to NBA game: {self.current_other_sport_game.away_team} @ {self.current_other_sport_game.home_team}")
+                debug.log(f"Switching to {self.current_other_sport_game.sport.value} game: {self.current_other_sport_game.away_team} @ {self.current_other_sport_game.home_team}")
         else:
             # Original MLB-only behavior
             game = self.schedule.next_game()
