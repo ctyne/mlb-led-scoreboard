@@ -218,6 +218,25 @@ class Data:
                 debug.log("Rotating to the same game, refreshing instead")
                 self.refresh_game()
 
+    def refresh_other_sports(self):
+        """Refresh other sport games data."""
+        if not self.multi_sport.enabled:
+            return
+        
+        try:
+            # Refresh games from ESPN API (ignores 5-min cache)
+            self.other_sport_games = self.multi_sport.get_todays_games(refresh=True)
+            
+            # Update the current game if it's in the refreshed list
+            if self.current_other_sport_game:
+                current_id = self.current_other_sport_game.game_id
+                for game in self.other_sport_games:
+                    if game.game_id == current_id:
+                        self.current_other_sport_game = game
+                        break
+        except Exception as e:
+            debug.log(f"Error refreshing other sport games: {e}")
+
     def refresh_standings(self):
         self.__process_network_status(self.standings.update())
 
