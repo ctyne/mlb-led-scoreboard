@@ -649,9 +649,16 @@ class ESPNProvider(BaseProvider):
                     except:
                         game.half = 1  # Default to first half
             
-            # Check for extra time or penalties
+            # Check for halftime, extra time or penalties
             detail = status_type.get("detail", "").lower()
-            if "extra time" in detail or "et" in detail:
+            
+            # Debug: log detail to see what ESPN sends
+            if "half" in detail or "time" in detail:
+                print(f"[DEBUG SOCCER] status detail: {detail}, period: {period}, clock: {display_clock}")
+            
+            if "halftime" in detail:
+                game.minute = "HT"  # Show "HT" for halftime
+            elif "extra time" in detail or "et" in detail:
                 game.is_extra_time = True
             if "penalties" in detail or "penalty shootout" in detail:
                 game.is_penalty_shootout = True
