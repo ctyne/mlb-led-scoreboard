@@ -15,7 +15,6 @@ from data.weather import Weather
 from data.multi_sport import MultiSportData
 from data.models.base_game import GameStatus
 
-
 class Data:
     def __init__(self, config):
         # Save the parsed config
@@ -38,6 +37,19 @@ class Data:
             try:
                 self.other_sport_games = self.multi_sport.get_todays_games()
                 debug.log(f"Found {len(self.other_sport_games)} other sport games")
+                
+                # Set initial game based on priority (live > scheduled > final)
+                if self.other_sport_games:
+                    # Check if there are any live games in other sports
+                    live_other_games = [g for g in self.other_sport_games if g.is_live()]
+                    
+                    if live_other_games:
+                        # Start with first live other sport game
+                        self.current_game_is_other_sport = True
+                        self.current_other_sport_game = live_other_games[0]
+                        self.current_game = None
+                        self.combined_game_index = 0
+                        debug.log(f"Starting with live {live_other_games[0].sport.value} game")
             except Exception as e:
                 debug.log(f"Error fetching other sport games: {e}")
                 self.other_sport_games = []
