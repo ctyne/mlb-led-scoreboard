@@ -681,24 +681,52 @@ class ESPNProvider(BaseProvider):
             game.away_halves = [int(ls.get("value", 0)) for ls in away_linescores]
         
         # Additional stats
-        stats = home.get("statistics", [])
-        for stat in stats:
+        home_stats = home.get("statistics", [])
+        for stat in home_stats:
             name = stat.get("name", "")
-            if name == "shots":
+            if name == "totalShots":
                 game.home_shots = int(stat.get("displayValue", 0))
-            elif name == "corners":
+            elif name == "shotsOnTarget":
+                game.home_shots_on_target = int(stat.get("displayValue", 0))
+            elif name == "wonCorners":
                 game.home_corners = int(stat.get("displayValue", 0))
+            elif name == "possessionPct":
+                try:
+                    game.home_possession = float(stat.get("displayValue", 0))
+                except:
+                    game.home_possession = 0.0
             elif name == "redCards":
                 game.home_red_cards = int(stat.get("displayValue", 0))
         
-        stats = away.get("statistics", [])
-        for stat in stats:
+        away_stats = away.get("statistics", [])
+        for stat in away_stats:
             name = stat.get("name", "")
-            if name == "shots":
+            if name == "totalShots":
                 game.away_shots = int(stat.get("displayValue", 0))
-            elif name == "corners":
+            elif name == "shotsOnTarget":
+                game.away_shots_on_target = int(stat.get("displayValue", 0))
+            elif name == "wonCorners":
                 game.away_corners = int(stat.get("displayValue", 0))
+            elif name == "possessionPct":
+                try:
+                    game.away_possession = float(stat.get("displayValue", 0))
+                except:
+                    game.away_possession = 0.0
             elif name == "redCards":
                 game.away_red_cards = int(stat.get("displayValue", 0))
+        
+        # Parse goal scorers from details/plays
+        competition = event.get("competitions", [{}])[0]
+        details = competition.get("details", [])
+        for detail in details:
+            if detail.get("scoringPlay", False):
+                athletes = detail.get("athletesInvolved", [])
+                clock = detail.get("clock", {})
+                minute = clock.get("displayValue", "")
+                if athletes and minute:
+                    scorer = athletes[0].get("shortName", "")
+                    if scorer:
+                        # Format as "Name MM'" e.g. "Rathbone 30'"
+                        game.goal_scorers.append(f"{scorer} {minute}")
         
         return game

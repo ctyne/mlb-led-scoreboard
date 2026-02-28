@@ -25,10 +25,17 @@ class SoccerGame(BaseGame):
         # Additional stats (optional)
         self.home_shots: int = 0
         self.away_shots: int = 0
+        self.home_shots_on_target: int = 0
+        self.away_shots_on_target: int = 0
         self.home_corners: int = 0
         self.away_corners: int = 0
+        self.home_possession: float = 0.0
+        self.away_possession: float = 0.0
         self.home_red_cards: int = 0
         self.away_red_cards: int = 0
+        
+        # Goal scorers (list of "Name Minute'" strings)
+        self.goal_scorers: list[str] = []
         
         # League info
         self.league: str = ""  # "Premier League", "MLS", etc.
@@ -63,10 +70,15 @@ class SoccerGame(BaseGame):
             'away_halves': self.away_halves,
             'home_shots': self.home_shots,
             'away_shots': self.away_shots,
+            'home_shots_on_target': self.home_shots_on_target,
+            'away_shots_on_target': self.away_shots_on_target,
             'home_corners': self.home_corners,
             'away_corners': self.away_corners,
+            'home_possession': self.home_possession,
+            'away_possession': self.away_possession,
             'home_red_cards': self.home_red_cards,
             'away_red_cards': self.away_red_cards,
+            'goal_scorers': self.goal_scorers,
             'league': self.league
         }
     

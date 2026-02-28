@@ -921,6 +921,50 @@ class MainRenderer:
                 except:
                     pass
         
+        # Scrolling stats for live games on row 27
+        if game.is_live():
+            # Build stats string
+            stats_parts = []
+            
+            # Possession
+            if game.home_possession > 0 or game.away_possession > 0:
+                stats_parts.append(f"Possession: {game.away_team[:3].upper()} {int(game.away_possession)}% - {game.home_team[:3].upper()} {int(game.home_possession)}%")
+            
+            # Shots (Shots on Target)
+            if game.away_shots > 0 or game.home_shots > 0:
+                stats_parts.append(f"Shots: {game.away_shots}-{game.home_shots}")
+                if game.away_shots_on_target > 0 or game.home_shots_on_target > 0:
+                    stats_parts.append(f"On Target: {game.away_shots_on_target}-{game.home_shots_on_target}")
+            
+            # Corners
+            if game.away_corners > 0 or game.home_corners > 0:
+                stats_parts.append(f"Corners: {game.away_corners}-{game.home_corners}")
+            
+            # Goal scorers
+            if game.goal_scorers:
+                for scorer in game.goal_scorers:
+                    stats_parts.append(scorer)
+            
+            # Join with separator
+            if stats_parts:
+                stats_text = "  |  ".join(stats_parts)
+                
+                # Scrolling text
+                from renderers import scrollingtext
+                font_dict = {
+                    'font': font,
+                    'size': {'width': 4, 'height': 6}
+                }
+                text_len = scrollingtext.render_text(
+                    self.canvas, 0, 27, 64, font_dict, mlb_yellow, mlb_bg_dict,
+                    stats_text, self.scrolling_text_pos, center=False
+                )
+                # Update scroll position (scroll right to left)
+                if text_len > 0:
+                    self.scrolling_text_pos -= 1
+                    if self.scrolling_text_pos + text_len < 0:
+                        self.scrolling_text_pos = 64
+        
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
     def _abbreviate_soccer_team(self, team_name):
