@@ -26,6 +26,7 @@ class Data:
         self.current_other_sport_game = None
         self.other_sport_games = []
         self.combined_game_index = 0  # Track position across ALL games
+        self.last_other_sport_refresh = 0  # Track last refresh time for rate limiting
 
         # get MLB schedule
         self.schedule: Schedule = Schedule(config)
@@ -219,9 +220,16 @@ class Data:
                 self.refresh_game()
 
     def refresh_other_sports(self):
-        """Refresh other sport games data."""
+        """Refresh other sport games data (rate limited to every 15 seconds)."""
         if not self.multi_sport.enabled:
             return
+        
+        # Rate limit: only refresh every 15 seconds
+        current_time = time.time()
+        if current_time - self.last_other_sport_refresh < 15:
+            return
+        
+        self.last_other_sport_refresh = current_time
         
         try:
             # Refresh games from ESPN API (ignores 5-min cache)
