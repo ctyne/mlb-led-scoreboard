@@ -628,12 +628,26 @@ class ESPNProvider(BaseProvider):
         # Match time (for live/final games)
         if game.status == GameStatus.LIVE or game.status == GameStatus.FINAL:
             # Period (half)
-            game.half = int(status_type.get("period", 0))
+            period = int(status_type.get("period", 0))
+            game.half = period
             
             # Match minute
             display_clock = status_data.get("displayClock", "")
             if display_clock:
                 game.minute = display_clock
+                
+                # If period is 0 but we have a minute, infer the half
+                if game.half == 0 and display_clock:
+                    try:
+                        # Parse minute (e.g., "20'" or "45'+2")
+                        minute_str = display_clock.replace("'", "").split("+")[0]
+                        minute_num = int(minute_str)
+                        if minute_num <= 45:
+                            game.half = 1
+                        else:
+                            game.half = 2
+                    except:
+                        game.half = 1  # Default to first half
             
             # Check for extra time or penalties
             detail = status_type.get("detail", "").lower()
