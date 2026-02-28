@@ -240,6 +240,10 @@ class Data:
                 current_id = self.current_other_sport_game.game_id
                 for game in self.other_sport_games:
                     if game.game_id == current_id:
+                        old_minute = getattr(self.current_other_sport_game, 'minute', '')
+                        new_minute = getattr(game, 'minute', '')
+                        if old_minute != new_minute:
+                            debug.log(f"[REFRESH] Time updated: {old_minute} -> {new_minute}")
                         self.current_other_sport_game = game
                         break
         except Exception as e:
