@@ -880,9 +880,10 @@ class MainRenderer:
             period = game.get_period_label()
             status_text = period
             if game.minute:
-                minute_text = game.minute[:4]  # "45'+2" or "67"
+                minute_text = game.minute  # Full minute text like "45'+2" or "67'"
                 status_text = f"{period} {minute_text}"
-            status_x = (64 - len(status_text) * 5) // 2
+            # Use 4px font width for proper centering
+            status_x = (64 - len(status_text) * 4) // 2
             graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status_text)
         elif game.is_final():
             if game.is_penalty_shootout:
