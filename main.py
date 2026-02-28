@@ -141,6 +141,9 @@ def __refresh_gameday(render_thread, data):  # type: (threading.Thread, Data) ->
             # make sure a game is populated
             data.advance_to_next_game()
 
+        # Always refresh the current game data
+        data.refresh_game()
+
         if data.should_rotate_to_next_game():
             if data.scrolling_finished:
                 time_delta = time.time() - starttime
@@ -155,8 +158,6 @@ def __refresh_gameday(render_thread, data):  # type: (threading.Thread, Data) ->
                 if time_delta >= rotate_rate:
                     starttime = time.time()
                     data.advance_to_next_game()
-        else:
-            data.refresh_game()
 
 
 
