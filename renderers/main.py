@@ -876,12 +876,23 @@ class MainRenderer:
         
         # Status text in MLB yellow
         if game.is_live():
-            # Live: show period/minute
-            period = game.get_period_label()
-            status_text = period
-            if game.minute:
-                minute_text = game.minute  # Full minute text like "45'+2" or "67'"
-                status_text = f"{period} {minute_text}"
+            # Check for halftime
+            if game.minute == "HT":
+                # Show "End of First Half" or "End of Second Half"
+                period = game.get_period_label()
+                if "1st" in period:
+                    status_text = "End of First Half"
+                elif "2nd" in period:
+                    status_text = "End of Second Half"
+                else:
+                    status_text = "Halftime"
+            else:
+                # Live: show period/minute
+                period = game.get_period_label()
+                status_text = period
+                if game.minute:
+                    minute_text = game.minute  # Full minute text like "45'+2" or "67'"
+                    status_text = f"{period} {minute_text}"
             # Use 4px font width for proper centering
             status_x = (64 - len(status_text) * 4) // 2
             graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status_text)
