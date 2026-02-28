@@ -653,10 +653,10 @@ class ESPNProvider(BaseProvider):
             detail = status_type.get("detail", "").lower()
             
             # Debug: log detail to see what ESPN sends
-            if "half" in detail or "time" in detail:
+            if "half" in detail or "time" in detail or detail == "ht":
                 print(f"[DEBUG SOCCER] status detail: {detail}, period: {period}, clock: {display_clock}")
             
-            if "halftime" in detail:
+            if "ht" in detail or "halftime" in detail:
                 game.minute = "HT"  # Show "HT" for halftime
             elif "extra time" in detail or "et" in detail:
                 game.is_extra_time = True
