@@ -34,15 +34,15 @@ class SoccerGame(BaseGame):
         self.league: str = ""  # "Premier League", "MLS", etc.
     
     def get_period_label(self) -> str:
-        """Get user-friendly period label (1H, 2H, ET, PK)."""
+        """Get user-friendly period label (1st Half, 2nd Half, ET, PK)."""
         if self.is_penalty_shootout:
             return "PK"
         elif self.is_extra_time:
             return "ET"
         elif self.half == 1:
-            return "1H"
+            return "1st Half"
         elif self.half == 2:
-            return "2H"
+            return "2nd Half"
         else:
             return f"H{self.half}"
     
