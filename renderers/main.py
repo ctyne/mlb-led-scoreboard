@@ -956,7 +956,7 @@ class MainRenderer:
                     'size': {'width': 4, 'height': 6}
                 }
                 text_len = scrollingtext.render_text(
-                    self.canvas, 0, 27, 64, font_dict, mlb_yellow, mlb_bg_dict,
+                    self.canvas, 0, 27, 64, font_dict, mlb_yellow, mlb_bg_color,
                     stats_text, self.scrolling_text_pos, center=False
                 )
                 # Update scroll position (scroll right to left)
