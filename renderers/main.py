@@ -878,12 +878,12 @@ class MainRenderer:
         if game.is_live():
             # Check for halftime
             if game.minute == "HT":
-                # Show "End of First Half" or "End of Second Half"
+                # Show "End of 1st Half" or "End of 2nd Half"
                 period = game.get_period_label()
                 if "1st" in period:
-                    status_text = "End of First Half"
+                    status_text = "End of 1st Half"
                 elif "2nd" in period:
-                    status_text = "End of Second Half"
+                    status_text = "End of 2nd Half"
                 else:
                     status_text = "Halftime"
             else:
