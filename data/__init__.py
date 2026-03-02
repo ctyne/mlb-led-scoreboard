@@ -109,7 +109,10 @@ class Data:
             # No individual game update needed like MLB's statsapi
             return
         
-        # MLB game refresh
+        # MLB game refresh (only if we have a current MLB game)
+        if self.current_game is None:
+            return
+        
         status = self.current_game.update()
         if status == UpdateStatus.SUCCESS:
             self.__update_layout_state()
