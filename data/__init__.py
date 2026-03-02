@@ -282,12 +282,16 @@ class Data:
         # Always the standings
         if self.config.standings_always_display:
             return ScreenType.ALWAYS_STANDINGS
-        # Full MLB Offday
-        if self.schedule.is_offday():
+        
+        # Check if there are any other sport games available
+        has_other_sport_games = len(self.other_sport_games) > 0 if self.multi_sport.enabled else False
+        
+        # Full MLB Offday - only if no other sports have games
+        if self.schedule.is_offday() and not has_other_sport_games:
             return ScreenType.LEAGUE_OFFDAY
 
-        # Preferred Team Offday
-        if self.schedule.is_offday_for_preferred_team() and (
+        # Preferred Team Offday - only if no other sports have games
+        if self.schedule.is_offday_for_preferred_team() and not has_other_sport_games and (
             self.config.news_ticker_team_offday or self.config.standings_team_offday
         ):
             return ScreenType.PREFERRED_TEAM_OFFDAY
