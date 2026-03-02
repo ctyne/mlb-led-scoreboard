@@ -51,6 +51,13 @@ class Data:
                         self.current_game = None
                         self.combined_game_index = 0
                         debug.log(f"Starting with live {live_other_games[0].sport.value} game")
+                    elif self.current_game is None:
+                        # MLB is off, start with first other sport game (even if scheduled)
+                        self.current_game_is_other_sport = True
+                        self.current_other_sport_game = self.other_sport_games[0]
+                        self.current_game = None
+                        self.combined_game_index = 0
+                        debug.log(f"Starting with {self.other_sport_games[0].sport.value} game (MLB off)")
             except Exception as e:
                 debug.log(f"Error fetching other sport games: {e}")
                 self.other_sport_games = []
