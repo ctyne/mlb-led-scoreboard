@@ -25,68 +25,30 @@ class Schedule:
 
     def update(self, force=False) -> UpdateStatus:
         if force or self.__should_update():
-            debug.log("===== SCHEDULE UPDATE CALLED =====")
             self.date = self.config.parse_today()
-            debug.log("Updating schedule for %s", self.date)
             self.starttime = time.time()
             try:
-                debug.log(f"Calling statsapi.schedule for {self.date.strftime('%Y-%m-%d')}")
                 self.__all_games = statsapi.schedule(self.date.strftime("%Y-%m-%d"))
-                debug.log(f"statsapi returned {len(self.__all_games)} games")
-                
-                # Debug: log first game to see structure
-                if self.__all_games:
-                    debug.log(f"First game keys: {self.__all_games[0].keys()}")
-                    debug.log(f"First game sample: away={self.__all_games[0].get('away_name')}, home={self.__all_games[0].get('home_name')}")
-                
-                # Filter out any non-MLB games that might have gotten into the API response
-                # NHL teams use abbreviations like PAN, NJD that cause issues
-                nhl_abbrevs = {'PAN', 'FLA', 'TBL', 'NSH', 'DAL', 'VEG', 'SEA', 'ARI', 
-                               'COL', 'MIN', 'WPG', 'EDM', 'CGY', 'VAN', 'LAK', 'ANA', 
-                               'SJS', 'BOS', 'MTL', 'TOR', 'OTT', 'BUF', 'DET', 'NYR', 
-                               'NYI', 'NJD', 'PHI', 'PIT', 'WSH', 'CAR', 'CBJ'}
-                
-                debug.log(f"Starting to filter {len(self.__all_games)} games for NHL teams")
-                filtered_games = []
-                for game in self.__all_games:
-                    away_abbrev = game.get('away_abbreviation', game.get('away_abbrev', '')).upper()
-                    home_abbrev = game.get('home_abbreviation', game.get('home_abbrev', '')).upper()
-                    
-                    debug.log(f"Checking game: {away_abbrev} @ {home_abbrev} (away_name: {game.get('away_name')}, home_name: {game.get('home_name')})")
-                    
-                    if away_abbrev in nhl_abbrevs or home_abbrev in nhl_abbrevs:
-                        debug.log(f"Filtering out non-MLB game: {game.get('away_name', 'Unknown')} @ {game.get('home_name', 'Unknown')} ({away_abbrev} @ {home_abbrev})")
-                        continue
-                    
-                    filtered_games.append(game)
-                
-                self.__all_games = filtered_games
-                debug.log(f"Schedule update: {len(self.__all_games)} MLB games found after filtering")
+                debug.log("Schedule update: %d games found for %s", len(self.__all_games), self.date)
             except Exception as e:
-                debug.log(f"EXCEPTION in schedule update: {type(e).__name__}: {e}")
-                debug.exception("Full traceback while refreshing schedule")
+                debug.exception("Error refreshing schedule")
                 return UpdateStatus.FAIL
             else:
                 games = self.__all_games
 
                 if self.config.rotation_only_preferred:
-                    debug.log(f"Filtering for preferred teams: {self.config.preferred_teams}")
-                    debug.log(f"All games before filter: {len(self.__all_games)}")
                     games = Schedule.__filter_list_of_games(self.__all_games, self.config.preferred_teams)
-                    debug.log(f"Games after preferred filter: {len(games)}")
                 if self.config.rotation_only_live:
                     live_games = [g for g in games if status.is_live(g["status"]) or status.is_fresh(g["status"])]
                     if live_games:
                         # we never have games drop down to [], since we may still be indexing into it
                         # but this is fine, since self.games_live() is will work even if we don't do this update
                         games = live_games
-                        debug.log(f"Games after live filter: {len(games)}")
 
                 if len(games) > 0:
                     self.current_idx %= len(games)
 
                 self._games = games
-                debug.log(f"Final _games count: {len(self._games)}")
 
                 return UpdateStatus.SUCCESS
 

@@ -140,27 +140,6 @@ class Data:
             # Convert MLB scheduled games to Game objects to check status
             mlb_game_objects = []
             for scheduled_game in mlb_scheduled_games:
-                # Debug: log the scheduled game to see its structure
-                debug.log(f"Scheduled game keys: {scheduled_game.keys()}")
-                
-                # Skip any non-MLB games that might have gotten into the schedule
-                # NHL teams use abbreviations like PAN, FLA that conflict with MLB
-                away_abbrev = scheduled_game.get('away_abbreviation', scheduled_game.get('away_abbrev', '')).upper()
-                home_abbrev = scheduled_game.get('home_abbreviation', scheduled_game.get('home_abbrev', '')).upper()
-                
-                debug.log(f"Checking game: {away_abbrev} @ {home_abbrev}")
-                
-                # List of known NHL abbreviations that might conflict
-                nhl_abbrevs = ['PAN', 'FLA', 'TBL', 'NSH', 'DAL', 'VEG', 'SEA', 'ARI', 
-                               'COL', 'MIN', 'WPG', 'EDM', 'CGY', 'VAN', 'LAK', 'ANA', 
-                               'SJS', 'BOS', 'MTL', 'TOR', 'OTT', 'BUF', 'DET', 'NYR', 
-                               'NYI', 'NJD', 'PHI', 'PIT', 'WSH', 'CAR', 'CBJ']
-                
-                # If either team uses an NHL abbreviation, skip this game
-                if away_abbrev in nhl_abbrevs or home_abbrev in nhl_abbrevs:
-                    debug.log(f"Skipping non-MLB game in schedule: {away_abbrev} @ {home_abbrev}")
-                    continue
-                
                 try:
                     game = Game.from_scheduled(scheduled_game, self.config.preferred_game_delay_multiplier, self.config.api_refresh_rate)
                     if game:
@@ -179,7 +158,7 @@ class Data:
                 game_status = game.status()
                 if game_status == status.IN_PROGRESS or game_status == status.DELAYED:
                     all_live.append(('mlb', scheduled_game))
-                elif game_status == status.SCHEDULED or game_status == status.WARMUP or game_status == status.PRE_GAME:
+                elif game_status == status.SCHEDULED or game_status == status.WARMUP or game_status == status.PREGAME:
                     all_scheduled.append(('mlb', scheduled_game))
                 elif game_status == status.FINAL:
                     all_final.append(('mlb', scheduled_game))

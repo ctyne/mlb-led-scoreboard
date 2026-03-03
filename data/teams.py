@@ -9,10 +9,29 @@ _SPECIAL_TEAMS = {
     160: { "abbr": "NL",  "name": "National League All-Stars" },
 }
 
+# WBC / international teams that appear in exhibition games
+_WBC_TEAMS = {
+    776: { "abbr": "BRA", "name": "Brazil" },
+    784: { "abbr": "CAN", "name": "Canada" },
+    792: { "abbr": "COL", "name": "Colombia" },
+    798: { "abbr": "CUB", "name": "Cuba" },
+    805: { "abbr": "DOM", "name": "Dominican Republic" },
+    821: { "abbr": "GBR", "name": "Great Britain" },
+    840: { "abbr": "ISR", "name": "Israel" },
+    841: { "abbr": "ITA", "name": "Italy" },
+    867: { "abbr": "MEX", "name": "Mexico" },
+    878: { "abbr": "NED", "name": "Netherlands" },
+    881: { "abbr": "NCA", "name": "Nicaragua" },
+    890: { "abbr": "PAN", "name": "Panama" },
+    897: { "abbr": "PUR", "name": "Puerto Rico" },
+    940: { "abbr": "USA", "name": "United States" },
+    944: { "abbr": "VEN", "name": "Venezuela" },
+}
+
 # Run this file to retreive the latest team data from the MLB API.
 #   From project root:
 #       python data/teams.py
-_TEAMS = _SPECIAL_TEAMS | {
+_TEAMS = _SPECIAL_TEAMS | _WBC_TEAMS | {
     108: { "abbr": "LAA", "name": "Angels" },
     109: { "abbr": "AZ",  "name": "D-backs" },
     110: { "abbr": "BAL", "name": "Orioles" },

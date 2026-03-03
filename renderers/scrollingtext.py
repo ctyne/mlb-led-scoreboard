@@ -13,14 +13,17 @@ def render_text(canvas, x, y, width, font, text_color, bg_color, text, scroll_po
         # TODO: Optimize by trimming offscreen characters
         graphics.DrawText(canvas, font["font"], scroll_pos, y, text_color, text)
 
-        # draw one-letter boxes to left and right to hide previous and next letters
+        # Mask left (one character width to clean up partially-entering text)
         top = y + 1
         bottom = top - font["size"]["height"]
         for xi in range(0, w):
             left = x - xi - 1
             graphics.DrawLine(canvas, left, top, left, bottom, bg_color)
-            right = x + width + xi
-            graphics.DrawLine(canvas, right, top, right, bottom, bg_color)
+
+        # Mask right (extend to canvas edge to prevent text bleeding into
+        # bases, outs, inning indicators, etc.)
+        for xi in range(x + width, canvas.width):
+            graphics.DrawLine(canvas, xi, top, xi, bottom, bg_color)
 
         return total_width
     else:
