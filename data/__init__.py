@@ -140,10 +140,15 @@ class Data:
             # Convert MLB scheduled games to Game objects to check status
             mlb_game_objects = []
             for scheduled_game in mlb_scheduled_games:
+                # Debug: log the scheduled game to see its structure
+                debug.log(f"Scheduled game keys: {scheduled_game.keys()}")
+                
                 # Skip any non-MLB games that might have gotten into the schedule
                 # NHL teams use abbreviations like PAN, FLA that conflict with MLB
-                away_abbrev = scheduled_game.get('away_abbreviation', '').upper()
-                home_abbrev = scheduled_game.get('home_abbreviation', '').upper()
+                away_abbrev = scheduled_game.get('away_abbreviation', scheduled_game.get('away_abbrev', '')).upper()
+                home_abbrev = scheduled_game.get('home_abbreviation', scheduled_game.get('home_abbrev', '')).upper()
+                
+                debug.log(f"Checking game: {away_abbrev} @ {home_abbrev}")
                 
                 # List of known NHL abbreviations that might conflict
                 nhl_abbrevs = ['PAN', 'FLA', 'TBL', 'NSH', 'DAL', 'VEG', 'SEA', 'ARI', 
