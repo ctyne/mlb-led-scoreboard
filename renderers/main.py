@@ -369,10 +369,25 @@ class MainRenderer:
         gray = graphics.Color(150, 150, 150)
         
         if game.is_live():
+            # Show period and time on row 20 (centered)
+            period_label = game.get_period_label()  # e.g., "Q1", "Q2", "OT"
+            time_remaining = game.get_time_remaining()  # e.g., "5:23"
+            
+            if period_label and time_remaining:
+                status_text = f"{period_label} {time_remaining}"
+            elif period_label:
+                status_text = period_label
+            else:
+                status_text = "LIVE"
+            
+            # Center the status text
+            status_x = (64 - len(status_text) * 4) // 2
+            graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status_text)
+            
             # Show top scorers for each team
             if game.away_top_scorer:
                 scorer_text = f"{game.away_top_scorer['name']} {game.away_top_scorer['points']}"
-                graphics.DrawText(self.canvas, font, 2, 24, mlb_yellow, scorer_text)
+                graphics.DrawText(self.canvas, font, 2, 27, mlb_yellow, scorer_text)
             
             if game.home_top_scorer:
                 scorer_text = f"{game.home_top_scorer['name']} {game.home_top_scorer['points']}"
