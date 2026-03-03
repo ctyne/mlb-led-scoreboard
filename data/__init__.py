@@ -94,6 +94,10 @@ class Data:
 
         game = self.current_game
 
+        # Other sport game or no game loaded yet — always rotate
+        if game is None:
+            return True
+
         if status.is_live(game.status()):
             if self.schedule.num_games() <= 1:
                 # don't rotate if this is the only game

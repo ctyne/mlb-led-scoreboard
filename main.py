@@ -125,20 +125,17 @@ def __refresh_gameday(render_thread, data):  # type: (threading.Thread, Data) ->
     while render_thread.is_alive():
         time.sleep(0.5)
         data.refresh_schedule()
+
+        # Refresh supplementary data when no games are live
         if not data.schedule.games_live():
-            cont = False
             if data.config.standings_no_games:
                 data.refresh_standings()
-                cont = True
             if data.config.news_no_games:
                 data.refresh_news_ticker()
                 data.refresh_weather()
-                cont = True
-            if cont:
-                continue
 
-        elif data.current_game is None:
-            # make sure a game is populated
+        # Make sure we have a game populated
+        if data.current_game is None and not data.current_game_is_other_sport:
             data.advance_to_next_game()
 
         # Always refresh the current game data
@@ -147,14 +144,14 @@ def __refresh_gameday(render_thread, data):  # type: (threading.Thread, Data) ->
         if data.should_rotate_to_next_game():
             if data.scrolling_finished:
                 time_delta = time.time() - starttime
-                
+
                 # Get rotation rate - use current MLB game status or default for other sports
                 if data.current_game_is_other_sport or data.current_game is None:
                     # For other sports, use default live rate (15 seconds)
                     rotate_rate = 15.0
                 else:
                     rotate_rate = data.config.rotate_rate_for_status(data.current_game.status())
-                
+
                 if time_delta >= rotate_rate:
                     starttime = time.time()
                     data.advance_to_next_game()

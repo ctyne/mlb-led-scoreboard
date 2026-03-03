@@ -88,22 +88,12 @@ class MainRenderer:
     def __render_gameday(self) -> NoReturn:
         refresh_rate = self.data.config.scrolling_speed
         while True:
-            if not self.data.schedule.games_live():
-                if self.data.config.news_no_games and self.data.config.standings_no_games:
-                    self.__draw_news(all_of(timer_cond(STANDINGS_NEWS_SWITCH_TIME), self.no_games_cond))
-                    self.__draw_standings(all_of(timer_cond(STANDINGS_NEWS_SWITCH_TIME), self.no_games_cond))
-                    continue
-                elif self.data.config.news_no_games:
-                    self.__draw_news(self.no_games_cond)
-                elif self.data.config.standings_no_games:
-                    self.__draw_standings(self.no_games_cond)
-
             if self.game_changed_time < self.data.game_changed_time:
                 self.scrolling_text_pos = self.canvas.width
                 self.data.scrolling_finished = not self.data.config.rotation_scroll_until_finished
                 self.game_changed_time = time.time()
 
-            # Draw the current game
+            # Draw the current game (pregame, live, or final)
             self.__draw_game()
 
             time.sleep(refresh_rate)
