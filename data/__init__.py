@@ -27,6 +27,7 @@ class Data:
         self.other_sport_games = []
         self.combined_game_index = 0  # Track position across ALL games
         self.last_other_sport_refresh = 0  # Track last refresh time for rate limiting
+        self.last_schedule_date = None  # Track the date of last schedule fetch
 
         # get MLB schedule
         self.schedule: Schedule = Schedule(config)
@@ -269,13 +270,27 @@ class Data:
         self.__process_network_status(self.headlines.update())
 
     def refresh_schedule(self, force=False):
+        from datetime import date
+        today = date.today()
+        
+        # Check if date changed - force refresh if so
+        if self.last_schedule_date != today:
+            debug.log(f"Date changed from {self.last_schedule_date} to {today}, forcing schedule refresh")
+            force = True
+            self.last_schedule_date = today
+        
         self.__process_network_status(self.schedule.update(force))
         
         # Also refresh other sports if enabled
         if self.multi_sport.enabled:
             try:
                 self.other_sport_games = self.multi_sport.get_todays_games()
-                debug.log(f"Refreshed: {len(self.other_sport_games)} other sport games")
+                debug.log(f"Refreshed: {len(self.other_sport_games)} other sport games for {today}")
+                
+                # If date changed and we have games, reset to first game
+                if force and self.other_sport_games:
+                    debug.log("Resetting to first game after date change")
+                    self.advance_to_next_game()
             except Exception as e:
                 debug.log(f"Error refreshing other sport games: {e}")
 
