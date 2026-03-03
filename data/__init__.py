@@ -140,6 +140,11 @@ class Data:
             # Convert MLB scheduled games to Game objects to check status
             mlb_game_objects = []
             for scheduled_game in mlb_scheduled_games:
+                # Debug: check what teams are in this game
+                away_team = scheduled_game.get('away_name', 'Unknown')
+                home_team = scheduled_game.get('home_name', 'Unknown')
+                debug.log(f"Processing MLB scheduled game: {away_team} @ {home_team}")
+                
                 game = Game.from_scheduled(scheduled_game, self.config.preferred_game_delay_multiplier, self.config.api_refresh_rate)
                 if game:
                     mlb_game_objects.append((scheduled_game, game))
