@@ -618,6 +618,12 @@ class MainRenderer:
                 'accent': {'r': 185, 'g': 151, 'b': 91},  # gold
                 'text': {'r': 255, 'g': 255, 'b': 255}
             }
+        elif 'panthers' in team_lower or 'florida' in team_lower:
+            colors = {
+                'bg': {'r': 4, 'g': 30, 'b': 66},  # navy blue
+                'accent': {'r': 200, 'g': 151, 'b': 57},  # gold
+                'text': {'r': 255, 'g': 255, 'b': 255}
+            }
         
         return colors
     
