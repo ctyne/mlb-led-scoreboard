@@ -25,11 +25,14 @@ class Schedule:
 
     def update(self, force=False) -> UpdateStatus:
         if force or self.__should_update():
+            debug.log("===== SCHEDULE UPDATE CALLED =====")
             self.date = self.config.parse_today()
             debug.log("Updating schedule for %s", self.date)
             self.starttime = time.time()
             try:
+                debug.log(f"Calling statsapi.schedule for {self.date.strftime('%Y-%m-%d')}")
                 self.__all_games = statsapi.schedule(self.date.strftime("%Y-%m-%d"))
+                debug.log(f"statsapi returned {len(self.__all_games)} games")
                 
                 # Debug: log first game to see structure
                 if self.__all_games:
@@ -43,6 +46,7 @@ class Schedule:
                                'SJS', 'BOS', 'MTL', 'TOR', 'OTT', 'BUF', 'DET', 'NYR', 
                                'NYI', 'NJD', 'PHI', 'PIT', 'WSH', 'CAR', 'CBJ'}
                 
+                debug.log(f"Starting to filter {len(self.__all_games)} games for NHL teams")
                 filtered_games = []
                 for game in self.__all_games:
                     away_abbrev = game.get('away_abbreviation', game.get('away_abbrev', '')).upper()
@@ -58,8 +62,9 @@ class Schedule:
                 
                 self.__all_games = filtered_games
                 debug.log(f"Schedule update: {len(self.__all_games)} MLB games found after filtering")
-            except:
-                debug.exception("Networking error while refreshing schedule")
+            except Exception as e:
+                debug.log(f"EXCEPTION in schedule update: {type(e).__name__}: {e}")
+                debug.exception("Full traceback while refreshing schedule")
                 return UpdateStatus.FAIL
             else:
                 games = self.__all_games
