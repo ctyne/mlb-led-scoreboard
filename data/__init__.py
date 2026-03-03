@@ -140,14 +140,29 @@ class Data:
             # Convert MLB scheduled games to Game objects to check status
             mlb_game_objects = []
             for scheduled_game in mlb_scheduled_games:
-                # Debug: check what teams are in this game
-                away_team = scheduled_game.get('away_name', 'Unknown')
-                home_team = scheduled_game.get('home_name', 'Unknown')
-                debug.log(f"Processing MLB scheduled game: {away_team} @ {home_team}")
+                # Skip any non-MLB games that might have gotten into the schedule
+                # NHL teams use abbreviations like PAN, FLA that conflict with MLB
+                away_abbrev = scheduled_game.get('away_abbreviation', '').upper()
+                home_abbrev = scheduled_game.get('home_abbreviation', '').upper()
                 
-                game = Game.from_scheduled(scheduled_game, self.config.preferred_game_delay_multiplier, self.config.api_refresh_rate)
-                if game:
-                    mlb_game_objects.append((scheduled_game, game))
+                # List of known NHL abbreviations that might conflict
+                nhl_abbrevs = ['PAN', 'FLA', 'TBL', 'NSH', 'DAL', 'VEG', 'SEA', 'ARI', 
+                               'COL', 'MIN', 'WPG', 'EDM', 'CGY', 'VAN', 'LAK', 'ANA', 
+                               'SJS', 'BOS', 'MTL', 'TOR', 'OTT', 'BUF', 'DET', 'NYR', 
+                               'NYI', 'NJD', 'PHI', 'PIT', 'WSH', 'CAR', 'CBJ']
+                
+                # If either team uses an NHL abbreviation, skip this game
+                if away_abbrev in nhl_abbrevs or home_abbrev in nhl_abbrevs:
+                    debug.log(f"Skipping non-MLB game in schedule: {away_abbrev} @ {home_abbrev}")
+                    continue
+                
+                try:
+                    game = Game.from_scheduled(scheduled_game, self.config.preferred_game_delay_multiplier, self.config.api_refresh_rate)
+                    if game:
+                        mlb_game_objects.append((scheduled_game, game))
+                except Exception as e:
+                    debug.log(f"Error creating Game object: {e}")
+                    continue
             
             # Categorize ALL games (MLB + other sports) by status
             all_live = []
