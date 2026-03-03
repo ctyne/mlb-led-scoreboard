@@ -4,6 +4,7 @@ from logging.handlers import RotatingFileHandler
 LOGFILE = os.path.abspath(os.path.join(__file__, "..", "logs", "mlbled.log"))
 
 logger = logging.getLogger("mlbled")
+logger.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter("{levelname} ({asctime}): {message}", style="{", datefmt="%H:%M:%S")
 
