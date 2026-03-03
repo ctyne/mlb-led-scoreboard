@@ -31,6 +31,11 @@ class Schedule:
             try:
                 self.__all_games = statsapi.schedule(self.date.strftime("%Y-%m-%d"))
                 
+                # Debug: log first game to see structure
+                if self.__all_games:
+                    debug.log(f"First game keys: {self.__all_games[0].keys()}")
+                    debug.log(f"First game sample: away={self.__all_games[0].get('away_name')}, home={self.__all_games[0].get('home_name')}")
+                
                 # Filter out any non-MLB games that might have gotten into the API response
                 # NHL teams use abbreviations like PAN, NJD that cause issues
                 nhl_abbrevs = {'PAN', 'FLA', 'TBL', 'NSH', 'DAL', 'VEG', 'SEA', 'ARI', 
@@ -43,6 +48,8 @@ class Schedule:
                     away_abbrev = game.get('away_abbreviation', game.get('away_abbrev', '')).upper()
                     home_abbrev = game.get('home_abbreviation', game.get('home_abbrev', '')).upper()
                     
+                    debug.log(f"Checking game: {away_abbrev} @ {home_abbrev} (away_name: {game.get('away_name')}, home_name: {game.get('home_name')})")
+                    
                     if away_abbrev in nhl_abbrevs or home_abbrev in nhl_abbrevs:
                         debug.log(f"Filtering out non-MLB game: {game.get('away_name', 'Unknown')} @ {game.get('home_name', 'Unknown')} ({away_abbrev} @ {home_abbrev})")
                         continue
@@ -50,7 +57,7 @@ class Schedule:
                     filtered_games.append(game)
                 
                 self.__all_games = filtered_games
-                debug.log(f"Schedule update: {len(self.__all_games)} MLB games found")
+                debug.log(f"Schedule update: {len(self.__all_games)} MLB games found after filtering")
             except:
                 debug.exception("Networking error while refreshing schedule")
                 return UpdateStatus.FAIL
