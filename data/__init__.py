@@ -176,13 +176,12 @@ class Data:
                 elif game.is_final():
                     all_final.append(('other', game))
             
-            # Determine which games to show based on priority
+            # Determine which games to show
+            # Live games get priority; when none are live, show both scheduled and final
             if all_live:
                 active_games = all_live
-            elif all_scheduled:
-                active_games = all_scheduled
             else:
-                active_games = all_final
+                active_games = all_scheduled + all_final
             
             if len(active_games) == 0:
                 debug.warning("No games available (MLB or other sports)")
