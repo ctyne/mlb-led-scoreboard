@@ -338,6 +338,9 @@ class Data:
             self.config.layout.set_state(layout.LAYOUT_STATE_PERFECT)
 
     def print_game_data_debug(self):
+        # Only print MLB game data debug info
+        if self.current_game_is_other_sport or self.current_game is None:
+            return
         debug.log("Game Data Refreshed: %s", self.current_game._current_data["gameData"]["game"]["id"])
         debug.log("Current game is %d seconds behind", self.current_game.current_delay())
         debug.log("Pre: %s", Pregame(self.current_game, self.config.time_format))
