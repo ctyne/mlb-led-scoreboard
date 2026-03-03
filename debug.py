@@ -10,10 +10,12 @@ formatter = logging.Formatter("{levelname} ({asctime}): {message}", style="{", d
 
 # Log to stdout
 sh = logging.StreamHandler()
+sh.setLevel(logging.DEBUG)
 sh.setFormatter(formatter)
 
 # Log to a file, handling rotation at 1MB
 fh = RotatingFileHandler(LOGFILE, maxBytes=0x100000, backupCount=5)
+fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)
 
 logger.addHandler(sh)
