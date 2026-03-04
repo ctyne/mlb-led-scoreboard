@@ -508,7 +508,7 @@ class ESPNProvider(BaseProvider):
         
         # Period info (for live/final games)
         if game.status == GameStatus.LIVE or game.status == GameStatus.FINAL:
-            game.period = int(status_type.get("period", 0))
+            game.period = int(status_data.get("period", 0))
             
             # Check for OT/SO
             if game.period > 3:

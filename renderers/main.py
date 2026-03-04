@@ -296,6 +296,7 @@ class MainRenderer:
             self.__draw_soccer_game(game)
         else:
             debug.log(f"Sport {game.sport.value} not yet supported")
+            self.data.scrolling_finished = True
             self.canvas.Clear()
             from driver import graphics
             font = self._get_font()
@@ -359,35 +360,39 @@ class MainRenderer:
         gray = graphics.Color(150, 150, 150)
         
         if game.is_live():
+            # No scrolling text for live NBA, signal finished for rotation
+            self.data.scrolling_finished = True
             # Show period and time on row 20 (centered)
             period_label = game.get_period_label()  # e.g., "Q1", "Q2", "OT"
             time_remaining = game.get_time_remaining()  # e.g., "5:23"
-            
+
             if period_label and time_remaining:
                 status_text = f"{period_label} {time_remaining}"
             elif period_label:
                 status_text = period_label
             else:
                 status_text = "LIVE"
-            
+
             # Center the status text
             status_x = (64 - len(status_text) * 4) // 2
             graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status_text)
-            
+
             # Show top scorers for each team
             if game.away_top_scorer:
                 scorer_text = f"{game.away_top_scorer['name']} {game.away_top_scorer['points']}"
                 graphics.DrawText(self.canvas, font, 2, 27, mlb_yellow, scorer_text)
-            
+
             if game.home_top_scorer:
                 scorer_text = f"{game.home_top_scorer['name']} {game.home_top_scorer['points']}"
                 graphics.DrawText(self.canvas, font, 2, 31, mlb_yellow, scorer_text)
         elif game.is_final():
+            # No scrolling text for final NBA, signal finished for rotation
+            self.data.scrolling_finished = True
             graphics.DrawText(self.canvas, font, 22, 20, mlb_yellow, "FINAL")
         else:
             # Pregame - show scrolling text with records and stats
             from renderers import scrollingtext
-            
+
             # Build pregame info text
             pregame_text = ""
             if game.away_record and game.home_record:
@@ -397,7 +402,7 @@ class MainRenderer:
                 pregame_text += f" at {home_name} ({game.home_record})"
                 if game.home_avg_points:
                     pregame_text += f" avg {game.home_avg_points:.1f} PPG"
-            
+
             # Show start time on row 20
             if game.start_time:
                 import time as time_module
@@ -408,12 +413,12 @@ class MainRenderer:
                     else:
                         offset_sec = time_module.timezone
                     local_offset = timezone(timedelta(seconds=-offset_sec))
-                    
+
                     if game.start_time.tzinfo is None:
                         utc_time = game.start_time.replace(tzinfo=timezone.utc)
                     else:
                         utc_time = game.start_time
-                    
+
                     local_time = utc_time.astimezone(local_offset)
                     time_str = local_time.strftime("%I:%M%p").lstrip('0')
                     time_x = (64 - len(time_str) * 4) // 2
@@ -423,7 +428,7 @@ class MainRenderer:
                     graphics.DrawText(self.canvas, font, 26, 20, mlb_yellow, "TBD")
             else:
                 graphics.DrawText(self.canvas, font, 26, 20, mlb_yellow, "TBD")
-            
+
             # Scrolling text on row 27 if we have pregame info
             if pregame_text:
                 font_dict = {
@@ -438,8 +443,13 @@ class MainRenderer:
                 if text_len > 0:
                     self.scrolling_text_pos -= 1
                     if self.scrolling_text_pos + text_len < 0:
+                        # Text has fully scrolled, signal finished for rotation
+                        self.data.scrolling_finished = True
                         self.scrolling_text_pos = 64
-        
+            else:
+                # No scrolling text in pregame, signal finished for rotation
+                self.data.scrolling_finished = True
+
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
     def __draw_ncaab_game(self, game):
@@ -749,15 +759,34 @@ class MainRenderer:
         
         # Status text on row 20 in MLB yellow
         if game.is_live():
+            # No scrolling text for live NHL, signal finished for rotation
+            self.data.scrolling_finished = True
+            # Show period and time on row 20 (centered)
+            period_label = game.get_period_label()  # e.g., "Period 3", "OT", "Shootout"
+            time_remaining = game.get_time_remaining()  # e.g., "12:34"
+
+            if period_label and time_remaining:
+                status_text = f"{period_label}: {time_remaining}"
+            elif period_label:
+                status_text = period_label
+            else:
+                status_text = "LIVE"
+
+            # Center the status text
+            status_x = (64 - len(status_text) * 4) // 2
+            graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status_text)
+
             # Show top scorers for each team
             if game.away_top_scorer:
                 scorer_text = f"{game.away_top_scorer['name']} {game.away_top_scorer['points']}"
-                graphics.DrawText(self.canvas, font, 2, 24, mlb_yellow, scorer_text)
-            
+                graphics.DrawText(self.canvas, font, 2, 27, mlb_yellow, scorer_text)
+
             if game.home_top_scorer:
                 scorer_text = f"{game.home_top_scorer['name']} {game.home_top_scorer['points']}"
                 graphics.DrawText(self.canvas, font, 2, 31, mlb_yellow, scorer_text)
         elif game.is_final():
+            # No scrolling text for final NHL, signal finished for rotation
+            self.data.scrolling_finished = True
             if game.is_shootout:
                 final_text = "FINAL/SO"
             elif game.is_overtime:
@@ -769,12 +798,12 @@ class MainRenderer:
         else:
             # Pregame - show scrolling text with records
             from renderers import scrollingtext
-            
+
             # Build pregame info text
             pregame_text = ""
             if game.away_record and game.home_record:
                 pregame_text = f"{away_name} ({game.away_record}) at {home_name} ({game.home_record})"
-            
+
             # Show start time on row 20
             if hasattr(game, 'start_time') and game.start_time:
                 import time
@@ -789,14 +818,14 @@ class MainRenderer:
                     graphics.DrawText(self.canvas, font, time_x, 20, mlb_yellow, time_display)
                 except:
                     pass
-            
+
             # Scrolling text on row 31 if we have pregame info
             if pregame_text:
                 font_dict = {
                     'font': font,
                     'size': {'width': 4, 'height': 6}  # 4x6 font
                 }
-                
+
                 text_len = scrollingtext.render_text(
                     self.canvas, 0, 31, 64, font_dict, mlb_yellow, mlb_bg_color,
                     pregame_text, self.scrolling_text_pos, center=False
@@ -805,8 +834,13 @@ class MainRenderer:
                 if text_len > 0:
                     self.scrolling_text_pos -= 1
                     if self.scrolling_text_pos + text_len < 0:
+                        # Text has fully scrolled, signal finished for rotation
+                        self.data.scrolling_finished = True
                         self.scrolling_text_pos = 64
-        
+            else:
+                # No scrolling text in pregame, signal finished for rotation
+                self.data.scrolling_finished = True
+
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
     def _abbreviate_nba_team(self, team_name):
@@ -885,6 +919,9 @@ class MainRenderer:
         # Draw MLB-style bottom section (rows 14-31)
         self._draw_filled_box(0, 14, 64, 18, mlb_bg_dict)
         
+        # Track whether this frame has scrolling text
+        has_scrolling_text = False
+
         # Status text in MLB yellow
         if game.is_live():
             # Check for halftime
@@ -908,6 +945,8 @@ class MainRenderer:
             status_x = (64 - len(status_text) * 4) // 2
             graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status_text)
         elif game.is_final():
+            # No scrolling text for final soccer, signal finished for rotation
+            self.data.scrolling_finished = True
             if game.is_penalty_shootout:
                 final_text = "FINAL/PK"
             elif game.is_extra_time:
@@ -917,6 +956,8 @@ class MainRenderer:
             final_x = (64 - len(final_text) * 5) // 2
             graphics.DrawText(self.canvas, font, final_x, 20, mlb_yellow, final_text)
         else:
+            # No scrolling text for pregame soccer, signal finished for rotation
+            self.data.scrolling_finished = True
             # Pregame - show start time
             if hasattr(game, 'start_time') and game.start_time:
                 import time
@@ -931,35 +972,35 @@ class MainRenderer:
                     graphics.DrawText(self.canvas, font, time_x, 20, mlb_yellow, time_display)
                 except:
                     pass
-        
+
         # Scrolling stats for live games on row 27
         if game.is_live():
             # Build stats string
             stats_parts = []
-            
+
             # Possession
             if game.home_possession > 0 or game.away_possession > 0:
                 stats_parts.append(f"Possession: {game.away_team[:3].upper()} {int(game.away_possession)}% - {game.home_team[:3].upper()} {int(game.home_possession)}%")
-            
+
             # Shots (Shots on Target)
             if game.away_shots > 0 or game.home_shots > 0:
                 stats_parts.append(f"Shots: {game.away_shots}-{game.home_shots}")
                 if game.away_shots_on_target > 0 or game.home_shots_on_target > 0:
                     stats_parts.append(f"On Target: {game.away_shots_on_target}-{game.home_shots_on_target}")
-            
+
             # Corners
             if game.away_corners > 0 or game.home_corners > 0:
                 stats_parts.append(f"Corners: {game.away_corners}-{game.home_corners}")
-            
+
             # Goal scorers
             if game.goal_scorers:
                 for scorer in game.goal_scorers:
                     stats_parts.append(scorer)
-            
+
             # Join with separator
             if stats_parts:
                 stats_text = "  |  ".join(stats_parts)
-                
+
                 # Scrolling text
                 from renderers import scrollingtext
                 font_dict = {
@@ -972,10 +1013,17 @@ class MainRenderer:
                 )
                 # Update scroll position (scroll right to left)
                 if text_len > 0:
+                    has_scrolling_text = True
                     self.scrolling_text_pos -= 1
                     if self.scrolling_text_pos + text_len < 0:
+                        # Text has fully scrolled, signal finished for rotation
+                        self.data.scrolling_finished = True
                         self.scrolling_text_pos = 64
-        
+
+            # If no scrolling stats text for live game, signal finished
+            if not has_scrolling_text:
+                self.data.scrolling_finished = True
+
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     
     def _abbreviate_soccer_team(self, team_name):

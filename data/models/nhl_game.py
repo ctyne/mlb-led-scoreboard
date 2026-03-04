@@ -37,19 +37,19 @@ class NHLGame(BaseGame):
         self.home_top_scorer: Optional[Dict[str, str]] = None  # {"name": "S. Crosby", "points": "1G 2A"}
     
     def get_period_label(self) -> str:
-        """Get user-friendly period label (P1, P2, P3, OT, SO)."""
+        """Get user-friendly period label (Period 1, Period 2, OT, SO)."""
         if self.is_shootout:
-            return "SO"
+            return "Shootout"
         elif self.is_overtime:
             if self.period == 4:
                 return "OT"
             else:
                 # Multiple OTs (rare in regular season, common in playoffs)
-                return f"{self.period - 3}OT"
-        elif self.period <= 3:
-            return f"P{self.period}"
+                return f"OT{self.period - 3}"
+        elif self.period >= 1:
+            return f"Period {self.period}"
         else:
-            return f"P{self.period}"
+            return ""
     
     def get_time_remaining(self) -> Optional[str]:
         """Get time remaining in current period."""
