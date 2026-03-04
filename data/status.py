@@ -24,6 +24,7 @@ COMPLETED_EARLY_FOG = "Completed Early: Fog"  # Final
 COMPLETED_EARLY_INCLEMENT_WEATHER = "Completed Early: Inclement Weather"  # Final
 COMPLETED_EARLY_LIGHTNING = "Completed Early: Lightning"  # Final
 COMPLETED_EARLY_AIR_QUALITY = "Completed Early: Air Quality"  # Final
+COMPLETED_EARLY_MERCY = "Completed Early: Mercy"  # Final
 COMPLETED_EARLY_MERCY_RULE = "Completed Early: Mercy Rule"  # Final
 COMPLETED_EARLY_POWER = "Completed Early: Power"  # Final
 COMPLETED_EARLY_RAIN = "Completed Early: Rain"  # Final
@@ -228,6 +229,7 @@ GAME_STATE_COMPLETE = [
     COMPLETED_EARLY_INCLEMENT_WEATHER,
     COMPLETED_EARLY_LIGHTNING,
     COMPLETED_EARLY_AIR_QUALITY,
+    COMPLETED_EARLY_MERCY,
     COMPLETED_EARLY_MERCY_RULE,
     COMPLETED_EARLY_COVID19,
     COMPLETED_EARLY_POWER,
@@ -391,8 +393,12 @@ def is_pregame(status):
 
 
 def is_complete(status):
-    """Returns whether the game has been completed"""
-    return status in GAME_STATE_COMPLETE
+    """Returns whether the game has been completed.
+    Falls back to prefix matching for unknown sub-statuses (e.g. 'Completed Early: Mercy')."""
+    if status in GAME_STATE_COMPLETE:
+        return True
+    # Catch unknown sub-statuses like "Completed Early: Mercy" or "Final: ..."
+    return status.startswith(("Completed Early", "Final", "Game Over", "Forfeit"))
 
 
 def is_live(status):
@@ -402,8 +408,10 @@ def is_live(status):
 
 def is_irregular(status):
     """Returns whether game is in an irregular state, such as delayed, postponed, cancelled,
-    or in a challenge."""
-    return status in GAME_STATE_IRREGULAR
+    or in a challenge. Falls back to prefix matching for unknown sub-statuses."""
+    if status in GAME_STATE_IRREGULAR:
+        return True
+    return status.startswith(("Cancelled", "Postponed", "Delayed", "Suspended"))
 
 
 def is_fresh(status):
