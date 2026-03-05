@@ -377,13 +377,15 @@ class MainRenderer:
             status_x = (64 - len(status_text) * 4) // 2
             graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status_text)
 
-            # Show top scorers for each team
-            if game.away_top_scorer:
-                scorer_text = f"{game.away_top_scorer['name']} {game.away_top_scorer['points']}"
+            # Show top scorers for each team (uses getattr for cross-sport safety)
+            away_scorer = getattr(game, 'away_top_scorer', None)
+            home_scorer = getattr(game, 'home_top_scorer', None)
+            if away_scorer:
+                scorer_text = f"{away_scorer['name']} {away_scorer['points']}"
                 graphics.DrawText(self.canvas, font, 2, 27, mlb_yellow, scorer_text)
 
-            if game.home_top_scorer:
-                scorer_text = f"{game.home_top_scorer['name']} {game.home_top_scorer['points']}"
+            if home_scorer:
+                scorer_text = f"{home_scorer['name']} {home_scorer['points']}"
                 graphics.DrawText(self.canvas, font, 2, 31, mlb_yellow, scorer_text)
         elif game.is_final():
             # No scrolling text for final NBA, signal finished for rotation
@@ -467,72 +469,87 @@ class MainRenderer:
     def _get_nba_team_colors(self, team_name):
         """Get team colors (background, accent, text) for NBA teams."""
         # Default colors
-        colors = {
-            'bg': {'r': 0, 'g': 0, 'b': 0},  # black background
-            'accent': {'r': 200, 'g': 200, 'b': 200},  # gray accent
-            'text': {'r': 255, 'g': 255, 'b': 255}  # white text
+        default_colors = {
+            'bg': {'r': 0, 'g': 0, 'b': 0},
+            'accent': {'r': 200, 'g': 200, 'b': 200},
+            'text': {'r': 255, 'g': 255, 'b': 255}
         }
-        
+
         team_lower = team_name.lower()
-        
-        # NBA team colors (background, accent, text)
-        if 'bucks' in team_lower or 'milwaukee' in team_lower:
-            colors = {
-                'bg': {'r': 0, 'g': 71, 'b': 27},  # dark green
-                'accent': {'r': 102, 'g': 45, 'b': 145},  # purple
-                'text': {'r': 240, 'g': 235, 'b': 210}  # cream
-            }
-        elif 'cavaliers' in team_lower or 'cleveland' in team_lower:
-            colors = {
-                'bg': {'r': 134, 'g': 0, 'b': 56},  # wine/maroon
-                'accent': {'r': 253, 'g': 187, 'b': 48},  # gold
-                'text': {'r': 255, 'g': 255, 'b': 255}  # white
-            }
-        elif 'lakers' in team_lower or 'los angeles lakers' in team_lower:
-            colors = {
-                'bg': {'r': 85, 'g': 37, 'b': 130},  # purple
-                'accent': {'r': 253, 'g': 185, 'b': 39},  # gold
-                'text': {'r': 255, 'g': 255, 'b': 255}
-            }
-        elif 'celtics' in team_lower or 'boston' in team_lower:
-            colors = {
-                'bg': {'r': 0, 'g': 122, 'b': 51},  # green
-                'accent': {'r': 139, 'g': 111, 'b': 78},  # gold
-                'text': {'r': 255, 'g': 255, 'b': 255}
-            }
-        elif 'warriors' in team_lower or 'golden state' in team_lower:
-            colors = {
-                'bg': {'r': 29, 'g': 66, 'b': 138},  # blue
-                'accent': {'r': 255, 'g': 199, 'b': 44},  # gold
-                'text': {'r': 255, 'g': 255, 'b': 255}
-            }
-        elif 'heat' in team_lower or 'miami' in team_lower:
-            colors = {
-                'bg': {'r': 152, 'g': 0, 'b': 46},  # red
-                'accent': {'r': 249, 'g': 160, 'b': 27},  # orange
-                'text': {'r': 255, 'g': 255, 'b': 255}
-            }
-        elif 'bulls' in team_lower or 'chicago' in team_lower:
-            colors = {
-                'bg': {'r': 206, 'g': 17, 'b': 65},  # red
-                'accent': {'r': 0, 'g': 0, 'b': 0},  # black
-                'text': {'r': 255, 'g': 255, 'b': 255}
-            }
-        elif 'knicks' in team_lower or 'new york' in team_lower:
-            colors = {
-                'bg': {'r': 0, 'g': 107, 'b': 182},  # blue
-                'accent': {'r': 245, 'g': 132, 'b': 38},  # orange
-                'text': {'r': 255, 'g': 255, 'b': 255}
-            }
+
+        # NBA team colors - all 30 teams
+        nba_colors = {
+            'hawks':         {'bg': {'r': 225, 'g': 58,  'b': 62},  'accent': {'r': 38,  'g': 40,  'b': 42},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'celtics':       {'bg': {'r': 0,   'g': 122, 'b': 51},  'accent': {'r': 139, 'g': 111, 'b': 78},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'nets':          {'bg': {'r': 0,   'g': 0,   'b': 0},   'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'hornets':       {'bg': {'r': 29,  'g': 17,  'b': 96},  'accent': {'r': 0,   'g': 120, 'b': 140}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'bulls':         {'bg': {'r': 206, 'g': 17,  'b': 65},  'accent': {'r': 0,   'g': 0,   'b': 0},   'text': {'r': 255, 'g': 255, 'b': 255}},
+            'cavaliers':     {'bg': {'r': 134, 'g': 0,   'b': 56},  'accent': {'r': 253, 'g': 187, 'b': 48},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'mavericks':     {'bg': {'r': 0,   'g': 83,  'b': 188}, 'accent': {'r': 0,   'g': 43,  'b': 92},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'nuggets':       {'bg': {'r': 14,  'g': 34,  'b': 64},  'accent': {'r': 254, 'g': 197, 'b': 36},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'pistons':       {'bg': {'r': 200, 'g': 16,  'b': 46},  'accent': {'r': 29,  'g': 66,  'b': 138}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'warriors':      {'bg': {'r': 29,  'g': 66,  'b': 138}, 'accent': {'r': 255, 'g': 199, 'b': 44},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'rockets':       {'bg': {'r': 206, 'g': 17,  'b': 65},  'accent': {'r': 0,   'g': 0,   'b': 0},   'text': {'r': 255, 'g': 255, 'b': 255}},
+            'pacers':        {'bg': {'r': 0,   'g': 45,  'b': 98},  'accent': {'r': 253, 'g': 187, 'b': 48},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'clippers':      {'bg': {'r': 200, 'g': 16,  'b': 46},  'accent': {'r': 29,  'g': 66,  'b': 138}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'lakers':        {'bg': {'r': 85,  'g': 37,  'b': 130}, 'accent': {'r': 253, 'g': 185, 'b': 39},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'grizzlies':     {'bg': {'r': 18,  'g': 23,  'b': 63},  'accent': {'r': 93,  'g': 118, 'b': 169}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'heat':          {'bg': {'r': 152, 'g': 0,   'b': 46},  'accent': {'r': 249, 'g': 160, 'b': 27},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'bucks':         {'bg': {'r': 0,   'g': 71,  'b': 27},  'accent': {'r': 240, 'g': 235, 'b': 210}, 'text': {'r': 240, 'g': 235, 'b': 210}},
+            'timberwolves':  {'bg': {'r': 12,  'g': 35,  'b': 64},  'accent': {'r': 35,  'g': 97,  'b': 146}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'pelicans':      {'bg': {'r': 12,  'g': 35,  'b': 64},  'accent': {'r': 200, 'g': 16,  'b': 46},  'text': {'r': 225, 'g': 182, 'b': 55}},
+            'knicks':        {'bg': {'r': 0,   'g': 107, 'b': 182}, 'accent': {'r': 245, 'g': 132, 'b': 38},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'thunder':       {'bg': {'r': 0,   'g': 122, 'b': 193}, 'accent': {'r': 239, 'g': 97,  'b': 0},   'text': {'r': 255, 'g': 255, 'b': 255}},
+            'magic':         {'bg': {'r': 0,   'g': 125, 'b': 197}, 'accent': {'r': 196, 'g': 206, 'b': 212}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            '76ers':         {'bg': {'r': 0,   'g': 107, 'b': 182}, 'accent': {'r': 237, 'g': 23,  'b': 76},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'suns':          {'bg': {'r': 29,  'g': 17,  'b': 96},  'accent': {'r': 229, 'g': 96,  'b': 32},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'trail blazers': {'bg': {'r': 224, 'g': 58,  'b': 62},  'accent': {'r': 0,   'g': 0,   'b': 0},   'text': {'r': 255, 'g': 255, 'b': 255}},
+            'kings':         {'bg': {'r': 91,  'g': 43,  'b': 130}, 'accent': {'r': 99,  'g': 113, 'b': 122}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'spurs':         {'bg': {'r': 196, 'g': 206, 'b': 212}, 'accent': {'r': 0,   'g': 0,   'b': 0},   'text': {'r': 0,   'g': 0,   'b': 0}},
+            'raptors':       {'bg': {'r': 206, 'g': 17,  'b': 65},  'accent': {'r': 0,   'g': 0,   'b': 0},   'text': {'r': 255, 'g': 255, 'b': 255}},
+            'jazz':          {'bg': {'r': 0,   'g': 43,  'b': 92},  'accent': {'r': 249, 'g': 160, 'b': 27},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'wizards':       {'bg': {'r': 0,   'g': 43,  'b': 92},  'accent': {'r': 227, 'g': 24,  'b': 55},  'text': {'r': 255, 'g': 255, 'b': 255}},
+        }
+
+        # Match by mascot name (last word of team name)
+        for mascot, colors in nba_colors.items():
+            if mascot in team_lower:
+                return colors
+
         # College Basketball Teams
-        elif 'badgers' in team_lower or 'wisconsin' in team_lower:
-            colors = {
-                'bg': {'r': 197, 'g': 5, 'b': 12},  # cardinal red
-                'accent': {'r': 255, 'g': 255, 'b': 255},  # white
-                'text': {'r': 255, 'g': 255, 'b': 255}
-            }
-        
-        return colors
+        ncaab_colors = {
+            'badgers':     {'bg': {'r': 197, 'g': 5,   'b': 12},  'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'wildcats':    {'bg': {'r': 0,   'g': 39,  'b': 93},  'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'blue devils': {'bg': {'r': 0,   'g': 48,  'b': 135}, 'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'tar heels':   {'bg': {'r': 123, 'g': 175, 'b': 212}, 'accent': {'r': 19,  'g': 41,  'b': 75},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'jayhawks':    {'bg': {'r': 0,   'g': 81,  'b': 186}, 'accent': {'r': 232, 'g': 0,   'b': 13},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'bulldogs':    {'bg': {'r': 19,  'g': 41,  'b': 75},  'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'volunteers':  {'bg': {'r': 255, 'g': 130, 'b': 0},   'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'hoosiers':    {'bg': {'r': 153, 'g': 0,   'b': 0},   'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'spartans':    {'bg': {'r': 24,  'g': 69,  'b': 59},  'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'wolverines':  {'bg': {'r': 0,   'g': 39,  'b': 76},  'accent': {'r': 255, 'g': 203, 'b': 5},   'text': {'r': 255, 'g': 203, 'b': 5}},
+            'huskies':     {'bg': {'r': 0,   'g': 0,   'b': 67},  'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'tigers':      {'bg': {'r': 82,  'g': 45,  'b': 128}, 'accent': {'r': 253, 'g': 166, 'b': 0},   'text': {'r': 255, 'g': 255, 'b': 255}},
+            'crimson tide': {'bg': {'r': 158, 'g': 27,  'b': 50},  'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'longhorns':   {'bg': {'r': 191, 'g': 87,  'b': 0},   'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'boilermakers': {'bg': {'r': 0,  'g': 0,   'b': 0},   'accent': {'r': 207, 'g': 174, 'b': 59},  'text': {'r': 207, 'g': 174, 'b': 59}},
+            'hawkeyes':    {'bg': {'r': 0,   'g': 0,   'b': 0},   'accent': {'r': 255, 'g': 205, 'b': 0},   'text': {'r': 255, 'g': 205, 'b': 0}},
+            'cardinals':   {'bg': {'r': 173, 'g': 0,   'b': 0},   'accent': {'r': 0,   'g': 0,   'b': 0},   'text': {'r': 255, 'g': 255, 'b': 255}},
+            'orangemen':   {'bg': {'r': 212, 'g': 68,  'b': 0},   'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'orange':      {'bg': {'r': 212, 'g': 68,  'b': 0},   'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'gators':      {'bg': {'r': 0,   'g': 33,  'b': 165}, 'accent': {'r': 250, 'g': 70,  'b': 22},  'text': {'r': 255, 'g': 255, 'b': 255}},
+            'razorbacks':  {'bg': {'r': 157, 'g': 34,  'b': 53},  'accent': {'r': 255, 'g': 255, 'b': 255}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'seminoles':   {'bg': {'r': 120, 'g': 47,  'b': 64},  'accent': {'r': 206, 'g': 184, 'b': 136}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'yellow jackets': {'bg': {'r': 179, 'g': 163, 'b': 105}, 'accent': {'r': 0, 'g': 48, 'b': 87}, 'text': {'r': 255, 'g': 255, 'b': 255}},
+            'terrapins':   {'bg': {'r': 224, 'g': 58,  'b': 62},  'accent': {'r': 255, 'g': 213, 'b': 0},   'text': {'r': 255, 'g': 255, 'b': 255}},
+            'cyclones':    {'bg': {'r': 200, 'g': 16,  'b': 46},  'accent': {'r': 241, 'g': 190, 'b': 72},  'text': {'r': 255, 'g': 255, 'b': 255}},
+        }
+
+        for mascot, colors in ncaab_colors.items():
+            if mascot in team_lower:
+                return colors
+
+        return default_colors
     
     def _get_nba_mascot(self, team_name):
         """Extract mascot from team name (e.g., 'Milwaukee Bucks' -> 'Bucks')."""
@@ -776,13 +793,15 @@ class MainRenderer:
             status_x = (64 - len(status_text) * 4) // 2
             graphics.DrawText(self.canvas, font, status_x, 20, mlb_yellow, status_text)
 
-            # Show top scorers for each team
-            if game.away_top_scorer:
-                scorer_text = f"{game.away_top_scorer['name']} {game.away_top_scorer['points']}"
+            # Show top scorers for each team (uses getattr for cross-sport safety)
+            away_scorer = getattr(game, 'away_top_scorer', None)
+            home_scorer = getattr(game, 'home_top_scorer', None)
+            if away_scorer:
+                scorer_text = f"{away_scorer['name']} {away_scorer['points']}"
                 graphics.DrawText(self.canvas, font, 2, 27, mlb_yellow, scorer_text)
 
-            if game.home_top_scorer:
-                scorer_text = f"{game.home_top_scorer['name']} {game.home_top_scorer['points']}"
+            if home_scorer:
+                scorer_text = f"{home_scorer['name']} {home_scorer['points']}"
                 graphics.DrawText(self.canvas, font, 2, 31, mlb_yellow, scorer_text)
         elif game.is_final():
             # No scrolling text for final NHL, signal finished for rotation

@@ -115,6 +115,12 @@ class ESPNProvider(BaseProvider):
         url = f"{self.BASE_URL}/{self.sport_path}/scoreboard"
         date_str = game_date.strftime("%Y%m%d")
         params = {"dates": date_str}
+
+        # NCAAB has many games per day; ESPN defaults to a small subset.
+        # Request D1 games with a high limit so favourite teams aren't missed.
+        if self._sport == Sport.NCAAB:
+            params["groups"] = "50"   # Division I
+            params["limit"] = "200"
         
         try:
             response = requests.get(url, params=params, timeout=10)

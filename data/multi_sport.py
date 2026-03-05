@@ -14,7 +14,7 @@ from data.scheduler import GameScheduler
 class MultiSportData:
     """
     Wrapper that adds multi-sport support to the scoreboard.
-    Combines MLB (existing) with NBA, NHL, NFL via ESPN API.
+    Combines MLB (existing) with NBA, NCAAB, NHL, NFL via ESPN API.
     """
     
     def __init__(self, config):
@@ -42,15 +42,19 @@ class MultiSportData:
         if 'NBA' in self.sports:
             nba_provider = ESPNProvider(Sport.NBA)
             self.providers.append(nba_provider)
-        
+
+        if 'NCAAB' in self.sports:
+            ncaab_provider = ESPNProvider(Sport.NCAAB)
+            self.providers.append(ncaab_provider)
+
         if 'NHL' in self.sports:
             nhl_provider = ESPNProvider(Sport.NHL)
             self.providers.append(nhl_provider)
-        
+
         if 'NFL' in self.sports:
             nfl_provider = ESPNProvider(Sport.NFL)
             self.providers.append(nfl_provider)
-        
+
         if 'SOCCER' in self.sports:
             soccer_provider = ESPNProvider(Sport.SOCCER)
             self.providers.append(soccer_provider)
@@ -95,6 +99,7 @@ class MultiSportData:
         """Convert string to Sport enum."""
         mapping = {
             'NBA': Sport.NBA,
+            'NCAAB': Sport.NCAAB,
             'NHL': Sport.NHL,
             'NFL': Sport.NFL,
             'MLB': Sport.MLB,

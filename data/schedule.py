@@ -8,7 +8,8 @@ from data import status
 from data.game import Game
 from data.update import UpdateStatus
 
-GAMES_REFRESH_RATE = 6 * 60
+GAMES_REFRESH_RATE_LIVE = 15           # 15 sec when games are live
+GAMES_REFRESH_RATE_IDLE = 30 * 60     # 30 min when no games are live
 
 
 class Schedule:
@@ -56,7 +57,8 @@ class Schedule:
 
     def __should_update(self):
         endtime = time.time()
-        return endtime - self.starttime >= GAMES_REFRESH_RATE
+        rate = GAMES_REFRESH_RATE_LIVE if self.games_live() else GAMES_REFRESH_RATE_IDLE
+        return endtime - self.starttime >= rate
 
     # offday code
     def is_offday_for_preferred_team(self):

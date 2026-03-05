@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone
 from data.screens import ScreenType
 
 import debug
@@ -14,6 +15,11 @@ from data.update import UpdateStatus
 from data.weather import Weather
 from data.multi_sport import MultiSportData
 from data.models.base_game import GameStatus
+
+# Adaptive refresh intervals (in seconds)
+REFRESH_LIVE = 15            # Game is live – poll every 15 s
+REFRESH_PREGAME_SOON = 120   # A game starts within 15 min – poll every 2 min
+REFRESH_IDLE = 30 * 60       # No games soon – poll every 30 min
 
 class Data:
     def __init__(self, config):
@@ -141,30 +147,22 @@ class Data:
             # Access schedule's internal _games list directly
             mlb_scheduled_games = getattr(self.schedule, '_games', [])
             
-            # Convert MLB scheduled games to Game objects to check status
-            mlb_game_objects = []
-            for scheduled_game in mlb_scheduled_games:
-                try:
-                    game = Game.from_scheduled(scheduled_game, self.config.preferred_game_delay_multiplier, self.config.api_refresh_rate)
-                    if game:
-                        mlb_game_objects.append((scheduled_game, game))
-                except Exception as e:
-                    debug.log(f"Error creating Game object: {e}")
-                    continue
-            
             # Categorize ALL games (MLB + other sports) by status
             all_live = []
             all_scheduled = []
             all_final = []
-            
-            # Categorize MLB games
-            for scheduled_game, game in mlb_game_objects:
-                game_status = game.status()
-                if game_status == status.IN_PROGRESS or game_status == status.DELAYED:
+
+            # Categorize MLB games using schedule status (no API calls needed)
+            for scheduled_game in mlb_scheduled_games:
+                game_status = scheduled_game["status"]
+                if status.is_live(game_status) or status.is_fresh(game_status):
                     all_live.append(('mlb', scheduled_game))
-                elif game_status == status.SCHEDULED or game_status == status.WARMUP or game_status == status.PREGAME:
+                elif status.is_pregame(game_status):
                     all_scheduled.append(('mlb', scheduled_game))
-                elif game_status == status.FINAL:
+                elif status.is_complete(game_status):
+                    all_final.append(('mlb', scheduled_game))
+                else:
+                    # Irregular states (postponed, cancelled, etc.) - include for display
                     all_final.append(('mlb', scheduled_game))
             
             # Categorize other sport games
@@ -237,22 +235,60 @@ class Data:
                 debug.log("Rotating to the same game, refreshing instead")
                 self.refresh_game()
 
+    def _get_other_sport_refresh_interval(self):
+        """
+        Return the appropriate ESPN refresh interval based on game state.
+          - Any game live            → REFRESH_LIVE  (15 s)
+          - Next game within 15 min  → REFRESH_PREGAME_SOON (2 min)
+          - Otherwise                → REFRESH_IDLE  (30 min)
+        """
+        if not self.other_sport_games:
+            return REFRESH_IDLE
+
+        now = datetime.now(timezone.utc)
+
+        any_live = False
+        soonest_start_sec = None
+
+        for game in self.other_sport_games:
+            if game.is_live():
+                any_live = True
+                break
+            if game.status == GameStatus.SCHEDULED and game.start_time:
+                try:
+                    start = game.start_time
+                    if start.tzinfo is None:
+                        start = start.replace(tzinfo=timezone.utc)
+                    delta = (start - now).total_seconds()
+                    if delta > 0 and (soonest_start_sec is None or delta < soonest_start_sec):
+                        soonest_start_sec = delta
+                except Exception:
+                    pass
+
+        if any_live:
+            return REFRESH_LIVE
+        if soonest_start_sec is not None and soonest_start_sec <= 15 * 60:
+            return REFRESH_PREGAME_SOON
+        return REFRESH_IDLE
+
     def refresh_other_sports(self):
-        """Refresh other sport games data (rate limited to every 15 seconds)."""
+        """Refresh other sport games data with adaptive rate limiting."""
         if not self.multi_sport.enabled:
             return
-        
-        # Rate limit: only refresh every 15 seconds
+
+        # Adaptive rate limit based on game state
+        interval = self._get_other_sport_refresh_interval()
         current_time = time.time()
-        if current_time - self.last_other_sport_refresh < 15:
+        if current_time - self.last_other_sport_refresh < interval:
             return
-        
+
         self.last_other_sport_refresh = current_time
-        
+
         try:
-            # Refresh games from ESPN API (ignores 5-min cache)
+            # Refresh games from ESPN API (ignores scheduler cache)
             self.other_sport_games = self.multi_sport.get_todays_games(refresh=True)
-            
+            debug.log(f"[REFRESH] ESPN refreshed ({len(self.other_sport_games)} games, next in {interval}s)")
+
             # Update the current game if it's in the refreshed list
             if self.current_other_sport_game:
                 current_id = self.current_other_sport_game.game_id
