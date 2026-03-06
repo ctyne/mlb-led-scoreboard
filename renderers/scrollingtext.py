@@ -13,12 +13,13 @@ def render_text(canvas, x, y, width, font, text_color, bg_color, text, scroll_po
         # TODO: Optimize by trimming offscreen characters
         graphics.DrawText(canvas, font["font"], scroll_pos, y, text_color, text)
 
-        # Mask left (one character width to clean up partially-entering text)
+        # Mask left (clear everything to the left of the text area so
+        # scrolling text cannot bleed into labels like "P:" / "AB:" or
+        # other screen regions outside the allocated scroll zone)
         top = y + 1
         bottom = top - font["size"]["height"]
-        for xi in range(0, w):
-            left = x - xi - 1
-            graphics.DrawLine(canvas, left, top, left, bottom, bg_color)
+        for xi in range(0, x):
+            graphics.DrawLine(canvas, xi, top, xi, bottom, bg_color)
 
         # Mask right (extend to canvas edge to prevent text bleeding into
         # bases, outs, inning indicators, etc.)
