@@ -25,9 +25,10 @@ SCHEDULE_API_FIELDS = "dates,date,games,status,detailedState,abstractGameState,r
 GAME_UPDATE_RATE = 10
 
 # Adaptive refresh intervals for individual game data (seconds)
-GAME_REFRESH_PREGAME = 5 * 60       # 5 min when game hasn't started
+GAME_REFRESH_PREGAME = 30 * 60      # 30 min when game hasn't started
 GAME_REFRESH_PREGAME_SOON = 2 * 60  # 2 min when game starts within 15 min
-GAME_REFRESH_FINAL = 5 * 60         # 5 min when game is over
+GAME_REFRESH_FINAL = 30 * 60        # 30 min when game is over
+GAME_REFRESH_RETRY = 60             # 1 min retry after a failed update
 
 class Game:
     @staticmethod
@@ -54,6 +55,7 @@ class Game:
         self._series_status = series_status
         self._api_refresh_rate = api_refresh_rate
         self._status = {}
+        self._last_update_failed = False
         self._uniform_data = Uniforms(game_id)
 
     def update(self, force=False, testing_params={}) -> UpdateStatus:
@@ -81,9 +83,11 @@ class Game:
                         debug.error("Failed to get game status from schedule")
 
                 self._uniform_data.update()
+                self._last_update_failed = False
                 return UpdateStatus.SUCCESS
             except:
                 debug.exception("Networking Error while refreshing the current game data.")
+                self._last_update_failed = True
                 return UpdateStatus.FAIL
         return UpdateStatus.DEFERRED
 
@@ -355,9 +359,14 @@ class Game:
 
         - Live game        → configured api_refresh_rate (fast, typically 5-10 s)
         - Pregame (≤15 min)→ GAME_REFRESH_PREGAME_SOON  (2 min)
-        - Pregame (>15 min)→ GAME_REFRESH_PREGAME        (5 min)
-        - Final            → GAME_REFRESH_FINAL           (5 min)
+        - Pregame (>15 min)→ GAME_REFRESH_PREGAME        (30 min)
+        - Final            → GAME_REFRESH_FINAL           (30 min)
+        - After failure     → GAME_REFRESH_RETRY           (1 min)
         """
+        # After a failed update, retry sooner so we recover quickly
+        if self._last_update_failed:
+            return GAME_REFRESH_RETRY
+
         # No status data yet (first update) → use default so we get data quickly
         if not self._status:
             return self._api_refresh_rate
