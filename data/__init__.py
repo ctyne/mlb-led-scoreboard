@@ -35,10 +35,14 @@ class Data:
         self.last_other_sport_refresh = 0  # Track last refresh time for rate limiting
         self.last_schedule_date = None  # Track the date of last schedule fetch
 
+        # Cache of MLB Game objects by game_id, so rotation reuses them
+        # instead of creating a new object (and forced API call) each time
+        self._mlb_game_cache = {}
+
         # get MLB schedule
         self.schedule: Schedule = Schedule(config)
         # NB: Can return none, but shouldn't matter?
-        self.current_game: Game = self.schedule.get_preferred_game()
+        self.current_game: Game = self._get_or_create_mlb_game_from_schedule(preferred=True)
 
         # Fetch other sport games if enabled
         if self.multi_sport.enabled:
@@ -118,6 +122,41 @@ class Data:
         # this should help most issues with games getting stuck
         return True
 
+    def _get_or_create_mlb_game(self, scheduled_game):
+        """Return a cached Game object or create (and cache) a new one.
+
+        This prevents advance_to_next_game from hitting the MLB API every
+        rotation cycle.  The cached Game object's own adaptive rate limiting
+        controls when it actually fetches fresh data.
+        """
+        game_id = scheduled_game["game_id"]
+        if game_id in self._mlb_game_cache:
+            return self._mlb_game_cache[game_id]
+
+        game = Game.from_scheduled(
+            scheduled_game,
+            self.config.preferred_game_delay_multiplier,
+            self.config.api_refresh_rate,
+        )
+        if game:
+            self._mlb_game_cache[game_id] = game
+        return game
+
+    def _get_or_create_mlb_game_from_schedule(self, preferred=False):
+        """Get initial game from schedule using the cache."""
+        if preferred:
+            idx = self.schedule._game_index_for_preferred_team()
+            if idx >= 0:
+                self.schedule.current_idx = idx
+            elif self.schedule._games:
+                self.schedule.current_idx = 0
+            else:
+                return None
+        if self.schedule._games:
+            scheduled_game = self.schedule._games[self.schedule.current_idx]
+            return self._get_or_create_mlb_game(scheduled_game)
+        return None
+
     def refresh_game(self):
         """Refresh current game data."""
         if self.current_game_is_other_sport:
@@ -193,11 +232,11 @@ class Data:
             game_type, game_data = active_games[self.combined_game_index]
             
             if game_type == 'mlb':
-                # It's an MLB game
+                # It's an MLB game — reuse cached Game to avoid forced API call
                 self.current_game_is_other_sport = False
                 self.current_other_sport_game = None
-                game = Game.from_scheduled(game_data, self.config.preferred_game_delay_multiplier, self.config.api_refresh_rate)
-                
+                game = self._get_or_create_mlb_game(game_data)
+
                 if game:
                     self.current_game = game
                     self.game_changed_time = time.time()
@@ -215,13 +254,19 @@ class Data:
                 self.scrolling_finished = False
                 debug.log(f"Switching to {self.current_other_sport_game.sport.value} game: {self.current_other_sport_game.away_team} @ {self.current_other_sport_game.home_team}")
         else:
-            # Original MLB-only behavior
-            game = self.schedule.next_game()
+            # Original MLB-only behavior — use cache to avoid API calls
+            self.schedule.current_idx = self.schedule._Schedule__next_game_index()
+            if not self.schedule._games:
+                self.network_issues = True
+                return
+
+            scheduled_game = self.schedule._games[self.schedule.current_idx]
+            game = self._get_or_create_mlb_game(scheduled_game)
             if game is None:
                 self.network_issues = True
                 return
 
-            if game.game_id != self.current_game.game_id:
+            if self.current_game is None or game.game_id != self.current_game.game_id:
                 self.current_game = game
                 self.game_changed_time = time.time()
                 self.__update_layout_state()
@@ -321,6 +366,7 @@ class Data:
             debug.log(f"Date changed from {self.last_schedule_date} to {today}, forcing schedule refresh")
             force = True
             self.last_schedule_date = today
+            self._mlb_game_cache.clear()  # New day, new games
         
         self.__process_network_status(self.schedule.update(force))
         
