@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import statsapi
@@ -23,6 +23,11 @@ API_FIELDS = (
 SCHEDULE_API_FIELDS = "dates,date,games,status,detailedState,abstractGameState,reason"
 
 GAME_UPDATE_RATE = 10
+
+# Adaptive refresh intervals for individual game data (seconds)
+GAME_REFRESH_PREGAME = 5 * 60       # 5 min when game hasn't started
+GAME_REFRESH_PREGAME_SOON = 2 * 60  # 2 min when game starts within 15 min
+GAME_REFRESH_FINAL = 5 * 60         # 5 min when game is over
 
 class Game:
     @staticmethod
@@ -343,7 +348,41 @@ class Game:
     def __should_update(self):
         endtime = time.time()
         time_delta = endtime - self.starttime
-        return time_delta >= self._api_refresh_rate
+        return time_delta >= self._adaptive_rate()
+
+    def _adaptive_rate(self):
+        """Return an API refresh interval appropriate for the current game state.
+
+        - Live game        → configured api_refresh_rate (fast, typically 5-10 s)
+        - Pregame (≤15 min)→ GAME_REFRESH_PREGAME_SOON  (2 min)
+        - Pregame (>15 min)→ GAME_REFRESH_PREGAME        (5 min)
+        - Final            → GAME_REFRESH_FINAL           (5 min)
+        """
+        # No status data yet (first update) → use default so we get data quickly
+        if not self._status:
+            return self._api_refresh_rate
+
+        abstract = self._status.get("abstractGameState", "")
+
+        # Live → fast refresh
+        if abstract == "Live":
+            return self._api_refresh_rate
+
+        # Final → slow refresh
+        if abstract == "Final":
+            return GAME_REFRESH_FINAL
+
+        # Pregame / Scheduled → check how far out game time is
+        try:
+            game_time = self.datetime()
+            now = datetime.now(timezone.utc)
+            seconds_until = (game_time - now).total_seconds()
+            if seconds_until <= 15 * 60:
+                return GAME_REFRESH_PREGAME_SOON
+        except Exception:
+            pass
+
+        return GAME_REFRESH_PREGAME
 
     @staticmethod
     def _format_id(player):
